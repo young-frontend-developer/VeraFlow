@@ -1,0 +1,18 @@
+fastapi
+uvicorn[standard]
+python-multipart
+sqlmodel
+psycopg[binary]
+anyio
+
+# engine - same pins the spike verified on Python 3.13
+quran-muaalem
+quran-transcript
+torch
+librosa
+numba>=0.61.2
+soundfile
+numpy
+
+# dev
+pytest

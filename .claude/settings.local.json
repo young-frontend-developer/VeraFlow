@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(.venv/Scripts/python.exe -c ' *)",
+      "Bash(.venv/Scripts/python.exe s6_sad_probe.py)",
+      "Bash(.venv/Scripts/python.exe \"C:/Users/RAHMAT~1/AppData/Local/Temp/claude/C--Users-Rahmatulloh-Desktop-Tilawah/83d0b7c0-78c8-486f-8434-baf257683b42/scratchpad/t_sib.py\")",
+      "Bash(.venv/Scripts/python.exe --version)",
+      "Bash(../spike/.venv/Scripts/python.exe -m pip install -q sqlmodel fastapi \"uvicorn[standard]\" python-multipart pytest)",
+      "Bash(../spike/.venv/Scripts/python.exe -m pytest -q)",
+      "Bash(../spike/.venv/Scripts/python.exe -c ' *)",
+      "Bash(python -)",
+      "Bash(rm -f tilawah.db)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"--- exit $? ---\")",
+      "Bash(../spike/.venv/Scripts/python.exe -m uvicorn tilawah.api.main:app --port 8000 --host 127.0.0.1)",
+      "Bash(npx vite *)",
+      "Bash(curl -s -m 5 http://127.0.0.1:8000/health)",
+      "Bash(curl -s -m 5 \"http://127.0.0.1:8000/api/ayat\")",
+      "Bash(curl -s -m 5 -o /dev/null -w \"%{http_code}\\\\n\" http://127.0.0.1:5173/)",
+      "Bash(echo \"tsc exit $?\")",
+      "Bash(npm run *)",
+      "Bash(curl -s -m 5 http://127.0.0.1:5173/)",
+      "PowerShell($c = Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue; if \\($c\\) { $c | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Write-Output \"stopping PID $_\"; Stop-Process -Id $_ -Force } } else { Write-Output \"port 8000 free\" })",
+      "Bash(curl -s -m 2 http://127.0.0.1:8000/health)",
+      "Bash(break)",
+      "PowerShell(Get-NetTCPConnection *)",
+      "PowerShell(taskkill *)",
+      "Bash(printf '%s\\\\n' 'TILAWAH_CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173' 'TILAWAH_MODEL_DTYPE=bfloat16' 'TILAWAH_DATABASE_URL=sqlite:///./tilawah.db')",
+      "Bash(TILAWAH_CORS_ORIGINS=\"http://localhost:5173,http://127.0.0.1:5173\" ../spike/.venv/Scripts/python.exe -m uvicorn tilawah.api.main:app --port 8010 --host 127.0.0.1)",
+      "Bash(curl -s -m 2 http://127.0.0.1:8010/health)",
+      "Bash(curl -s -m 5 http://127.0.0.1:8010/health)",
+      "Bash(spike/.venv/Scripts/python.exe \"C:\\\\Users\\\\RAHMAT~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Rahmatulloh-Desktop-Tilawah\\\\83d0b7c0-78c8-486f-8434-baf257683b42\\\\scratchpad\\\\demo.py\")",
+      "PowerShell($c = Get-NetTCPConnection -LocalPort 5173 -State Listen -ErrorAction SilentlyContinue; if \\($c\\) { $c | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }; \"stopped vite\" } else { \"5173 free\" })",
+      "Bash(curl -s -m 2 -o /dev/null http://127.0.0.1:5173/)",
+      "Bash(curl -s -m 5 -o /dev/null -w '%{http_code}' http://127.0.0.1:5173/)",
+      "Bash(echo \"web: $\\(curl -s -m 5 -o /dev/null -w '%{http_code}' http://127.0.0.1:5173/\\)\")",
+      "Bash(curl -s -m 5 -o /dev/null -w '%{http_code}' http://127.0.0.1:8010/health)",
+      "Bash(echo \"api: $\\(curl -s -m 5 -o /dev/null -w '%{http_code}' http://127.0.0.1:8010/health\\)\")"
+    ]
+  }
+}

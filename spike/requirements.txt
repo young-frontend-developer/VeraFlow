@@ -1,0 +1,11 @@
+# Tilawah spike dependencies.  Python 3.13 (NOT 3.14 - no reliable torch/numba wheels yet).
+# On Windows, plain `pip install torch` gives the CPU build, which is what we want.
+
+quran-muaalem          # provides the Muaalem inference wrapper + explain helpers
+quran-transcript       # Quran text -> expected phonemes (QPS) + sifat
+torch                  # CPU build on Windows by default
+librosa                # audio loading (recommended by quran-muaalem docs)
+numba>=0.61.2          # librosa dependency; 0.61.2+ is the first with Python 3.13 support
+soundfile              # WAV read/write - what our scripts actually use
+sounddevice            # microphone capture (bundles PortAudio on Windows)
+numpy

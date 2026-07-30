@@ -1,0 +1,20 @@
+{
+  "_meta": {
+    "note": "MVP catalogue. Short ayat only - a 2-second recitation gives clean signal and a fast retry loop. Same set the spike measured, so you already know how the engine behaves on them.",
+    "expert_audio": "https://everyayah.com/data/{reciter}/{sura:03d}{aya:03d}.mp3",
+    "default_reciter": "Alafasy_128kbps",
+    "adding_an_ayah": "Add the entry, then verify content/rules.json covers every error code the engine can emit for it. Never expose an ayah whose likely errors have no authored content."
+  },
+  "ayat": [
+    {"sura": 103, "aya": 1, "slug": "al-asr-1",   "uz": "Al-Asr 1", "ru": "Аль-Аср 1",       "level": 1},
+    {"sura": 112, "aya": 2, "slug": "ikhlas-2",   "uz": "Ixlos 2",  "ru": "Аль-Ихлас 2",     "level": 1},
+    {"sura": 112, "aya": 3, "slug": "ikhlas-3",   "uz": "Ixlos 3",  "ru": "Аль-Ихлас 3",     "level": 1},
+    {"sura": 113, "aya": 1, "slug": "falaq-1",    "uz": "Falaq 1",  "ru": "Аль-Фаляк 1",     "level": 2},
+    {"sura": 114, "aya": 1, "slug": "nas-1",      "uz": "Nos 1",    "ru": "Ан-Нас 1",        "level": 2},
+    {"sura": 108, "aya": 1, "slug": "kawthar-1",  "uz": "Kavsar 1", "ru": "Аль-Каусар 1",    "level": 2},
+    {"sura": 108, "aya": 3, "slug": "kawthar-3",  "uz": "Kavsar 3", "ru": "Аль-Каусар 3",    "level": 2},
+    {"sura": 109, "aya": 1, "slug": "kafirun-1",  "uz": "Kofirun 1","ru": "Аль-Кафирун 1",   "level": 3},
+    {"sura": 110, "aya": 1, "slug": "nasr-1",     "uz": "Nasr 1",   "ru": "Ан-Наср 1",       "level": 3},
+    {"sura": 1,   "aya": 6, "slug": "fatiha-6",   "uz": "Fotiha 6", "ru": "Аль-Фатиха 6",    "level": 3}
+  ]
+}

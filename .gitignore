@@ -1,0 +1,18 @@
+# python
+.venv/
+__pycache__/
+*.pyc
+api/.env
+api/tilawah.db
+
+# node
+node_modules/
+web/.env
+web/dist/
+
+# spike artefacts - the clips are personal recitations, keep them local
+spike/clips/
+spike/.cache_transcribe/
+spike/results.json
+spike/scored.csv
+spike/typed.csv

@@ -1,0 +1,215 @@
+{
+  "_meta": {
+    "purpose": "Error code -> learner-facing content. Decision 4: rule name, correction and reason are DETERMINISTIC TEMPLATES over scholar-authored content. No LLM writes anything here.",
+    "status_values": {
+      "ship": "shown normally - measured reliable in the spike",
+      "teacher": "shown as low-confidence, ends with 'check with your teacher' (decision 5)",
+      "collect": "logged, NEVER shown - not yet measured"
+    },
+    "reviewed": "false until a qualified qori signs off. Nothing with reviewed=false should reach production.",
+    "how_to_promote": "Move a code to 'ship' only after it has a measured false-positive rate on correct recitation from a VERIFIED reciter.",
+
+    "DEV_OVERRIDE": {
+      "WARNING": "!!! DEV ONLY — NOT FIT TO LAUNCH !!! Two codes below are flipped to reviewed=true so the app can be demonstrated end to end. NO QORI HAS REVIEWED THESE STRINGS. They are a developer's first draft of Uzbek and Russian tajweed instruction.",
+      "affected": ["SUB_AYN_HAMZA", "SUB_SAD_SEEN"],
+      "marker": "Every overridden rule carries reviewed_by: DEV-OVERRIDE. Grep for DEV-OVERRIDE to find them all.",
+      "to_re_gate": "Set reviewed=false and delete the reviewed_by key, or replace it with the reviewing qori's name once the strings are genuinely signed off.",
+      "tripwires": [
+        "tests/test_engine.py::test_no_dev_overrides_remain fails on purpose while any override exists",
+        "the API logs a WARNING banner naming them on every startup"
+      ]
+    }
+  },
+  "SUB_AYN_HAMZA": {
+    "status": "ship",
+    "reviewed": true,
+    "reviewed_by": "DEV-OVERRIDE — no qori has seen this. Re-gate before launch.",
+    "severity": "high",
+    "uz": {
+      "rule": "Ayn (ع) harfi",
+      "you_did": "Siz ع ni hamza (ء) kabi oʻqidingiz.",
+      "fix": "ع tomoq oʻrtasidan chiqadi. Hamza esa tomoq tubidan. Tomoq oʻrtasini siqib, ovozni choʻzing.",
+      "drill": "عَ — عِ — عُ ni sekin takrorlang, qoʻlingizni tomogʻingizga qoʻying: tebranishni his qilishingiz kerak."
+    },
+    "ru": {
+      "rule": "Буква Айн (ع)",
+      "you_did": "Вы произнесли ع как хамзу (ء).",
+      "fix": "ع выходит из середины горла, хамза — из глубины. Сожмите середину горла и потяните звук.",
+      "drill": "Медленно повторяйте عَ — عِ — عُ, держа руку на горле: вы должны почувствовать вибрацию."
+    }
+  },
+  "SUB_SAD_SEEN": {
+    "status": "ship",
+    "reviewed": true,
+    "reviewed_by": "DEV-OVERRIDE — no qori has seen this. Re-gate before launch.",
+    "severity": "high",
+    "uz": {
+      "rule": "Sod (ص) — tafxim harfi",
+      "you_did": "Siz ص ni oddiy س kabi oʻqidingiz — boʻrttirish yoʻqoldi.",
+      "fix": "ص aytganda tilning orqa qismini yuqori tanglayga koʻtaring. Ovoz toʻliq va ogʻir chiqadi.",
+      "drill": "سَ va صَ ni ketma-ket ayting. Farqni eshiting: ikkinchisi ogʻirroq va toʻlaroq."
+    },
+    "ru": {
+      "rule": "Буква Сод (ص) — буква тафхима",
+      "you_did": "Вы произнесли ص как обычную س — потерян эмфатический призвук.",
+      "fix": "При ص поднимите заднюю часть языка к нёбу. Звук должен быть полным и тяжёлым.",
+      "drill": "Произнесите سَ и صَ подряд. Услышьте разницу: вторая тяжелее и полнее."
+    }
+  },
+  "SUB_QAF_KAF": {
+    "status": "teacher",
+    "reviewed": false,
+    "severity": "high",
+    "uz": {
+      "rule": "Qof (ق) harfi",
+      "you_did": "Siz ق ni ك kabi oʻqidingiz (rus tilidagi «к»).",
+      "fix": "ق tilning eng orqa qismi bilan kichik tilchaga tegib chiqadi — ك dan ancha orqaroq.",
+      "drill": "قَ — كَ juftligini takrorlang va chiqish nuqtasi qanday orqaga siljishini his qiling."
+    },
+    "ru": {
+      "rule": "Буква Коф (ق)",
+      "you_did": "Вы произнесли ق как ك (русское «к»).",
+      "fix": "ق образуется самой задней частью языка у язычка — заметно глубже, чем ك.",
+      "drill": "Повторяйте пару قَ — كَ и почувствуйте, как точка выхода смещается назад."
+    }
+  },
+  "SUB_HA_KHA": {
+    "status": "collect",
+    "reviewed": false,
+    "severity": "medium",
+    "uz": {
+      "rule": "Ho (ح) harfi",
+      "you_did": "Siz ح ni خ kabi oʻqidingiz (rus tilidagi «х»).",
+      "fix": "ح tomoq oʻrtasidan, ishqalanishsiz chiqadi. خ esa tomoq yuqorisidan, ishqalanib.",
+      "drill": "حَ ni nafas bilan, quruq ishqalanishsiz ayting."
+    },
+    "ru": {
+      "rule": "Буква Ха (ح)",
+      "you_did": "Вы произнесли ح как خ (русское «х»).",
+      "fix": "ح выходит из середины горла без хрипа, خ — из верхней части горла с хрипом.",
+      "drill": "Произносите حَ на выдохе, без сухого трения."
+    }
+  },
+  "MADD_SHORT": {
+    "status": "teacher",
+    "reviewed": false,
+    "severity": "medium",
+    "template": true,
+    "uz": {
+      "rule": "Madd (choʻzish)",
+      "you_did": "Choʻzishni {heard_count} harakat ushladingiz, {expected_count} kerak edi.",
+      "fix": "Choʻzishni oxirigacha ushlang. Barmoq bilan sanang: har harakat — bir barmoq.",
+      "drill": "Ayni shu soʻzni {expected_count} harakat sanab, sekin takrorlang."
+    },
+    "ru": {
+      "rule": "Мадд (протяжение)",
+      "you_did": "Вы протянули {heard_count} счёта вместо {expected_count}.",
+      "fix": "Держите протяжение до конца. Считайте пальцами: один счёт — один палец.",
+      "drill": "Повторите это слово медленно, отсчитывая {expected_count} счёта."
+    }
+  },
+  "MADD_LONG": {
+    "status": "teacher",
+    "reviewed": false,
+    "severity": "low",
+    "template": true,
+    "uz": {
+      "rule": "Madd (choʻzish)",
+      "you_did": "Choʻzishni {heard_count} harakat ushladingiz, {expected_count} yetarli.",
+      "fix": "Ortiqcha choʻzish ham xato. Sanoqqa rioya qiling.",
+      "drill": "{expected_count} harakat sanab toʻxtang."
+    },
+    "ru": {
+      "rule": "Мадд (протяжение)",
+      "you_did": "Вы протянули {heard_count} счёта, достаточно {expected_count}.",
+      "fix": "Излишнее протяжение — тоже ошибка. Соблюдайте счёт.",
+      "drill": "Отсчитайте {expected_count} счёта и остановитесь."
+    }
+  },
+  "GHUNNA_SHORT": {
+    "status": "collect",
+    "reviewed": false,
+    "severity": "medium",
+    "template": true,
+    "uz": {
+      "rule": "Gʻunna (burun tovushi)",
+      "you_did": "Gʻunnani {heard_count} harakat ushladingiz, {expected_count} kerak.",
+      "fix": "Ovozni burunga yoʻnaltiring va ikki harakat toʻliq ushlang.",
+      "drill": "Burningizni barmoq bilan yoping — ovoz toʻxtashi kerak. Toʻxtamasa, gʻunna yoʻq."
+    },
+    "ru": {
+      "rule": "Гунна (носовой призвук)",
+      "you_did": "Вы держали гунну {heard_count} счёта вместо {expected_count}.",
+      "fix": "Направьте звук в нос и держите полных два счёта.",
+      "drill": "Зажмите нос пальцами — звук должен прерваться. Если нет, гунны нет."
+    }
+  },
+  "QALQALA_DROP": {
+    "status": "collect",
+    "reviewed": false,
+    "severity": "medium",
+    "uz": {
+      "rule": "Qalqala",
+      "you_did": "Sukunli harfda qalqala (sakrash) eshitilmadi.",
+      "fix": "ق ط ب ج د harflari sukun bilan kelsa, engil sakrash boʻladi — harakatsiz, quruq.",
+      "drill": "أَحَدْ soʻzining oxiridagi د ni sakratib ayting."
+    },
+    "ru": {
+      "rule": "Калькаля",
+      "you_did": "На букве с сукуном не слышен отскок.",
+      "fix": "Буквы ق ط ب ج د с сукуном произносятся с лёгким отскоком — без огласовки.",
+      "drill": "Произнесите أَحَدْ, отскочив на конечной د."
+    }
+  },
+  "DELETION": {
+    "status": "teacher",
+    "reviewed": false,
+    "severity": "high",
+    "uz": {
+      "rule": "Tushib qolgan harf",
+      "you_did": "{letter} harfi eshitilmadi.",
+      "fix": "Sekinroq oʻqing va har bir harfni toʻliq talaffuz qiling.",
+      "drill": "Ayatni yarim tezlikda, har harfni ajratib oʻqing."
+    },
+    "ru": {
+      "rule": "Пропущенная буква",
+      "you_did": "Буква {letter} не прозвучала.",
+      "fix": "Читайте медленнее и проговаривайте каждую букву полностью.",
+      "drill": "Прочитайте аят в половину скорости, отделяя каждую букву."
+    }
+  },
+  "INSERTION": {
+    "status": "teacher",
+    "reviewed": false,
+    "severity": "high",
+    "uz": {
+      "rule": "Ortiqcha tovush",
+      "you_did": "Matnda yoʻq tovush qoʻshildi.",
+      "fix": "Matnga qarab, faqat yozilganini oʻqing.",
+      "drill": "Ayatni koʻzingiz bilan kuzatib, sekin takrorlang."
+    },
+    "ru": {
+      "rule": "Лишний звук",
+      "you_did": "Добавлен звук, которого нет в тексте.",
+      "fix": "Следите по тексту и читайте только написанное.",
+      "drill": "Повторите аят медленно, следя глазами по строке."
+    }
+  },
+  "SUBSTITUTION": {
+    "status": "collect",
+    "reviewed": false,
+    "severity": "medium",
+    "uz": {
+      "rule": "Harf almashtirildi",
+      "you_did": "{expected} oʻrniga {heard} eshitildi.",
+      "fix": "Harfning chiqish oʻrnini (maxraj) tekshiring.",
+      "drill": "Ikkala harfni juft qilib, sekin taqqoslab ayting."
+    },
+    "ru": {
+      "rule": "Замена буквы",
+      "you_did": "Вместо {expected} прозвучала {heard}.",
+      "fix": "Проверьте точку выхода (махрадж) этой буквы.",
+      "drill": "Произнесите обе буквы парой, медленно сравнивая."
+    }
+  }
+}

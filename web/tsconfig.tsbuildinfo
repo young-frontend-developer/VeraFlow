@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/components/ayahtext.tsx","./src/components/feedback.tsx","./src/components/langtoggle.tsx","./src/components/library.tsx","./src/components/log.tsx","./src/components/recite.tsx","./src/components/tabbar.tsx","./src/lib/api.ts","./src/lib/i18n.ts","./src/lib/recorder.ts"],"version":"5.9.3"}
