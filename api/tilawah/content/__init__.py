@@ -29,6 +29,33 @@ def ayat_index() -> dict[tuple[int, int], dict]:
     return {(a["sura"], a["aya"]): a for a in ayat()}
 
 
+@lru_cache(maxsize=1)
+def _segments_file() -> dict:
+    """Precomputed practice segments for the whole Quran.
+
+    Built by tools/build_segments.py and committed - packing an ayah costs
+    0.2-3 s, which must not happen in a request.
+    """
+    path = _DIR / "segments.json"
+    if not path.exists():
+        return {"_meta": {}, "segments": {}}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def segments_meta() -> dict:
+    return _segments_file().get("_meta", {})
+
+
+@lru_cache(maxsize=4096)
+def segments_of(sura: int, aya: int) -> list[dict]:
+    """[{start_word, num_words, n_phonemes}] covering the ayah in order."""
+    raw = _segments_file().get("segments", {}).get(f"{sura}:{aya}")
+    if not raw:
+        return []
+    return [{"start_word": s, "num_words": n, "n_phonemes": p}
+            for s, n, p in raw]
+
+
 DEV_OVERRIDE = "DEV-OVERRIDE"
 
 

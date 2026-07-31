@@ -35,9 +35,25 @@ async def lifespan(_: FastAPI):
         logging.warning("Re-gate in tilawah/content/rules.json before launch.")
         logging.warning(bar)
 
+    # Refuse to serve real people while storing their voice without asking.
+    if settings.debug_audio and settings.is_production:
+        raise RuntimeError(
+            "TILAWAH_DEBUG_AUDIO=1 stores every recording with NO consent. "
+            "That is a laptop-only diagnostic. Unset it, or set TILAWAH_ENV=dev "
+            "if this really is a development box."
+        )
+    if settings.debug_audio:
+        logging.warning("=" * 68)
+        logging.warning("DEBUG AUDIO ON - every upload is stored, consent IGNORED")
+        logging.warning("Development only. Never set this where real learners can reach.")
+        logging.warning("=" * 68)
+    logging.info("audio retention: collect=%s (per-learner consent still required)",
+                 settings.collect_audio)
+
     # The model is NOT preloaded. First recitation pays ~15 s; every later one
     # is fast. Preloading here would make deploys slow and health checks lie.
-    logging.info("Tilawah API ready (model loads on first analyse)")
+    logging.info("Tilawah API ready (model loads on first analyse, dtype=%s)",
+                 settings.model_dtype)
     yield
 
 

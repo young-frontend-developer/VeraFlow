@@ -25,6 +25,11 @@ class User(SQLModel, table=True):
     id: str = Field(primary_key=True)          # anonymous device id for MVP
     lang: str = Field(default="uz")
     consented: bool = Field(default=False)     # gates retention of attempts
+    # Separate and stricter than `consented`. Keeping a transcript of what you
+    # recited is not the same as keeping a recording of your voice, and one does
+    # not imply the other - so it is asked separately and defaults to off.
+    audio_consented: bool = Field(default=False)
+    consent_seen: bool = Field(default=False)  # has been shown the choice
     created_at: datetime = Field(default_factory=_now)
 
 
@@ -33,6 +38,13 @@ class Attempt(SQLModel, table=True):
     user_id: str = Field(index=True, foreign_key="user.id")
     sura: int
     aya: int
+    # The practice range, indexed RELATIVE TO THE AYAH. Never store encoded
+    # indices: include_bismillah prepends the basmala into the index space, so
+    # the same words carry different numbers depending on a flag, and history
+    # would silently corrupt the moment bismillah handling changed.
+    start_word: int = Field(default=0)
+    num_words: int = Field(default=0)          # 0 = the whole ayah
+    include_bismillah: bool = Field(default=False)
     created_at: datetime = Field(default_factory=_now, index=True)
 
     status: str                                 # ok | retry_recording | error

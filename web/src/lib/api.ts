@@ -76,18 +76,50 @@ export const history = (limit = 20) =>
     `${BASE}/api/attempts?device_id=${encodeURIComponent(deviceId())}&limit=${limit}`,
   ).then(json<Attempt[]>);
 
+/** A practice range, indexed RELATIVE TO THE AYAH (never encoded indices). */
+export type PracticeRange = {
+  start_word: number;
+  num_words: number;
+  include_bismillah?: boolean;
+};
+
+export type PracticeSegment = PracticeRange & {
+  index: number;
+  n_phonemes: number;
+  /** Median-reciter estimate. The slow rate used for capping is never sent. */
+  seconds: number;
+  uthmani: string;
+};
+
+export type AyahSegments = {
+  sura: number;
+  aya: number;
+  n_words: number;
+  /** Boundaries that do not split an Uthmani word — the only legal cuts. */
+  legal_cuts: number[];
+  segments: PracticeSegment[];
+};
+
+export const ayahSegments = (sura: number, aya: number) =>
+  fetch(`${BASE}/api/segments/${sura}/${aya}`).then(json<AyahSegments>);
+
 export async function submitAttempt(
   audio: Blob,
   sura: number,
   aya: number,
   lang: string,
+  range?: PracticeRange,
 ): Promise<Attempt> {
   const fd = new FormData();
-  fd.append("audio", audio, "recitation.webm");
+  fd.append("audio", audio, "recitation.wav");
   fd.append("sura", String(sura));
   fd.append("aya", String(aya));
   fd.append("lang", lang);
   fd.append("device_id", deviceId());
+  // Omitted or 0 means the whole ayah, so existing callers are unaffected.
+  fd.append("start_word", String(range?.start_word ?? 0));
+  fd.append("num_words", String(range?.num_words ?? 0));
+  fd.append("include_bismillah", String(range?.include_bismillah ?? false));
   return fetch(`${BASE}/api/attempts`, { method: "POST", body: fd }).then(
     json<Attempt>,
   );
@@ -101,10 +133,28 @@ export async function flagWrong(attemptId: number): Promise<void> {
   });
 }
 
-export async function setConsent(consented: boolean): Promise<void> {
+export type Meta = {
+  pilot: boolean;
+  unverified_codes: string[];
+  collect_audio_offered: boolean;
+  version: string;
+};
+
+export const meta = () => fetch(`${BASE}/api/meta`).then(json<Meta>);
+
+/**
+ * Two separate permissions. Storing a record of what you recited is not the
+ * same as storing a recording of your voice, so audio is asked for separately
+ * and defaults to off. Revoking either one deletes what it covered.
+ */
+export async function setConsent(
+  consented: boolean,
+  audioConsented = false,
+): Promise<void> {
   const fd = new FormData();
   fd.append("device_id", deviceId());
   fd.append("consented", String(consented));
+  fd.append("audio_consented", String(audioConsented));
   await fetch(`${BASE}/api/consent`, { method: "POST", body: fd });
 }
 

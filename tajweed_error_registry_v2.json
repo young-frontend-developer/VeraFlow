@@ -1,0 +1,801 @@
+{
+  "_meta": {
+    "version": "0.2-draft",
+    "languages": ["uz-Latn", "ru"],
+    "total_errors": 34,
+    "status": "DRAFT — every entry is marked status='draft'. Rahmatulloh (qari) must review each one and set status='reviewed' before it is shown to a learner. The app's safety gate must only display entries where status == 'reviewed'.",
+    "field_guide": {
+      "group": "makharij | sifat | ghunna | madd | ahkam",
+      "severity": "high = changes word meaning | medium = breaks a required rule | low = stylistic / measure",
+      "detection_confidence": "high = directly readable from Muaalem output | medium = needs comparison logic | low = needs extra engineering, do not ship first",
+      "detection_signal": "How the backend maps Muaalem output to this error id. Phoneme substitutions come from the phoneme diff; sifat values come from the per-phoneme sifat list (hams_or_jahr, shidda_or_rakhawa, tafkheem_or_taqeeq, itbaq, safeer, qalqla, tikraar, tafashie, istitala, ghonna); madd length comes from repeated-character counts in the phoneme string.",
+      "uz / ru": "nima_xato/chto_ne_tak → qoida/pravilo → nega_muhim/pochemu_vazhno → tuzatish/kak_ispravit → mashq/uprazhnenie"
+    },
+    "implementation_note": "Ship detection_confidence 'high' entries first. 'low' entries (ahkam group) are included so the taxonomy is complete, but their detection logic is not yet reliable — keep them status='draft' until the mapping is tested."
+  },
+
+  "errors": {
+
+    "MAKHARIJ_AIN_TO_HAMZA": {
+      "status": "draft", "group": "makharij", "severity": "high", "detection_confidence": "high",
+      "detection_signal": "phoneme substitution: ع -> ء",
+      "uz": {
+        "name": "ع harfi o'rniga ء o'qish",
+        "short": "Siz ع harfini ء kabi talaffuz qildingiz.",
+        "nima_xato": "Siz ع harfini ء (hamza) kabi o'qidingiz — tovushni bo'g'izning o'rta qismidan emas, eng chuqur qismidan chiqardingiz.",
+        "qoida": "ع harfi halqning o'rta qismidan chiqadi. ء esa halqning eng chuqur, eng pastki qismidan chiqadigan keskin tovush. Ikkalasi ham bo'g'iz harflari, lekin makhraji boshqa.",
+        "nega_muhim": "Bu ikki harfni aralashtirish so'z ma'nosini o'zgartiradi. 'سَمِيع' (eshituvchi) hamza bilan o'qilsa, butunlay boshqa so'zga aylanadi.",
+        "tuzatish": "Bo'g'izni uch qismga bo'lib tasavvur qiling: eng tubi — hamza, o'rtasi — ayn, yuqorisi — g'ayn. 'أَعُوذُ' ni juda sekin o'qing: 'أَ' da bo'g'iz tubida keskin yopilish, 'عُ' da o'rtada yumshoqroq siqilish bo'ladi. Qo'lingizni tomog'ingizga qo'yib farqni seziting.",
+        "mashq": "10 marta navbatma-navbat: أَ — عَ — أَ — عَ. Keyin so'zlarda: 'أَحَد' va 'عَبْد', 'أَنْعَمْتَ'. Har safar ayn bo'g'iz o'rtasidan chiqayotganini tekshiring."
+      },
+      "ru": {
+        "name": "Буква ع произнесена как ء",
+        "short": "Вы произнесли ع как хамзу (ء).",
+        "chto_ne_tak": "Вы произнесли букву ع как ء (хамза) — звук вышел из самой глубокой части горла вместо середины.",
+        "pravilo": "ع выходит из середины горла. ء выходит из самой глубокой, нижней части горла — это резкий смыкающийся звук. Обе буквы горловые, но махрадж у них разный.",
+        "pochemu_vazhno": "Смешение этих букв меняет смысл слова. 'سَمِيع' (Слышащий), прочитанное с хамзой, становится совершенно другим словом.",
+        "kak_ispravit": "Представьте горло разделённым на три части: низ — хамза, середина — айн, верх — гайн. Прочитайте 'أَعُوذُ' очень медленно: на 'أَ' почувствуйте резкое смыкание внизу горла, на 'عُ' — более мягкое сжатие в середине. Положите руку на горло, чтобы ощутить разницу.",
+        "uprazhnenie": "10 раз поочерёдно: أَ — عَ — أَ — عَ. Затем в словах: 'أَحَد' и 'عَبْد', 'أَنْعَمْتَ'. Каждый раз проверяйте, что айн выходит из середины горла."
+      }
+    },
+
+    "MAKHARIJ_AIN_TO_HHA": {
+      "status": "draft", "group": "makharij", "severity": "high", "detection_confidence": "high",
+      "detection_signal": "phoneme substitution: ع -> ح",
+      "uz": {
+        "name": "ع harfi o'rniga ح o'qish",
+        "short": "Siz ع harfini ح kabi talaffuz qildingiz.",
+        "nima_xato": "Siz ع harfini ح kabi o'qidingiz. Makhraj joyi to'g'ri edi, lekin tovushni jarangsiz (nafas bilan) chiqardingiz.",
+        "qoida": "ع va ح ikkalasi ham halqning o'rta qismidan chiqadi — makhraj bir xil. Farq sifatida: ع jarangli (majhur), ovoz paychalari titraydi; ح jarangsiz (mahmus), faqat nafas chiqadi.",
+        "nega_muhim": "Makhraj bir xil bo'lgani uchun bu xato juda keng tarqalgan, lekin ma'no o'zgaradi: 'عَال' va 'حَال' ikki xil so'z.",
+        "tuzatish": "Barmog'ingizni tomog'ingizga qo'ying va 'عَ' ni ayting — titrash sezishingiz kerak. Keyin 'حَ' ni ayting — titrash bo'lmaydi, faqat iliq nafas chiqadi. Shu titrash bor-yo'qligi asosiy farq.",
+        "mashq": "Tomoqni ushlab 10 marta: عَ — حَ — عَ — حَ. Keyin so'zlarda: 'الْعَالَمِين' va 'الرَّحْمَن'. Har safar titrash bor-yo'qligini barmoq bilan tekshiring."
+      },
+      "ru": {
+        "name": "Буква ع произнесена как ح",
+        "short": "Вы произнесли ع как ح.",
+        "chto_ne_tak": "Вы произнесли ع как ح. Место выхода было верным, но звук получился глухим (только выдох).",
+        "pravilo": "ع и ح выходят из одного места — середины горла. Разница в качестве: ع звонкая (маджхура), голосовые связки вибрируют; ح глухая (махмуса), выходит только воздух.",
+        "pochemu_vazhno": "Так как махрадж одинаковый, эта ошибка очень распространена, но смысл меняется: 'عَال' и 'حَال' — разные слова.",
+        "kak_ispravit": "Положите палец на горло и произнесите 'عَ' — вы должны почувствовать вибрацию. Затем 'حَ' — вибрации нет, только тёплый выдох. Наличие вибрации и есть главное отличие.",
+        "uprazhnenie": "Держа палец на горле, 10 раз: عَ — حَ — عَ — حَ. Затем в словах: 'الْعَالَمِين' и 'الرَّحْمَن'. Каждый раз проверяйте вибрацию пальцем."
+      }
+    },
+
+    "MAKHARIJ_HAMZA_TO_AIN": {
+      "status": "draft", "group": "makharij", "severity": "high", "detection_confidence": "high",
+      "detection_signal": "phoneme substitution: ء -> ع",
+      "uz": {
+        "name": "ء harfi o'rniga ع o'qish",
+        "short": "Siz hamzani ayn kabi o'qidingiz.",
+        "nima_xato": "Siz ء (hamza) o'rniga ع ni talaffuz qildingiz — tovush bo'g'iz tubidan emas, o'rtasidan chiqdi.",
+        "qoida": "Hamza — bo'g'izning eng tubidan chiqadigan keskin, to'liq yopiladigan tovush. U shadid (kuchli) harf: makhraj to'liq yopiladi va keyin birdan ochiladi.",
+        "nega_muhim": "Hamza va ayn boshqa-boshqa harflar. Ularni almashtirish Qur'on lafzini buzadi va ma'noni o'zgartirishi mumkin.",
+        "tuzatish": "Hamzani o'zbekcha 'a-a' deb to'xtab aytgandagi kabi tasavvur qiling — ikki tovush orasidagi keskin uzilish. Bo'g'iz to'liq yopilib, keyin ochilishi kerak. Ayn esa hech qachon to'liq yopilmaydi.",
+        "mashq": "10 marta: أَ — عَ. Hamzada uzilish, aynda uzluksizlik borligini eshiting. So'zlarda: 'أَنْعَمْتَ' — birinchi harf hamza, o'rtasida ayn."
+      },
+      "ru": {
+        "name": "Буква ء произнесена как ع",
+        "short": "Вы произнесли хамзу как айн.",
+        "chto_ne_tak": "Вместо ء (хамза) вы произнесли ع — звук вышел из середины горла, а не из его основания.",
+        "pravilo": "Хамза — резкий звук из самой нижней части горла с полным смыканием. Это шадида (сильная) буква: махрадж полностью закрывается, затем резко раскрывается.",
+        "pochemu_vazhno": "Хамза и айн — разные буквы. Их замена искажает произнесение Корана и может изменить смысл.",
+        "kak_ispravit": "Представьте хамзу как резкий обрыв между двумя гласными — как пауза внутри слова. Горло должно полностью сомкнуться и затем раскрыться. Айн же никогда не смыкается полностью.",
+        "uprazhnenie": "10 раз: أَ — عَ. Услышьте обрыв на хамзе и непрерывность на айне. В словах: 'أَنْعَمْتَ' — первая буква хамза, в середине айн."
+      }
+    },
+
+    "MAKHARIJ_HA_TO_HHA": {
+      "status": "draft", "group": "makharij", "severity": "high", "detection_confidence": "high",
+      "detection_signal": "phoneme substitution: ه -> ح",
+      "uz": {
+        "name": "ه harfi o'rniga ح o'qish",
+        "short": "Siz ه harfini ح kabi o'qidingiz.",
+        "nima_xato": "Siz ه harfini ح kabi talaffuz qildingiz — yengil, ochiq nafas o'rniga bo'g'iz o'rtasida siqilish hosil qildingiz.",
+        "qoida": "ه halqning eng chuqur qismidan, hamza bilan bir joydan chiqadi, lekin yumshoq va nafas bilan. ح esa halqning o'rtasidan, biroz siqilish bilan chiqadi.",
+        "nega_muhim": "'هَادِي' (hidoyat qiluvchi) va 'حَادِي' — bular ikki xil so'z. Bu farq ma'noga bevosita ta'sir qiladi.",
+        "tuzatish": "ه ni aytganda bo'g'iz deyarli ochiq qoladi — bu shunchaki iliq nafas, oynani bug'latgandek. ح da esa bo'g'iz o'rtasi siqiladi, tovush 'qirali' chiqadi. Avval faqat nafas chiqaring (bu ه), keyin bo'g'izni ozgina siqing (bu ح).",
+        "mashq": "10 marta: هَ — حَ — هَ — حَ. So'zlarda: 'اللَّه' (ه) va 'الرَّحْمَن' (ح). Har safar bo'g'iz siqilyaptimi — shuni tekshiring."
+      },
+      "ru": {
+        "name": "Буква ه произнесена как ح",
+        "short": "Вы произнесли ه как ح.",
+        "chto_ne_tak": "Вы произнесли ه как ح — вместо лёгкого открытого выдоха создали сжатие в середине горла.",
+        "pravilo": "ه выходит из самой глубокой части горла, оттуда же, откуда хамза, но мягко и с выдохом. ح выходит из середины горла с лёгким сжатием.",
+        "pochemu_vazhno": "'هَادِي' (ведущий по прямому пути) и 'حَادِي' — разные слова. Эта разница напрямую влияет на смысл.",
+        "kak_ispravit": "При ه горло остаётся почти открытым — это просто тёплый выдох, как будто вы запотеваете стекло. При ح середина горла сжимается, звук становится «шершавым». Сначала просто выдохните (это ه), затем слегка сожмите горло (это ح).",
+        "uprazhnenie": "10 раз: هَ — حَ — هَ — حَ. В словах: 'اللَّه' (ه) и 'الرَّحْمَن' (ح). Каждый раз проверяйте, есть ли сжатие горла."
+      }
+    },
+
+    "MAKHARIJ_KHA_TO_HHA": {
+      "status": "draft", "group": "makharij", "severity": "high", "detection_confidence": "high",
+      "detection_signal": "phoneme substitution: خ -> ح",
+      "uz": {
+        "name": "خ harfi o'rniga ح o'qish",
+        "short": "Siz خ harfini ح kabi o'qidingiz.",
+        "nima_xato": "Siz خ harfini ح kabi talaffuz qildingiz — tovushni bo'g'izning yuqori qismidan emas, o'rtasidan chiqardingiz va qalinligi yo'qoldi.",
+        "qoida": "خ halqning eng yuqori qismidan, og'iz bo'shlig'iga yaqin joydan chiqadi va u qalin (mufaxxam) harf. ح esa halqning o'rtasidan chiqadi va ingichka.",
+        "nega_muhim": "'خَفِيّ' (yashirin) va 'حَفِيّ' (mehribon) — ma'no butunlay boshqa. Bu xato Qur'on ma'nosini o'zgartiradi.",
+        "tuzatish": "خ da tovush tomoqning yuqorisida, xuddi tomoq tozalayotgandek chiqadi va qalin eshitiladi. ح esa pastroqda, o'rtada va ingichka. خ da og'iz ichida qalinlikni, ح da esa yengillikni seziting.",
+        "mashq": "10 marta: خَ — حَ — خَ — حَ. So'zlarda: 'خَوْف' va 'حَوْل', 'الْخَنَّاس'. Qaysi biri qalin chiqayotganini har safar tekshiring."
+      },
+      "ru": {
+        "name": "Буква خ произнесена как ح",
+        "short": "Вы произнесли خ как ح.",
+        "chto_ne_tak": "Вы произнесли خ как ح — звук вышел из середины горла вместо верхней части, и потерялась тяжесть.",
+        "pravilo": "خ выходит из самой верхней части горла, ближе к полости рта, и является тяжёлой (муфаххама) буквой. ح выходит из середины горла и является лёгкой.",
+        "pochemu_vazhno": "'خَفِيّ' (скрытый) и 'حَفِيّ' (добрый) — совершенно разный смысл. Эта ошибка меняет значение аята.",
+        "kak_ispravit": "При خ звук идёт из верха горла, как будто вы прочищаете горло, и звучит тяжело. ح — ниже, из середины, и легко. Почувствуйте тяжесть во рту при خ и лёгкость при ح.",
+        "uprazhnenie": "10 раз: خَ — حَ — خَ — حَ. В словах: 'خَوْف' и 'حَوْل', 'الْخَنَّاس'. Каждый раз определяйте, какая звучит тяжелее."
+      }
+    },
+
+    "MAKHARIJ_GHAYN_TO_QAF": {
+      "status": "draft", "group": "makharij", "severity": "medium", "detection_confidence": "high",
+      "detection_signal": "phoneme substitution: غ -> ق",
+      "uz": {
+        "name": "غ harfi o'rniga ق o'qish",
+        "short": "Siz غ harfini ق kabi o'qidingiz.",
+        "nima_xato": "Siz غ harfini ق kabi talaffuz qildingiz — bo'g'izdan chiqadigan uzluksiz tovush o'rniga til orqasi bilan to'liq yopiladigan tovush chiqardingiz.",
+        "qoida": "غ halqning eng yuqori qismidan chiqadi va u rixv (uzluksiz) harf — havo oqimi to'xtamaydi. ق esa tilning eng orqa qismi yumshoq tanglayga tegib chiqadi va shadid (to'liq yopiluvchi) harf.",
+        "nega_muhim": "غ va ق ikki xil harf; ularni almashtirish so'zni buzadi. 'غَفُور' va 'قَفُور' — biri Allohning sifati, ikkinchisi mavjud emas.",
+        "tuzatish": "غ ni aytganda havo uzluksiz chiqishi kerak — uni cho'zib aytib ko'ring, 'غغغ' — bu mumkin. ق ni cho'zib bo'lmaydi, chunki makhraj to'liq yopiladi. Shu sinov bilan farqni aniqlang.",
+        "mashq": "غ ni 5 soniya cho'zib ayting, keyin ق ni aytishga urinib ko'ring — cho'zilmasligini sezing. So'zlarda: 'غَفُور', 'الْمَغْضُوب' va 'قُلْ', 'خَلَقَ'."
+      },
+      "ru": {
+        "name": "Буква غ произнесена как ق",
+        "short": "Вы произнесли غ как ق.",
+        "chto_ne_tak": "Вы произнесли غ как ق — вместо непрерывного горлового звука сделали полное смыкание задней частью языка.",
+        "pravilo": "غ выходит из верхней части горла и является рихва (непрерывной) буквой — поток воздуха не прерывается. ق образуется задней частью языка у мягкого нёба и является шадида (полностью смыкающейся).",
+        "pochemu_vazhno": "غ и ق — разные буквы; их замена искажает слово. 'غَفُور' — одно из имён Аллаха, 'قَفُور' не существует.",
+        "kak_ispravit": "При غ воздух должен идти непрерывно — попробуйте протянуть 'غغغ', это возможно. ق протянуть нельзя, так как махрадж полностью закрывается. Используйте эту проверку.",
+        "uprazhnenie": "Протяните غ 5 секунд, затем попробуйте протянуть ق — почувствуйте, что это невозможно. В словах: 'غَفُور', 'الْمَغْضُوب' и 'قُلْ', 'خَلَقَ'."
+      }
+    },
+
+    "MAKHARIJ_QAF_TO_KAF": {
+      "status": "draft", "group": "makharij", "severity": "high", "detection_confidence": "high",
+      "detection_signal": "phoneme substitution: ق -> ك",
+      "uz": {
+        "name": "ق harfini ك kabi o'qish",
+        "short": "Siz ق harfini ك kabi o'qidingiz.",
+        "nima_xato": "Siz ق harfini ك kabi talaffuz qildingiz — tovushni tilning eng orqa qismidan emas, biroz oldinroqdan chiqardingiz va qalinlik yo'qoldi.",
+        "qoida": "ق tilning eng orqa qismi yumshoq tanglayning eng orqasiga tegib chiqadi va qalin harf. ك esa ق dan biroz oldinroq chiqadi va ingichka.",
+        "nega_muhim": "'قَلْب' (yurak) va 'كَلْب' (it) — bu farq nihoyatda muhim. Xato ma'noni butunlay o'zgartiradi.",
+        "tuzatish": "ق ni aytganda tovushni imkon qadar orqadan, tomoqqa yaqin joydan chiqaring — u chuqur va qalin eshitiladi. ك esa oldinroqda, yengilroq. Ikkalasini ketma-ket aytib, tilingiz qayerda tegayotganini seziting.",
+        "mashq": "10 marta: كَ — قَ — كَ — قَ. So'zlarda: 'قُلْ' va 'كُلْ', 'الْقَارِعَة', 'خَلَقَ'. Har safar tovush chuqurroq joydan chiqayaptimi — tekshiring."
+      },
+      "ru": {
+        "name": "Буква ق произнесена как ك",
+        "short": "Вы произнесли ق как ك.",
+        "chto_ne_tak": "Вы произнесли ق как ك — звук вышел не из самой задней части языка, а чуть впереди, и потерялась тяжесть.",
+        "pravilo": "ق образуется самой задней частью языка у задней границы мягкого нёба и является тяжёлой буквой. ك образуется чуть впереди и является лёгкой.",
+        "pochemu_vazhno": "'قَلْب' (сердце) и 'كَلْب' (собака) — эта разница крайне важна. Ошибка полностью меняет смысл.",
+        "kak_ispravit": "При ق выводите звук как можно глубже, ближе к горлу — он звучит глубоко и тяжело. ك — впереди и легче. Произнесите обе подряд и почувствуйте, где касается язык.",
+        "uprazhnenie": "10 раз: كَ — قَ — كَ — قَ. В словах: 'قُلْ' и 'كُلْ', 'الْقَارِعَة', 'خَلَقَ'. Проверяйте, выходит ли звук глубже."
+      }
+    },
+
+    "MAKHARIJ_THA_TO_SEEN": {
+      "status": "draft", "group": "makharij", "severity": "medium", "detection_confidence": "high",
+      "detection_signal": "phoneme substitution: ث -> س",
+      "uz": {
+        "name": "ث harfi o'rniga س o'qish",
+        "short": "Siz ث harfini س kabi o'qidingiz.",
+        "nima_xato": "Siz ث harfini س kabi talaffuz qildingiz — til uchini tishlar orasiga chiqarmadingiz, tovush tishlar orqasida qoldi.",
+        "qoida": "ث da til uchi yuqori old tishlarning uchiga tegib, tishlar orasidan biroz chiqadi. س da esa til uchi tishlar orqasida qoladi va tovush ingichka, hushtakka o'xshab chiqadi (safir sifati).",
+        "nega_muhim": "'الْكَوْثَر' ni 'الْكَوْسَر' deb o'qish so'zni o'zgartiradi. Bu ikki harf o'xshash eshitilsa ham, mutlaqo boshqa.",
+        "tuzatish": "Oyna oldida turing va 'ثَ' ni ayting — til uchingiz tishlar orasidan ko'rinishi kerak. 'سَ' da esa til ko'rinmaydi. Ko'zingiz bilan ko'rib tasdiqlang.",
+        "mashq": "Oyna oldida 10 marta: ثَ — سَ — ثَ — سَ. So'zlarda: 'الْكَوْثَر', 'ثُمَّ', 'كَثِير'. Har safar til uchi chiqyaptimi — ko'zingiz bilan tekshiring."
+      },
+      "ru": {
+        "name": "Буква ث произнесена как س",
+        "short": "Вы произнесли ث как س.",
+        "chto_ne_tak": "Вы произнесли ث как س — не вывели кончик языка между зубами, звук остался за зубами.",
+        "pravilo": "При ث кончик языка касается кромки верхних передних зубов и слегка выходит между зубами. При س кончик остаётся за зубами, а звук получается свистящим (сифат сафир).",
+        "pochemu_vazhno": "Чтение 'الْكَوْثَر' как 'الْكَوْسَر' меняет слово. Эти буквы похожи на слух, но совершенно разные.",
+        "kak_ispravit": "Встаньте перед зеркалом и произнесите 'ثَ' — кончик языка должен быть виден между зубами. При 'سَ' язык не виден. Подтвердите разницу глазами.",
+        "uprazhnenie": "Перед зеркалом 10 раз: ثَ — سَ — ثَ — سَ. В словах: 'الْكَوْثَر', 'ثُمَّ', 'كَثِير'. Каждый раз проверяйте глазами, выходит ли язык."
+      }
+    },
+
+    "MAKHARIJ_THAL_TO_ZAY": {
+      "status": "draft", "group": "makharij", "severity": "medium", "detection_confidence": "high",
+      "detection_signal": "phoneme substitution: ذ -> ز",
+      "uz": {
+        "name": "ذ harfi o'rniga ز o'qish",
+        "short": "Siz ذ harfini ز kabi o'qidingiz.",
+        "nima_xato": "Siz ذ harfini ز kabi talaffuz qildingiz — til uchi tishlar orasiga chiqmadi, hushtaksimon tovush hosil bo'ldi.",
+        "qoida": "ذ da til uchi yuqori tishlar uchiga tegib, tishlar orasidan chiqadi — bu ث ning jarangli juftligi. ز esa til uchi tishlar orqasida qolib, safir (hushtak) sifati bilan chiqadi.",
+        "nega_muhim": "'ذَلِك' va 'زَلِك' — birinchisi Qur'onda ko'p uchraydigan so'z, ikkinchisi ma'nosiz. Harflarni almashtirish lafzni buzadi.",
+        "tuzatish": "Oyna oldida 'ذَ' ni ayting — til uchi ko'rinishi shart. Bu ث bilan bir joydan chiqadi, faqat ovoz qo'shiladi. ز da til ichkarida qoladi.",
+        "mashq": "Oyna oldida 10 marta: ذَ — زَ — ذَ — زَ. So'zlarda: 'ذَلِكَ', 'الَّذِي', 'إِذَا'. Til uchi har safar ko'rinyaptimi — tekshiring."
+      },
+      "ru": {
+        "name": "Буква ذ произнесена как ز",
+        "short": "Вы произнесли ذ как ز.",
+        "chto_ne_tak": "Вы произнесли ذ как ز — кончик языка не вышел между зубами, получился свистящий звук.",
+        "pravilo": "При ذ кончик языка касается кромки верхних зубов и выходит между ними — это звонкая пара к ث. При ز кончик остаётся за зубами и звук имеет сифат сафир (свист).",
+        "pochemu_vazhno": "'ذَلِك' — часто встречающееся в Коране слово, 'زَلِك' не имеет смысла. Замена букв искажает произнесение.",
+        "kak_ispravit": "Перед зеркалом произнесите 'ذَ' — кончик языка обязательно должен быть виден. Она выходит оттуда же, откуда ث, только с голосом. При ز язык остаётся внутри.",
+        "uprazhnenie": "Перед зеркалом 10 раз: ذَ — زَ — ذَ — زَ. В словах: 'ذَلِكَ', 'الَّذِي', 'إِذَا'. Проверяйте видимость кончика языка."
+      }
+    },
+
+    "MAKHARIJ_ZAA_TO_ZAY": {
+      "status": "draft", "group": "makharij", "severity": "high", "detection_confidence": "high",
+      "detection_signal": "phoneme substitution: ظ -> ز, odatda tafkheem_or_taqeeq va itbaq o'zgarishi bilan",
+      "uz": {
+        "name": "ظ harfi o'rniga ز o'qish",
+        "short": "Siz ظ harfini ز kabi o'qidingiz.",
+        "nima_xato": "Siz ظ harfini ز kabi talaffuz qildingiz — til uchi tishlar orasiga chiqmadi va qalinlik yo'qoldi.",
+        "qoida": "ظ da til uchi tishlar orasidan chiqadi (ذ kabi), lekin u qalin va itbaqli harf: tilning orqa qismi tanglayga ko'tariladi. ز esa ingichka va til ichkarida qoladi.",
+        "nega_muhim": "'الظَّالِمِين' ni 'الزَّالِمِين' deb o'qish so'zni buzadi. ظ va ز butunlay boshqa harflar.",
+        "tuzatish": "ظ da ikkita narsa bir vaqtda bo'lishi kerak: til uchi tishlar orasida (oynadan ko'rinadi) va tilning orqasi ko'tarilgan (og'izda qalinlik seziladi). Ikkalasini birga bajaring.",
+        "mashq": "Oyna oldida 10 marta: ذَ — ظَ (ikkalasida ham til ko'rinadi, lekin ظ qalin). So'zlarda: 'الظَّالِمِين', 'عَظِيم', 'أَنْظُرْ'."
+      },
+      "ru": {
+        "name": "Буква ظ произнесена как ز",
+        "short": "Вы произнесли ظ как ز.",
+        "chto_ne_tak": "Вы произнесли ظ как ز — кончик языка не вышел между зубами и потерялась тяжесть.",
+        "pravilo": "При ظ кончик языка выходит между зубами (как при ذ), но это тяжёлая буква с итбаком: задняя часть языка поднимается к нёбу. ز — лёгкая, язык остаётся внутри.",
+        "pochemu_vazhno": "Чтение 'الظَّالِمِين' как 'الزَّالِمِين' искажает слово. ظ и ز — совершенно разные буквы.",
+        "kak_ispravit": "При ظ должны совпасть две вещи: кончик языка между зубами (видно в зеркале) и поднятая задняя часть языка (тяжесть во рту). Делайте оба одновременно.",
+        "uprazhnenie": "Перед зеркалом 10 раз: ذَ — ظَ (в обеих язык виден, но ظ тяжёлая). В словах: 'الظَّالِمِين', 'عَظِيم', 'أَنْظُرْ'."
+      }
+    },
+
+    "MAKHARIJ_SAD_TO_SEEN": {
+      "status": "draft", "group": "makharij", "severity": "high", "detection_confidence": "high",
+      "detection_signal": "phoneme substitution: ص -> س, odatda tafkheem_or_taqeeq: mofakham -> moraqaq bilan birga",
+      "uz": {
+        "name": "ص harfini ingichka (س kabi) o'qish",
+        "short": "Siz ص harfini oddiy س kabi ingichka o'qidingiz.",
+        "nima_xato": "Siz ص harfini ingichka, ya'ni oddiy 's' kabi talaffuz qildingiz. Til uchi to'g'ri joyda edi, lekin tilning orqa qismi ko'tarilmadi.",
+        "qoida": "ص — qalin (mufaxxam) va itbaqli harf. Til uchi pastki old tishlar orqasiga tegadi, ayni paytda tilning orqa qismi tanglayga ko'tariladi. س esa ingichka — til orqasi ko'tarilmaydi.",
+        "nega_muhim": "'صَبْر' (sabr) va س bilan o'qilgan shakl boshqa so'z. Qalin va ingichka harflarni ajratish tajvidning asosiy talabi.",
+        "tuzatish": "'صَ' ni o'qiyotganda til uchini س dagidek joyda qoldiring, lekin tilning orqa qismini xuddi 'q' aytmoqchi bo'lgandek ko'taring. Og'iz ichida bo'shliq kengayganini seziting.",
+        "mashq": "Avval bo'sh tovushlarda: 'سَسَسَ' keyin 'صَصَصَ'. Keyin so'zlarda: 'الصَّمَد', 'صِرَاط', 'يَصْبِرُونَ'. Har birini 5-10 marta sekin."
+      },
+      "ru": {
+        "name": "Буква ص произнесена легко (как س)",
+        "short": "Вы произнесли ص как обычную س.",
+        "chto_ne_tak": "Вы произнесли ص легко, как обычную 'с'. Кончик языка был на месте, но задняя часть языка не поднялась.",
+        "pravilo": "ص — тяжёлая (муфаххама) буква с итбаком. Кончик языка касается за нижними передними зубами, при этом задняя часть языка поднимается к нёбу. س — лёгкая, задняя часть не поднимается.",
+        "pochemu_vazhno": "'صَبْر' (терпение) и вариант с س — разные слова. Различение тяжёлых и лёгких букв — основное требование таджвида.",
+        "kak_ispravit": "При 'صَ' оставьте кончик языка там же, где при س, но поднимите заднюю часть языка, как будто собираетесь сказать 'къ'. Почувствуйте, как расширяется полость рта.",
+        "uprazhnenie": "Сначала на чистых слогах: 'سَسَسَ', затем 'صَصَصَ'. Потом в словах: 'الصَّمَد', 'صِرَاط', 'يَصْبِرُونَ'. По 5–10 раз медленно."
+      }
+    },
+
+    "MAKHARIJ_TAA_TO_TA": {
+      "status": "draft", "group": "makharij", "severity": "high", "detection_confidence": "high",
+      "detection_signal": "phoneme substitution: ط -> ت, odatda tafkheem_or_taqeeq va itbaq (motbaq -> monfateh) o'zgarishi bilan",
+      "uz": {
+        "name": "ط harfini ingichka (ت kabi) o'qish",
+        "short": "Siz ط harfini oddiy ت kabi ingichka o'qidingiz.",
+        "nima_xato": "Siz ط harfini ت kabi ingichka talaffuz qildingiz. Tilning orqa qismi ko'tarilmadi, tovush qalin chiqmadi.",
+        "qoida": "ط — qalin va itbaqli harf. Til uchi yuqori old tishlar ildiziga qattiq tegadi va ayni paytda tilning orqa qismi tanglayga ko'tariladi. ت esa ingichka.",
+        "nega_muhim": "'أَعْطَيْنَاك' va 'أَتَيْنَاك' butunlay boshqa ma'noga ega. Bu xato oyat ma'nosini o'zgartiradi.",
+        "tuzatish": "ط ni aytganda til uchi bilan birga tilning orqa qismini ham ko'taring — og'iz ichida bo'shliq to'lganini sezasiz. Tovush og'ir chiqishi kerak. ت da til yassi qoladi.",
+        "mashq": "10 marta: تَ — طَ — تَ — طَ. So'zlarda: 'الطَّارِق', 'أَعْطَيْنَاك', 'يَطْبَع'. Og'iz ichida qalinlik bor-yo'qligini tekshiring."
+      },
+      "ru": {
+        "name": "Буква ط произнесена легко (как ت)",
+        "short": "Вы произнесли ط как обычную ت.",
+        "chto_ne_tak": "Вы произнесли ط легко, как ت. Задняя часть языка не поднялась, звук не получился тяжёлым.",
+        "pravilo": "ط — тяжёлая буква с итбаком. Кончик языка плотно касается основания верхних передних зубов, и одновременно задняя часть языка поднимается к нёбу. ت — лёгкая.",
+        "pochemu_vazhno": "'أَعْطَيْنَاك' и 'أَتَيْنَاك' имеют совершенно разный смысл. Эта ошибка меняет значение аята.",
+        "kak_ispravit": "При ط вместе с кончиком поднимайте и заднюю часть языка — почувствуйте, как заполняется полость рта. Звук должен быть тяжёлым. При ت язык остаётся плоским.",
+        "uprazhnenie": "10 раз: تَ — طَ — تَ — طَ. В словах: 'الطَّارِق', 'أَعْطَيْنَاك', 'يَطْبَع'. Проверяйте тяжесть во рту."
+      }
+    },
+
+    "MAKHARIJ_DAD_TO_DAL": {
+      "status": "draft", "group": "makharij", "severity": "high", "detection_confidence": "high",
+      "detection_signal": "phoneme substitution: ض -> د, ko'pincha istitala (mostateel -> not_mostateel) yo'qolishi bilan",
+      "uz": {
+        "name": "ض harfi o'rniga د o'qish",
+        "short": "Siz ض harfini oddiy د kabi o'qidingiz.",
+        "nima_xato": "Siz ض harfini د kabi talaffuz qildingiz — tilning yon qismini ishlatmadingiz va qalinlik yo'qoldi.",
+        "qoida": "ض tilning yon qismi yuqori oziq tishlarga tegib chiqadi va u qalin, itbaqli, istitalali harf (tovush til bo'ylab cho'ziladi). د esa til uchi bilan chiqadigan ingichka harf.",
+        "nega_muhim": "ض arab tilining eng o'ziga xos harfi. Uni د deb o'qish so'zni buzadi: 'الضَّالِّين' va 'الدَّالِّين' boshqa ma'no.",
+        "tuzatish": "Tilingizning chap yoki o'ng yon qismini yuqori oziq tishlarga bosing (bitta tomon yetarli). Tovush til uchidan emas, yondan chiqadi. Bu boshida qiyin — sekin va sabr bilan mashq qiling.",
+        "mashq": "Til yonini tishga bosib 10 marta 'ضَ' ni ayting. Keyin د bilan solishtiring: دَ — ضَ. So'zlarda: 'الضَّالِّين', 'وَلَا الضَّالِّينَ', 'مَرَض'."
+      },
+      "ru": {
+        "name": "Буква ض произнесена как د",
+        "short": "Вы произнесли ض как обычную د.",
+        "chto_ne_tak": "Вы произнесли ض как د — не задействовали боковую часть языка, и потерялась тяжесть.",
+        "pravilo": "ض образуется боковой частью языка у верхних коренных зубов; это тяжёлая буква с итбаком и иститаля (звук тянется вдоль языка). د образуется кончиком языка и является лёгкой.",
+        "pochemu_vazhno": "ض — самая характерная буква арабского языка. Чтение её как د искажает слово: 'الضَّالِّين' и 'الدَّالِّين' — разный смысл.",
+        "kak_ispravit": "Прижмите боковую часть языка (левую или правую, достаточно одной) к верхним коренным зубам. Звук выходит не с кончика, а сбоку. Поначалу это трудно — тренируйтесь медленно и терпеливо.",
+        "uprazhnenie": "Прижав бок языка к зубам, 10 раз произнесите 'ضَ'. Затем сравните с د: دَ — ضَ. В словах: 'الضَّالِّين', 'وَلَا الضَّالِّينَ', 'مَرَض'."
+      }
+    },
+
+    "MAKHARIJ_DAD_TO_ZAA": {
+      "status": "draft", "group": "makharij", "severity": "high", "detection_confidence": "high",
+      "detection_signal": "phoneme substitution: ض -> ظ",
+      "uz": {
+        "name": "ض harfi o'rniga ظ o'qish",
+        "short": "Siz ض harfini ظ kabi o'qidingiz.",
+        "nima_xato": "Siz ض harfini ظ kabi talaffuz qildingiz — til uchini tishlar orasiga chiqardingiz, holbuki ض tilning yon qismidan chiqishi kerak.",
+        "qoida": "ض tilning yon qismi bilan yuqori oziq tishlardan chiqadi. ظ esa til uchi tishlar orasidan chiqadi. Ikkalasi ham qalin va itbaqli, shuning uchun ular chalkashtiriladi — lekin makhraj butunlay boshqa.",
+        "nega_muhim": "Bu ikki harf ko'p o'rganuvchilarda aralashib ketadi. 'الضَّالِّين' ni ظ bilan o'qish xato hisoblanadi.",
+        "tuzatish": "Oynaga qarang: ظ da til uchi ko'rinadi, ض da ko'rinmaydi. Bu eng oson tekshirish usuli. ض da tovush yon tomondan, ظ da old tomondan chiqadi.",
+        "mashq": "Oyna oldida 10 marta: ظَ (til ko'rinadi) — ضَ (til ko'rinmaydi). So'zlarda: 'الضَّالِّين' (ض) va 'الظَّالِمِين' (ظ) ni ketma-ket o'qing."
+      },
+      "ru": {
+        "name": "Буква ض произнесена как ظ",
+        "short": "Вы произнесли ض как ظ.",
+        "chto_ne_tak": "Вы произнесли ض как ظ — вывели кончик языка между зубами, тогда как ض должна выходить боковой частью языка.",
+        "pravilo": "ض выходит боковой частью языка у верхних коренных зубов. ظ выходит кончиком языка между зубами. Обе тяжёлые и с итбаком, поэтому их путают — но махрадж совершенно разный.",
+        "pochemu_vazhno": "Эти две буквы часто смешивают. Чтение 'الضَّالِّين' через ظ считается ошибкой.",
+        "kak_ispravit": "Посмотрите в зеркало: при ظ кончик языка виден, при ض — нет. Это самый простой способ проверки. При ض звук идёт сбоку, при ظ — спереди.",
+        "uprazhnenie": "Перед зеркалом 10 раз: ظَ (язык виден) — ضَ (язык не виден). В словах читайте подряд: 'الضَّالِّين' (ض) и 'الظَّالِمِين' (ظ)."
+      }
+    },
+
+    "TAFKHEEM_LOST": {
+      "status": "draft", "group": "sifat", "severity": "medium", "detection_confidence": "high",
+      "detection_signal": "sifat tafkheem_or_taqeeq: kutilgan 'mofakham' o'rniga 'moraqaq' (harf o'zgarmagan holda)",
+      "uz": {
+        "name": "Qalin harfni ingichka o'qish",
+        "short": "Harf to'g'ri, lekin qalinligi yo'qolgan.",
+        "nima_xato": "Siz harfni to'g'ri aytdingiz, lekin uni ingichka o'qidingiz. Bu harf qalin (mufaxxam) o'qilishi kerak edi.",
+        "qoida": "Doimo qalin o'qiladigan harflar: خ، ص، ض، ط، ظ، غ، ق. Bularni aytganda tilning orqa qismi tanglayga ko'tariladi va og'iz ichida bo'shliq kengayadi.",
+        "nega_muhim": "Qalinlikni yo'qotish harfni ingichka juftiga yaqinlashtiradi va Qur'on ohangini buzadi.",
+        "tuzatish": "Qalin harfdan oldin tilingizning orqa qismini ozgina ko'taring, og'zingizni biroz kengaytiring. Tovushni oldinga emas, yuqoriga bosib chiqaring. Ovozingizni yozib qayta eshiting.",
+        "mashq": "Har bir qalin harfni 5 martadan: 'خَ صَ ضَ طَ ظَ غَ قَ'. Keyin ingichka juftlari bilan solishtiring: 'صَ/سَ', 'طَ/تَ', 'قَ/كَ'."
+      },
+      "ru": {
+        "name": "Тяжёлая буква прочитана легко",
+        "short": "Буква верная, но потеряна тяжесть.",
+        "chto_ne_tak": "Вы произнесли букву правильно, но легко. Эта буква должна читаться тяжело (муфаххама).",
+        "pravilo": "Всегда тяжёлые буквы: خ، ص، ض، ط، ظ، غ، ق. При их произнесении задняя часть языка поднимается к нёбу и расширяется полость рта.",
+        "pochemu_vazhno": "Потеря тяжести сближает букву с её лёгкой парой и нарушает звучание Корана.",
+        "kak_ispravit": "Перед тяжёлой буквой слегка поднимите заднюю часть языка и немного расширьте рот. Направляйте звук не вперёд, а вверх. Запишите себя и переслушайте.",
+        "uprazhnenie": "Каждую тяжёлую букву по 5 раз: 'خَ صَ ضَ طَ ظَ غَ قَ'. Затем сравните с лёгкими парами: 'صَ/سَ', 'طَ/تَ', 'قَ/كَ'."
+      }
+    },
+
+    "TAFKHEEM_ADDED": {
+      "status": "draft", "group": "sifat", "severity": "low", "detection_confidence": "high",
+      "detection_signal": "sifat tafkheem_or_taqeeq: kutilgan 'moraqaq' o'rniga 'mofakham'",
+      "uz": {
+        "name": "Ingichka harfni qalin o'qish",
+        "short": "Harf keraksiz ravishda qalin chiqdi.",
+        "nima_xato": "Siz ingichka o'qilishi kerak bo'lgan harfni qalin talaffuz qildingiz. Tilning orqa qismi keraksiz ko'tarildi.",
+        "qoida": "Qalin harflar faqat ettita: خ، ص، ض، ط، ظ، غ، ق (ر va ل ba'zi holatlarda). Qolgan barcha harflar ingichka o'qiladi.",
+        "nega_muhim": "Keraksiz qalinlik ham xato — u harfni boshqa harfga o'xshatib yuboradi. Ko'pincha bu qalin harf yonidagi harflarda sodir bo'ladi.",
+        "tuzatish": "Ingichka harfni aytganda tilingiz yassi va bo'sh turishi kerak. Agar oldingi harf qalin bo'lsa, tilni darhol pastga tushiring — qalinlik keyingi harfga 'yuqmasin'.",
+        "mashq": "'صَبَ' ni o'qing: 'ص' qalin, 'ب' esa darhol ingichka bo'lishi kerak. Shunday juftlarni 10 marta: 'طَبَ', 'قَتَ', 'ضَرَ'."
+      },
+      "ru": {
+        "name": "Лёгкая буква прочитана тяжело",
+        "short": "Буква получилась излишне тяжёлой.",
+        "chto_ne_tak": "Вы произнесли тяжело букву, которая должна читаться легко. Задняя часть языка поднялась без необходимости.",
+        "pravilo": "Тяжёлых букв всего семь: خ، ص، ض، ط، ظ، غ، ق (плюс ر и ل в отдельных случаях). Все остальные читаются легко.",
+        "pochemu_vazhno": "Лишняя тяжесть — тоже ошибка: она уподобляет букву другой. Чаще всего это происходит рядом с тяжёлыми буквами.",
+        "kak_ispravit": "При лёгкой букве язык должен быть плоским и расслабленным. Если предыдущая буква тяжёлая, сразу опустите язык, чтобы тяжесть не «перешла» дальше.",
+        "uprazhnenie": "Прочитайте 'صَبَ': 'ص' тяжёлая, 'ب' сразу должна стать лёгкой. Такие пары 10 раз: 'طَبَ', 'قَتَ', 'ضَرَ'."
+      }
+    },
+
+    "RAA_TAFKHEEM_MISSING": {
+      "status": "draft", "group": "sifat", "severity": "medium", "detection_confidence": "medium",
+      "detection_signal": "phoneme ر, sifat tafkheem_or_taqeeq: kutilgan 'mofakham' o'rniga 'moraqaq'",
+      "uz": {
+        "name": "ر harfi qalin o'qilmagan",
+        "short": "Bu o'rinda ر qalin o'qilishi kerak edi.",
+        "nima_xato": "Siz ر harfini ingichka o'qidingiz, holbuki bu o'rinda u qalin o'qilishi kerak edi.",
+        "qoida": "ر qalin o'qiladi: fatha yoki damma bilan kelganda ('رَ', 'رُ'), sukunli bo'lib oldingi harakat fatha yoki damma bo'lganda. Kasra bilan kelganda esa ingichka o'qiladi.",
+        "nega_muhim": "ر ning qalin-ingichkaligi qoidaga bog'liq. Noto'g'ri o'qish tajvid qoidasining buzilishi hisoblanadi.",
+        "tuzatish": "Harfning harakatiga qarang: 'رَ' va 'رُ' — qalin, 'رِ' — ingichka. Qalin ر da tilning orqa qismini ko'taring, tovush og'ir chiqsin.",
+        "mashq": "Solishtirib o'qing: 'رَبّ' (qalin) va 'رِزْق' (ingichka). Har birini 10 marta. Keyin: 'الرَّحْمَن' (qalin), 'رِجَال' (ingichka)."
+      },
+      "ru": {
+        "name": "Буква ر не прочитана тяжело",
+        "short": "В этом месте ر должна была быть тяжёлой.",
+        "chto_ne_tak": "Вы произнесли ر легко, хотя в этом положении она должна читаться тяжело.",
+        "pravilo": "ر читается тяжело: с фатхой или даммой ('رَ', 'رُ'), а также с сукуном, если предыдущая огласовка — фатха или дамма. С кясрой она читается легко.",
+        "pochemu_vazhno": "Тяжесть или лёгкость ر определяется правилом. Неверное чтение является нарушением таджвида.",
+        "kak_ispravit": "Смотрите на огласовку: 'رَ' и 'رُ' — тяжёлая, 'رِ' — лёгкая. При тяжёлой ر поднимайте заднюю часть языка, звук должен быть плотным.",
+        "uprazhnenie": "Читайте сравнивая: 'رَبّ' (тяжёлая) и 'رِزْق' (лёгкая), по 10 раз. Затем: 'الرَّحْمَن' (тяжёлая), 'رِجَال' (лёгкая)."
+      }
+    },
+
+    "RAA_TARQIQ_MISSING": {
+      "status": "draft", "group": "sifat", "severity": "medium", "detection_confidence": "medium",
+      "detection_signal": "phoneme ر, sifat tafkheem_or_taqeeq: kutilgan 'moraqaq' o'rniga 'mofakham'",
+      "uz": {
+        "name": "ر harfi ingichka o'qilmagan",
+        "short": "Bu o'rinda ر ingichka o'qilishi kerak edi.",
+        "nima_xato": "Siz ر harfini qalin o'qidingiz, holbuki bu o'rinda u ingichka o'qilishi kerak edi.",
+        "qoida": "ر ingichka o'qiladi: kasra bilan kelganda ('رِ'), sukunli bo'lib oldingi harakat kasra bo'lganda (agar keyin qalin harf kelmasa).",
+        "nega_muhim": "ر ning har ikki holati ham qoidaga bo'ysunadi. Doim qalin o'qish — keng tarqalgan xato.",
+        "tuzatish": "'رِ' ni aytganda tilingiz yassi qolsin, tovush yengil va oldinda chiqsin. Qalin ر dagidek og'iz ichida bo'shliq hosil qilmang.",
+        "mashq": "Solishtiring: 'رِزْق' (ingichka) va 'رَبّ' (qalin), 10 martadan. Keyin: 'فِرْعَوْن', 'مِرْيَة' — bu yerda ر ingichka."
+      },
+      "ru": {
+        "name": "Буква ر не прочитана легко",
+        "short": "В этом месте ر должна была быть лёгкой.",
+        "chto_ne_tak": "Вы произнесли ر тяжело, хотя в этом положении она должна читаться легко.",
+        "pravilo": "ر читается легко: с кясрой ('رِ'), а также с сукуном, если предыдущая огласовка — кясра (и далее не следует тяжёлая буква).",
+        "pochemu_vazhno": "Оба состояния ر подчиняются правилу. Чтение её всегда тяжело — распространённая ошибка.",
+        "kak_ispravit": "При 'رِ' язык остаётся плоским, звук лёгкий и выходит впереди. Не создавайте объём во рту, как при тяжёлой ر.",
+        "uprazhnenie": "Сравнивайте: 'رِزْق' (лёгкая) и 'رَبّ' (тяжёлая), по 10 раз. Затем: 'فِرْعَوْن', 'مِرْيَة' — здесь ر лёгкая."
+      }
+    },
+
+    "QALQALAH_MISSING": {
+      "status": "draft", "group": "sifat", "severity": "medium", "detection_confidence": "high",
+      "detection_signal": "sifat qalqla: kutilgan 'moqalqal' o'rniga 'not_moqalqal'",
+      "uz": {
+        "name": "Qalqala qilinmagan",
+        "short": "Siz qalqala harfida sakrash tovushini chiqarmadingiz.",
+        "nima_xato": "Siz qalqala harfini (ق، ط، ب، ج، د) sukun bilan o'qiyotganda unga xos sakrash tovushini chiqarmadingiz — harf jim qolib ketdi.",
+        "qoida": "Qalqala harflari beshta: ق، ط، ب، ج، د. Bu harflar sukunli bo'lganda makhrajdan ajralishda yengil sakrash hosil bo'ladi. Bu sakrash harakatga (unliga) aylanmasligi kerak.",
+        "nega_muhim": "Qalqalasiz o'qishda harf to'liq talaffuz qilinmaydi — u yarim aytilgan bo'lib qoladi.",
+        "tuzatish": "'أَحَدْ' oxiridagi 'د' ni ayting va makhrajdan ajralganda yengil 'd' sakrashini eshiting. Muhim: bu 'da', 'di' yoki 'du' ga aylanmasin — faqat qisqa qaytish tovushi.",
+        "mashq": "Har bir harfni sukun bilan 5 martadan: 'اقْ', 'اطْ', 'ابْ', 'اجْ', 'ادْ'. So'zlarda: 'أَحَدْ', 'الْفَلَقْ', 'يَجْعَل'."
+      },
+      "ru": {
+        "name": "Калькаля не выполнена",
+        "short": "Вы не произвели отскок на букве калькаля.",
+        "chto_ne_tak": "Читая букву калькаля (ق، ط، ب، ج، د) с сукуном, вы не произвели характерный отскок — буква осталась «немой».",
+        "pravilo": "Букв калькаля пять: ق، ط، ب، ج، د. Когда они с сукуном, при отрыве от махраджа возникает лёгкий отскок. Этот отскок не должен превращаться в огласовку.",
+        "pochemu_vazhno": "Без калькаля буква не произносится полностью — она остаётся наполовину произнесённой.",
+        "kak_ispravit": "Произнесите 'د' в конце 'أَحَدْ' и услышьте лёгкий отскок при отрыве от махраджа. Важно: он не должен стать 'да', 'ди' или 'ду' — только короткий возврат звука.",
+        "uprazhnenie": "Каждую букву с сукуном по 5 раз: 'اقْ', 'اطْ', 'ابْ', 'اجْ', 'ادْ'. В словах: 'أَحَدْ', 'الْفَلَقْ', 'يَجْعَل'."
+      }
+    },
+
+    "QALQALAH_EXCESSIVE": {
+      "status": "draft", "group": "sifat", "severity": "low", "detection_confidence": "medium",
+      "detection_signal": "qalqala harfidan keyin kutilmagan unli fonema aniqlangan (qalqla: moqalqal + qo'shimcha unli)",
+      "uz": {
+        "name": "Qalqala haddan ortiq kuchli qilingan",
+        "short": "Qalqala unli tovushga aylanib ketdi.",
+        "nima_xato": "Siz qalqalani haddan ortiq kuchli qildingiz va u qisqa sakrash o'rniga to'liq unli tovushga aylandi.",
+        "qoida": "Qalqala — faqat yengil, qisqa qaytish tovushi. U harakat (fatha, kasra, damma) hosil qilmasligi kerak. Sukunli harf sukunli bo'lib qolishi shart.",
+        "nega_muhim": "Qalqalani unliga aylantirish so'zga mavjud bo'lmagan harakat qo'shadi — bu ham xato.",
+        "tuzatish": "Sakrashni juda qisqa qiling — bu tovush emas, balki makhrajning ochilish sasi. 'أَحَدْ' ni ayting: 'd' dan keyin hech qanday unli eshitilmasin.",
+        "mashq": "'أَحَدْ' ni 10 marta o'qing va oxirida 'da' emas, faqat qisqa 'd' sakrashi chiqishini tekshiring. Ovozingizni yozib eshiting."
+      },
+      "ru": {
+        "name": "Калькаля выполнена чрезмерно",
+        "short": "Калькаля превратилась в гласный звук.",
+        "chto_ne_tak": "Вы сделали калькаля слишком сильной, и вместо короткого отскока получился полноценный гласный звук.",
+        "pravilo": "Калькаля — только лёгкий короткий возврат звука. Она не должна образовывать огласовку (фатху, кясру, дамму). Буква с сукуном должна остаться с сукуном.",
+        "pochemu_vazhno": "Превращение калькаля в гласный добавляет к слову отсутствующую огласовку — это тоже ошибка.",
+        "kak_ispravit": "Делайте отскок очень коротким — это не звук, а призвук раскрытия махраджа. Произнесите 'أَحَدْ': после 'д' не должно быть слышно гласного.",
+        "uprazhnenie": "Прочитайте 'أَحَدْ' 10 раз и проверьте, что в конце звучит короткий отскок 'д', а не 'да'. Запишите себя и переслушайте."
+      }
+    },
+
+    "HAMS_LOST": {
+      "status": "draft", "group": "sifat", "severity": "medium", "detection_confidence": "high",
+      "detection_signal": "sifat hams_or_jahr: kutilgan 'hams' o'rniga 'jahr'",
+      "uz": {
+        "name": "Jarangsiz harf jarangli o'qilgan",
+        "short": "Harf nafas bilan emas, ovoz bilan chiqdi.",
+        "nima_xato": "Siz jarangsiz (mahmus) harfni jarangli qilib o'qidingiz — nafas oqimi o'rniga ovoz ishlatdingiz.",
+        "qoida": "Mahmus (jarangsiz) harflar: ف، ح، ث، ه، ش، خ، ص، س، ك، ت. Bu harflarda ovoz paychalari titramaydi, faqat nafas oqimi chiqadi.",
+        "nega_muhim": "Jarangsiz harfni jarangli o'qish uni boshqa harfga aylantiradi: ت → د, س → ز, ك → g.",
+        "tuzatish": "Barmog'ingizni tomog'ingizga qo'ying. Mahmus harfni aytganda titrash bo'lmasligi kerak. 'سَ' va 'زَ' ni ketma-ket ayting — farqni barmoq bilan seziting.",
+        "mashq": "Tomoqni ushlab juftlarni 10 marta: 'تَ/دَ', 'سَ/زَ', 'كَ/gَ'. Har safar birinchisida titrash yo'qligini tekshiring."
+      },
+      "ru": {
+        "name": "Глухая буква прочитана звонко",
+        "short": "Буква вышла с голосом вместо выдоха.",
+        "chto_ne_tak": "Вы прочитали глухую (махмуса) букву звонко — использовали голос вместо потока воздуха.",
+        "pravilo": "Глухие буквы: ف، ح، ث، ه، ش، خ، ص، س، ك، ت. При них голосовые связки не вибрируют, выходит только поток воздуха.",
+        "pochemu_vazhno": "Озвончение глухой буквы превращает её в другую: ت → د, س → ز, ك → г.",
+        "kak_ispravit": "Положите палец на горло. При глухой букве вибрации быть не должно. Произнесите 'سَ' и 'زَ' подряд — почувствуйте разницу пальцем.",
+        "uprazhnenie": "Держа палец на горле, 10 раз пары: 'تَ/دَ', 'سَ/زَ', 'كَ/гَ'. Каждый раз проверяйте отсутствие вибрации на первой."
+      }
+    },
+
+    "JAHR_LOST": {
+      "status": "draft", "group": "sifat", "severity": "medium", "detection_confidence": "high",
+      "detection_signal": "sifat hams_or_jahr: kutilgan 'jahr' o'rniga 'hams'",
+      "uz": {
+        "name": "Jarangli harf jarangsiz o'qilgan",
+        "short": "Harf ovozsiz, faqat nafas bilan chiqdi.",
+        "nima_xato": "Siz jarangli (majhur) harfni jarangsiz qilib o'qidingiz — ovoz paychalari ishlamadi.",
+        "qoida": "Majhur (jarangli) harflarda ovoz paychalari titraydi va nafas oqimi to'xtaydi. Mahmus harflardan tashqari barcha harflar majhur.",
+        "nega_muhim": "Jarangli harfni jarangsiz o'qish uni juftiga aylantiradi: د → ت, ز → س, ع → ح.",
+        "tuzatish": "Barmog'ingizni tomog'ingizga qo'ying va harfni ayting — titrash sezilishi shart. Agar titrash yo'q bo'lsa, ovozingizni ishlating, faqat nafas chiqarmang.",
+        "mashq": "Tomoqni ushlab 10 marta: 'دَ', 'زَ', 'عَ', 'بَ'. Har birida titrash borligini tasdiqlang."
+      },
+      "ru": {
+        "name": "Звонкая буква прочитана глухо",
+        "short": "Буква вышла без голоса, только с выдохом.",
+        "chto_ne_tak": "Вы прочитали звонкую (маджхура) букву глухо — голосовые связки не работали.",
+        "pravilo": "При звонких буквах голосовые связки вибрируют, поток воздуха останавливается. Все буквы, кроме глухих, являются звонкими.",
+        "pochemu_vazhno": "Оглушение звонкой буквы превращает её в пару: د → ت, ز → س, ع → ح.",
+        "kak_ispravit": "Положите палец на горло и произнесите букву — вибрация обязательна. Если её нет, задействуйте голос, а не только выдох.",
+        "uprazhnenie": "Держа палец на горле, 10 раз: 'دَ', 'زَ', 'عَ', 'بَ'. Убедитесь в наличии вибрации на каждой."
+      }
+    },
+
+    "SHIDDA_LOST": {
+      "status": "draft", "group": "sifat", "severity": "medium", "detection_confidence": "high",
+      "detection_signal": "sifat shidda_or_rakhawa: kutilgan 'shadeed' o'rniga 'rikhw' yoki 'between'",
+      "uz": {
+        "name": "Kuchli harf uzluksiz o'qilgan",
+        "short": "Makhraj to'liq yopilmadi.",
+        "nima_xato": "Siz shadid (kuchli) harfni rixv kabi uzluksiz o'qidingiz — makhraj to'liq yopilmadi va havo oqimi to'xtamadi.",
+        "qoida": "Shadid harflar: أ، ج، د، ق، ط، ب، ك، ت. Bu harflarda makhraj to'liq yopiladi, havo butunlay to'xtaydi, keyin birdan ochiladi. Ularni cho'zib bo'lmaydi.",
+        "nega_muhim": "Shadid harfni cho'zish uni boshqa harfga o'xshatib yuboradi (masalan ق → غ, ت → ث).",
+        "tuzatish": "Sinov: harfni cho'zishga urinib ko'ring. Agar cho'zilsa — makhraj to'liq yopilmagan. 'بْ' ni ayting: havo butunlay to'xtashi kerak.",
+        "mashq": "Har bir shadid harfni sukun bilan 5 martadan ayting va havo to'liq to'xtayotganini tekshiring: 'أَبْ', 'أَتْ', 'أَدْ', 'أَقْ', 'أَكْ'."
+      },
+      "ru": {
+        "name": "Сильная буква прочитана непрерывно",
+        "short": "Махрадж не сомкнулся полностью.",
+        "chto_ne_tak": "Вы прочитали шадида (сильную) букву как рихва — махрадж не сомкнулся полностью и поток воздуха не остановился.",
+        "pravilo": "Сильные буквы: أ، ج، د، ق، ط، ب، ك، ت. При них махрадж полностью смыкается, воздух полностью останавливается, затем резко раскрывается. Их нельзя тянуть.",
+        "pochemu_vazhno": "Протягивание сильной буквы уподобляет её другой (например ق → غ, ت → ث).",
+        "kak_ispravit": "Проверка: попробуйте протянуть букву. Если тянется — махрадж не сомкнулся полностью. Произнесите 'بْ': воздух должен полностью остановиться.",
+        "uprazhnenie": "Каждую сильную букву с сукуном по 5 раз, проверяя полную остановку воздуха: 'أَبْ', 'أَتْ', 'أَدْ', 'أَقْ', 'أَكْ'."
+      }
+    },
+
+    "GHUNNA_MISSING": {
+      "status": "draft", "group": "ghunna", "severity": "medium", "detection_confidence": "high",
+      "detection_signal": "sifat ghonna: kutilgan 'maghnoon' o'rniga 'not_maghnoon'",
+      "uz": {
+        "name": "G'unna (burun tovushi) qilinmagan",
+        "short": "Siz burun tovushini qilmadingiz.",
+        "nima_xato": "Siz ن yoki م harfida g'unna qilmadingiz — tovushni burun orqali cho'zish o'rniga tez og'izdan chiqarib yubordingiz.",
+        "qoida": "G'unna — burun bo'shlig'idan chiqadigan tovush. ن va م harflarida tashdid bo'lsa, g'unna ikki harakat davomida qilinadi va burunda rezonans hosil bo'lishi shart.",
+        "nega_muhim": "G'unnani tashlab ketish Qur'on ohangini buzadi. G'unna — tajvidning eng asosiy belgilaridan biri.",
+        "tuzatish": "Barmoq bilan burun qanotlarini yengil ushlab 'نّ' ni ayting. Titrash sezmasangiz, g'unna yetarli emas. 'إِنَّ' ni sekin o'qing va 'نّ' da ikkigacha sanang.",
+        "mashq": "Burnini ushlab 10 marta: 'إِنَّ', 'ثُمَّ', 'أَمَّا', 'مِمَّا'. Har safar titrash borligini va ikki sanoq davom etganini tekshiring."
+      },
+      "ru": {
+        "name": "Гунна (носовой звук) не выполнена",
+        "short": "Вы не сделали носовой звук.",
+        "chto_ne_tak": "Вы не сделали гунну на ن или م — вместо протяжения через нос быстро вывели звук через рот.",
+        "pravilo": "Гунна — звук из носовой полости. При ташдиде на ن и م гунна выполняется в течение двух харакатов, и в носу обязателен резонанс.",
+        "pochemu_vazhno": "Пропуск гунны нарушает звучание Корана. Гунна — один из основных признаков таджвида.",
+        "kak_ispravit": "Слегка зажмите крылья носа пальцами и произнесите 'نّ'. Если вибрации нет — гунна недостаточна. Медленно прочитайте 'إِنَّ' и посчитайте на 'نّ' до двух.",
+        "uprazhnenie": "Придерживая нос, 10 раз: 'إِنَّ', 'ثُمَّ', 'أَمَّا', 'مِمَّا'. Каждый раз проверяйте вибрацию и длительность в два счёта."
+      }
+    },
+
+    "GHUNNA_TOO_SHORT": {
+      "status": "draft", "group": "ghunna", "severity": "low", "detection_confidence": "medium",
+      "detection_signal": "ghonna: 'maghnoon' aniqlangan, lekin fonema uzunligi kutilgandan qisqa",
+      "uz": {
+        "name": "G'unna qisqa qilingan",
+        "short": "G'unna bor, lekin yetarlicha cho'zilmagan.",
+        "nima_xato": "Siz g'unnani qildingiz, lekin uni juda qisqa ushladingiz — ikki harakat o'rniga bir harakatga yaqin bo'ldi.",
+        "qoida": "To'liq g'unna ikki harakat davom etadi. Bu taxminan barmoqni ikki marta bukish yoki ikkigacha sanash muddati.",
+        "nega_muhim": "G'unnaning muddati ham qoidaga kiradi. Qisqa g'unna to'liq bajarilmagan hisoblanadi.",
+        "tuzatish": "Sanashni ovoz chiqarmasdan ichingizda qiling: 'in-n(bir, ikki)a'. Barmog'ingiz bilan tizzangizga ikki marta urib, ritmni ushlang.",
+        "mashq": "'إِنَّ' ni 10 marta o'qing, har safar 'نّ' da aynan ikkigacha sanang. Keyin 'ثُمَّ' bilan takrorlang."
+      },
+      "ru": {
+        "name": "Гунна выполнена слишком коротко",
+        "short": "Гунна есть, но недостаточно протянута.",
+        "chto_ne_tak": "Вы сделали гунну, но удержали её слишком коротко — получился примерно один харакат вместо двух.",
+        "pravilo": "Полная гунна длится два хараката. Это примерно время двух сгибаний пальца или счёта до двух.",
+        "pochemu_vazhno": "Длительность гунны также входит в правило. Короткая гунна считается невыполненной полностью.",
+        "kak_ispravit": "Считайте про себя: 'ин-н(раз, два)а'. Отбивайте ритм пальцем по колену два раза.",
+        "uprazhnenie": "Прочитайте 'إِنَّ' 10 раз, каждый раз считая на 'نّ' ровно до двух. Затем повторите с 'ثُمَّ'."
+      }
+    },
+
+    "GHUNNA_ADDED": {
+      "status": "draft", "group": "ghunna", "severity": "medium", "detection_confidence": "medium",
+      "detection_signal": "sifat ghonna: kutilgan 'not_maghnoon' o'rniga 'maghnoon' (izhor o'rinlarida)",
+      "uz": {
+        "name": "Keraksiz g'unna qo'shilgan",
+        "short": "Bu o'rinda g'unna qilinmasligi kerak edi.",
+        "nima_xato": "Siz g'unna qilmaslik kerak bo'lgan o'rinda burun tovushini qo'shdingiz.",
+        "qoida": "Izhor o'rinlarida (nun sokin yoki tanvindan keyin halq harflari: ء، ه، ع، ح، غ، خ kelganda) nun aniq va g'unnasiz o'qiladi.",
+        "nega_muhim": "Izhor o'rnida g'unna qilish ikhfo bilan aralashtirish demakdir — qoidalar chegarasi buziladi.",
+        "tuzatish": "Nun sokindan keyingi harfga qarang: agar u halq harfi bo'lsa — nunni toza, burunsiz ayting. 'مَنْ آمَنَ' da 'نْ' aniq eshitilishi kerak.",
+        "mashq": "Izhor misollarini 10 marta o'qing: 'مَنْ آمَنَ', 'مِنْ عِلْم', 'أَنْعَمْتَ'. Har safar burun ishtirok etmayotganini tekshiring."
+      },
+      "ru": {
+        "name": "Добавлена лишняя гунна",
+        "short": "В этом месте гунну делать не следовало.",
+        "chto_ne_tak": "Вы добавили носовой звук там, где гунна не выполняется.",
+        "pravilo": "В местах изхара (после нун сакина или танвина следуют горловые буквы: ء، ه، ع، ح، غ، خ) нун читается чётко и без гунны.",
+        "pochemu_vazhno": "Гунна на месте изхара означает смешение с ихфа — нарушается граница между правилами.",
+        "kak_ispravit": "Посмотрите на букву после нун сакина: если она горловая — произносите нун чисто, без носа. В 'مَنْ آمَنَ' 'نْ' должна звучать отчётливо.",
+        "uprazhnenie": "Прочитайте примеры изхара 10 раз: 'مَنْ آمَنَ', 'مِنْ عِلْم', 'أَنْعَمْتَ'. Каждый раз проверяйте, что нос не задействован."
+      }
+    },
+
+    "MADD_TOO_SHORT": {
+      "status": "draft", "group": "madd", "severity": "medium", "detection_confidence": "high",
+      "detection_signal": "cho'zilish uzunligi: takroriy unli belgilari soni kutilgandan kam (tolerantlik chegarasidan tashqarida)",
+      "uz": {
+        "name": "Cho'zish (madd) qisqa qilingan",
+        "short": "Siz cho'zilishi kerak bo'lgan tovushni qisqa o'qidingiz.",
+        "nima_xato": "Siz madd tovushini kerakli muddatdan qisqa ushladingiz.",
+        "qoida": "Madd harflari uchta: ا، و، ي. Tabiiy madd ikki harakat cho'ziladi. Ba'zi holatlarda (madd muttasil, madd lozim) cho'zish 4-6 harakatgacha uzayadi.",
+        "nega_muhim": "Maddni qisqartirish Qur'on o'qishining o'lchovini buzadi va ayrim hollarda ma'noga ta'sir qiladi.",
+        "tuzatish": "Cho'zish paytida ichingizda sanang: bir, ikki (tabiiy madd uchun). Uzunroq maddlarda to'rtgacha sanang. Barmoq bilan tizzaga urib ritmni ushlang.",
+        "mashq": "'قَالَ' ni o'qing va 'ا' da ikkigacha sanang. Keyin 'جَاءَ' — to'rtgacha. Har birini 10 marta, sanoqni buzmasdan."
+      },
+      "ru": {
+        "name": "Мадд выполнен слишком коротко",
+        "short": "Вы прочитали протяжение короче нужного.",
+        "chto_ne_tak": "Вы удержали звук мадда меньше положенного времени.",
+        "pravilo": "Букв мадда три: ا، و، ي. Естественный мадд тянется два хараката. В отдельных случаях (мадд муттасыль, мадд лязим) протяжение доходит до 4–6 харакатов.",
+        "pochemu_vazhno": "Сокращение мадда нарушает меру чтения Корана, а иногда влияет и на смысл.",
+        "kak_ispravit": "Во время протяжения считайте про себя: раз, два (для естественного мадда). Для длинных — до четырёх. Отбивайте ритм пальцем по колену.",
+        "uprazhnenie": "Прочитайте 'قَالَ', считая на 'ا' до двух. Затем 'جَاءَ' — до четырёх. По 10 раз, не сбивая счёт."
+      }
+    },
+
+    "MADD_TOO_LONG": {
+      "status": "draft", "group": "madd", "severity": "low", "detection_confidence": "high",
+      "detection_signal": "cho'zilish uzunligi: takroriy unli belgilari soni kutilgandan ko'p (tolerantlik chegarasidan tashqarida)",
+      "uz": {
+        "name": "Cho'zish (madd) haddan ortiq uzun",
+        "short": "Siz tovushni kerakligidan uzunroq cho'zdingiz.",
+        "nima_xato": "Siz madd tovushini kerakli muddatdan uzunroq ushladingiz.",
+        "qoida": "Har bir madd turining o'z o'lchovi bor. Tabiiy madd — ikki harakat, undan ortiq emas. O'zboshimchalik bilan uzaytirish xato hisoblanadi.",
+        "nega_muhim": "Tajvidda 'ko'proq — yaxshiroq' emas. Har bir madd o'z muddatida o'qilishi kerak.",
+        "tuzatish": "Sanoqqa qat'iy amal qiling: tabiiy maddda ikkidan oshirmang. Ovozingizni yozib olib, mashhur qori o'qishi bilan solishtiring.",
+        "mashq": "'قَالَ' ni 10 marta, har safar aynan ikkigacha sanang. Keyin qori o'qishini eshitib solishtiring."
+      },
+      "ru": {
+        "name": "Мадд выполнен слишком длинно",
+        "short": "Вы протянули звук дольше положенного.",
+        "chto_ne_tak": "Вы удержали звук мадда дольше нужного времени.",
+        "pravilo": "У каждого вида мадда своя мера. Естественный мадд — два хараката, не больше. Произвольное удлинение считается ошибкой.",
+        "pochemu_vazhno": "В таджвиде «больше — не значит лучше». Каждый мадд должен читаться в свою меру.",
+        "kak_ispravit": "Строго следуйте счёту: при естественном мадде не превышайте двух. Запишите себя и сравните с чтением известного чтеца.",
+        "uprazhnenie": "Прочитайте 'قَالَ' 10 раз, каждый раз считая ровно до двух. Затем послушайте чтеца и сравните."
+      }
+    },
+
+    "MADD_ADDED": {
+      "status": "draft", "group": "madd", "severity": "medium", "detection_confidence": "high",
+      "detection_signal": "kutilmagan takroriy unli belgilari: ref da madd yo'q, lekin aniqlangan fonemada cho'zilish bor",
+      "uz": {
+        "name": "Keraksiz cho'zish qo'shilgan",
+        "short": "Siz cho'zilmasligi kerak bo'lgan tovushni cho'zdingiz.",
+        "nima_xato": "Siz qisqa harakatni cho'zib yubordingiz — bu yerda madd yo'q edi.",
+        "qoida": "Cho'zish faqat madd harflari (ا، و، ي) mos shartlar bilan kelganda bo'ladi. Oddiy fatha, kasra, damma qisqa o'qiladi — bir harakat.",
+        "nega_muhim": "Keraksiz cho'zish so'zga mavjud bo'lmagan harf qo'shgandek bo'ladi va ma'noni o'zgartirishi mumkin.",
+        "tuzatish": "Harakatli harfni qisqa va aniq ayting. Agar harfdan keyin ا، و yoki ي yo'q bo'lsa — cho'zmang. Ohang uchun cho'zish odati bo'lsa, undan voz keching.",
+        "mashq": "'كَتَبَ' ni 10 marta o'qing — barcha harakatlar qisqa. Keyin 'كَاتَبَ' bilan solishtiring — bu yerda faqat birinchisi cho'ziladi."
+      },
+      "ru": {
+        "name": "Добавлено лишнее протяжение",
+        "short": "Вы протянули звук, который тянуть не следовало.",
+        "chto_ne_tak": "Вы протянули краткую огласовку — мадда в этом месте не было.",
+        "pravilo": "Протяжение бывает только при буквах мадда (ا، و، ي) с соответствующими условиями. Обычные фатха, кясра, дамма читаются кратко — один харакат.",
+        "pochemu_vazhno": "Лишнее протяжение равносильно добавлению отсутствующей буквы и может изменить смысл.",
+        "kak_ispravit": "Произносите огласованную букву кратко и чётко. Если после буквы нет ا، و или ي — не тяните. Если есть привычка тянуть ради мелодии, откажитесь от неё.",
+        "uprazhnenie": "Прочитайте 'كَتَبَ' 10 раз — все огласовки краткие. Затем сравните с 'كَاتَبَ' — здесь тянется только первая."
+      }
+    },
+
+    "MADD_WAJIB_SHORTENED": {
+      "status": "draft", "group": "madd", "severity": "medium", "detection_confidence": "medium",
+      "detection_signal": "madd muttasil o'rinlari (madd harfi + hamza bir so'zda): cho'zilish 4-5 harakat o'rniga 2 ga yaqin",
+      "uz": {
+        "name": "Madd muttasil qisqa o'qilgan",
+        "short": "Bu cho'zish 4-5 harakat bo'lishi kerak edi.",
+        "nima_xato": "Siz madd muttasilni tabiiy madd kabi ikki harakat o'qidingiz, holbuki u 4-5 harakat cho'zilishi kerak.",
+        "qoida": "Madd muttasil — madd harfidan keyin bir so'z ichida hamza kelgan holat. Bu cho'zish vojib va 4-5 harakat davom etadi.",
+        "nega_muhim": "Madd muttasil ulamolar ittifoqi bilan uzaytiriladi. Uni qisqa o'qish qoidaning buzilishi hisoblanadi.",
+        "tuzatish": "So'zga qarang: agar madd harfidan keyin bir so'z ichida hamza (ء) bo'lsa — cho'zishni uzaytiring. To'rtgacha sanang, tabiiy madddan ikki barobar uzunroq.",
+        "mashq": "10 marta o'qing va to'rtgacha sanang: 'جَاءَ', 'السَّمَاءِ', 'أُولَـٰئِكَ'. Keyin 'قَالَ' (tabiiy, ikki) bilan solishtiring."
+      },
+      "ru": {
+        "name": "Мадд муттасыль прочитан коротко",
+        "short": "Это протяжение должно быть 4–5 харакатов.",
+        "chto_ne_tak": "Вы прочитали мадд муттасыль как естественный мадд в два хараката, хотя он должен тянуться 4–5.",
+        "pravilo": "Мадд муттасыль — когда после буквы мадда внутри одного слова следует хамза. Это протяжение обязательно и длится 4–5 харакатов.",
+        "pochemu_vazhno": "Мадд муттасыль удлиняется по согласию учёных. Его сокращение является нарушением правила.",
+        "kak_ispravit": "Посмотрите на слово: если после буквы мадда внутри слова есть хамза (ء) — удлиняйте. Считайте до четырёх, вдвое дольше естественного мадда.",
+        "uprazhnenie": "Прочитайте 10 раз, считая до четырёх: 'جَاءَ', 'السَّمَاءِ', 'أُولَـٰئِكَ'. Затем сравните с 'قَالَ' (естественный, два)."
+      }
+    },
+
+    "IKHFA_MISSING": {
+      "status": "draft", "group": "ahkam", "severity": "medium", "detection_confidence": "low",
+      "detection_signal": "TEKSHIRILMAGAN: nun sokin/tanvin + ikhfo harflari ketma-ketligi, ghonna: 'not_maghnoon' va nun aniq talaffuz qilingan. Bu mapping test qilinishi kerak.",
+      "uz": {
+        "name": "Ikhfo qilinmagan",
+        "short": "Nun aniq o'qildi, holbuki yashirilishi kerak edi.",
+        "nima_xato": "Siz nun sokin yoki tanvinni aniq o'qidingiz, holbuki bu o'rinda u yashirilib, g'unna bilan o'qilishi kerak edi.",
+        "qoida": "Nun sokin yoki tanvindan keyin 15 ta ikhfo harfidan biri kelsa, nun aniq aytilmaydi — u yashiriladi va ikki harakat g'unna bilan o'qiladi.",
+        "nega_muhim": "Ikhfo — nun sokin qoidalarining asosiylaridan biri. Uni bajarmaslik tajvid xatosi.",
+        "tuzatish": "Nunni to'liq aytmang: tilingiz nun makhrajiga tegmasin, tovush burunda qolsin va keyingi harfga silliq o'tsin. 'مِنْ قَبْل' da 'نْ' eshitilmasligi kerak.",
+        "mashq": "10 marta: 'مِنْ قَبْل', 'أَنْتُمْ', 'كُنْتُمْ'. Har safar til nun makhrajiga tegmayotganini tekshiring."
+      },
+      "ru": {
+        "name": "Ихфа не выполнено",
+        "short": "Нун прочитан отчётливо, хотя должен быть скрыт.",
+        "chto_ne_tak": "Вы отчётливо произнесли нун сакин или танвин, хотя здесь он должен быть скрыт и прочитан с гунной.",
+        "pravilo": "Если после нун сакина или танвина следует одна из 15 букв ихфа, нун не произносится отчётливо — он скрывается и читается с гунной в два хараката.",
+        "pochemu_vazhno": "Ихфа — одно из основных правил нун сакина. Его невыполнение является ошибкой таджвида.",
+        "kak_ispravit": "Не произносите нун полностью: язык не должен касаться махраджа нуна, звук остаётся в носу и плавно переходит к следующей букве. В 'مِنْ قَبْل' 'نْ' не должен быть слышен отчётливо.",
+        "uprazhnenie": "10 раз: 'مِنْ قَبْل', 'أَنْتُمْ', 'كُنْتُمْ'. Каждый раз проверяйте, что язык не касается махраджа нуна."
+      }
+    },
+
+    "IDGHAM_MISSING": {
+      "status": "draft", "group": "ahkam", "severity": "medium", "detection_confidence": "low",
+      "detection_signal": "TEKSHIRILMAGAN: nun sokin/tanvin + idg'om harflari (ي، ر، م، ل، و، ن) ketma-ketligi, nun alohida fonema sifatida aniqlangan. Bu mapping test qilinishi kerak.",
+      "uz": {
+        "name": "Idg'om qilinmagan",
+        "short": "Nun keyingi harfga qo'shilmadi.",
+        "nima_xato": "Siz nun sokin yoki tanvinni alohida o'qidingiz, holbuki u keyingi harfga qo'shilib ketishi kerak edi.",
+        "qoida": "Nun sokin yoki tanvindan keyin ي، ر، م، ل، و، ن harflaridan biri kelsa, nun keyingi harfga singib ketadi. ي، ن، م، و bilan g'unna qilinadi; ر va ل bilan g'unnasiz.",
+        "nega_muhim": "Idg'om nun sokin qoidalarining asosiylaridan. Nunni alohida aytish qoidani buzadi.",
+        "tuzatish": "Nunni umuman aytmang — to'g'ridan-to'g'ri keyingi harfni tashdidli qilib ayting. 'مَنْ يَقُول' → 'مَيَّقُول' kabi eshitiladi (g'unna bilan).",
+        "mashq": "10 marta: 'مَنْ يَعْمَلْ', 'مِنْ رَبِّهِمْ', 'مِنْ لَدُنْه'. Nun eshitilmayotganini har safar tekshiring."
+      },
+      "ru": {
+        "name": "Идгам не выполнен",
+        "short": "Нун не слился со следующей буквой.",
+        "chto_ne_tak": "Вы произнесли нун сакин или танвин отдельно, хотя он должен был слиться со следующей буквой.",
+        "pravilo": "Если после нун сакина или танвина следует одна из букв ي، ر، م، ل، و، ن, нун сливается со следующей буквой. С ي، ن، م، و — с гунной; с ر и ل — без гунны.",
+        "pochemu_vazhno": "Идгам — одно из основных правил нун сакина. Отдельное произнесение нуна нарушает правило.",
+        "kak_ispravit": "Не произносите нун вовсе — сразу произносите следующую букву с ташдидом. 'مَنْ يَقُول' звучит как 'مَيَّقُول' (с гунной).",
+        "uprazhnenie": "10 раз: 'مَنْ يَعْمَلْ', 'مِنْ رَبِّهِمْ', 'مِنْ لَدُنْه'. Каждый раз проверяйте, что нун не слышен."
+      }
+    },
+
+    "IQLAB_MISSING": {
+      "status": "draft", "group": "ahkam", "severity": "medium", "detection_confidence": "low",
+      "detection_signal": "TEKSHIRILMAGAN: nun sokin/tanvin + ب ketma-ketligi, م fonemasi aniqlanmagan. Bu mapping test qilinishi kerak.",
+      "uz": {
+        "name": "Iqlob qilinmagan",
+        "short": "Nun mim ga aylantirilmadi.",
+        "nima_xato": "Siz nun sokin yoki tanvindan keyin ب kelganda uni م ga aylantirmadingiz.",
+        "qoida": "Nun sokin yoki tanvindan keyin ب kelsa, nun م ga aylanadi va g'unna bilan ikki harakat o'qiladi. Bu qoida iqlob deyiladi.",
+        "nega_muhim": "Iqlob nun sokinning to'rtta asosiy qoidasidan biri. Uni bajarmaslik xato hisoblanadi.",
+        "tuzatish": "Nun o'rniga م ni ayting, lekin lablarni to'liq yopmang — yengil tegizing va burun orqali ikki harakat cho'zing. 'مِنْ بَعْد' → 'مِمْ بَعْد'.",
+        "mashq": "10 marta: 'مِنْ بَعْدِ', 'أَنْبِئْهُمْ', 'سَمِيعٌ بَصِير'. Har safar م tovushi va g'unna borligini tekshiring."
+      },
+      "ru": {
+        "name": "Иклаб не выполнен",
+        "short": "Нун не преобразован в мим.",
+        "chto_ne_tak": "После нун сакина или танвина следует ب, но вы не преобразовали нун в م.",
+        "pravilo": "Если после нун сакина или танвина следует ب, нун превращается в م и читается с гунной в два хараката. Это правило называется иклаб.",
+        "pochemu_vazhno": "Иклаб — одно из четырёх основных правил нун сакина. Его невыполнение является ошибкой.",
+        "kak_ispravit": "Вместо нуна произнесите م, но не смыкайте губы полностью — лёгкое касание и протяжение через нос в два хараката. 'مِنْ بَعْد' → 'مِمْ بَعْد'.",
+        "uprazhnenie": "10 раз: 'مِنْ بَعْدِ', 'أَنْبِئْهُمْ', 'سَمِيعٌ بَصِير'. Каждый раз проверяйте наличие звука م и гунны."
+      }
+    },
+
+    "IZHAR_WRONG": {
+      "status": "draft", "group": "ahkam", "severity": "medium", "detection_confidence": "low",
+      "detection_signal": "TEKSHIRILMAGAN: nun sokin/tanvin + halq harflari ketma-ketligi, lekin ghonna: 'maghnoon' aniqlangan. GHUNNA_ADDED bilan qisman ustma-ust tushadi — mapping aniqlashtirilishi kerak.",
+      "uz": {
+        "name": "Izhor o'rnida boshqa qoida qo'llangan",
+        "short": "Nun aniq o'qilishi kerak edi.",
+        "nima_xato": "Siz izhor o'rnida nunni aniq o'qish o'rniga uni yashirdingiz yoki g'unna qo'shdingiz.",
+        "qoida": "Nun sokin yoki tanvindan keyin halq harflari (ء، ه، ع، ح، غ، خ) kelsa, nun to'liq, aniq va g'unnasiz o'qiladi. Bu izhor deyiladi.",
+        "nega_muhim": "Izhor o'rnida ikhfo yoki idg'om qilish qoidalar chegarasini buzadi.",
+        "tuzatish": "Nunni to'liq ayting: til nun makhrajiga to'liq tegsin, tovush aniq eshitilsin, burun orqali cho'zilmasin. Keyingi harfga tez o'ting.",
+        "mashq": "10 marta: 'مَنْ آمَنَ', 'مِنْ عِلْم', 'أَنْعَمْتَ', 'مِنْ خَيْر'. Nun har safar aniq eshitilyaptimi — tekshiring."
+      },
+      "ru": {
+        "name": "На месте изхара применено другое правило",
+        "short": "Нун должен был читаться отчётливо.",
+        "chto_ne_tak": "На месте изхара вы скрыли нун или добавили гунну вместо отчётливого произнесения.",
+        "pravilo": "Если после нун сакина или танвина следуют горловые буквы (ء، ه، ع، ح، غ، خ), нун читается полностью, отчётливо и без гунны. Это называется изхар.",
+        "pochemu_vazhno": "Применение ихфа или идгама на месте изхара нарушает границы правил.",
+        "kak_ispravit": "Произносите нун полностью: язык полностью касается махраджа нуна, звук слышен отчётливо, через нос не тянется. Быстро переходите к следующей букве.",
+        "uprazhnenie": "10 раз: 'مَنْ آمَنَ', 'مِنْ عِلْم', 'أَنْعَمْتَ', 'مِنْ خَيْر'. Проверяйте, что нун слышен отчётливо."
+      }
+    }
+  }
+}

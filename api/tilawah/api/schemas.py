@@ -25,10 +25,36 @@ class AyahOut(BaseModel):
     segments: list[SegmentOut]
 
 
+class PracticeSegmentOut(BaseModel):
+    """One practice-sized range of an ayah, indexed relative to the ayah.
+
+    `seconds` is the median-reciter estimate - the honest number for most
+    people. The slow-reciter rate that decides whether a range fits under the
+    cap is deliberately not exposed: it reads as pessimistic and wrong.
+    """
+    index: int
+    start_word: int
+    num_words: int
+    n_phonemes: int
+    seconds: float
+    uthmani: str
+
+
+class AyahSegmentsOut(BaseModel):
+    sura: int
+    aya: int
+    n_words: int
+    legal_cuts: list[int]
+    segments: list[PracticeSegmentOut]
+
+
 class AttemptOut(BaseModel):
     id: int | None = None
     sura: int = 0
     aya: int = 0
+    start_word: int = 0
+    num_words: int = 0
+    include_bismillah: bool = False
     status: str                 # ok | retry_recording | error
     reason: str = ""            # too_noisy | too_short | ...
     clean: bool = False
@@ -40,3 +66,16 @@ class AttemptOut(BaseModel):
 
 class WrongFlagIn(BaseModel):
     note: str | None = None
+
+
+class MetaOut(BaseModel):
+    """Client-visible state of the deployment itself.
+
+    `pilot` drives the "not yet fully verified" banner. It is derived from the
+    content review state as well as an env flag, so the banner cannot outlive
+    the condition it warns about, and cannot be forgotten either.
+    """
+    pilot: bool = False
+    unverified_codes: list[str] = []
+    collect_audio_offered: bool = False   # may the audio consent even be shown
+    version: str = "0.1.0"

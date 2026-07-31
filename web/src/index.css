@@ -793,3 +793,174 @@ button {
     border-right: 1px solid var(--rule-soft);
   }
 }
+
+/* ── pilot banner ───────────────────────────────────────────────────────── */
+/* Sits in the flow directly under the header rather than floating over the
+ * page: it is a statement about the whole app, not a transient alert, and it
+ * should feel admitted-to rather than popped-up. */
+
+.pilot {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  margin: 0 1.5rem 0.25rem;
+  padding: 0.8rem 0.95rem;
+  background: var(--brass-wash);
+  border: 1px solid rgba(161, 120, 54, 0.3);
+  border-radius: 0.85rem;
+}
+
+.pilot__mark {
+  flex: none;
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-top: 0.4rem;
+  border-radius: 50%;
+  background: var(--brass);
+}
+
+.pilot__title {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.pilot__body {
+  margin: 0.15rem 0 0;
+  font-size: 0.83rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* ── first-run consent gate ─────────────────────────────────────────────── */
+/* Not a modal over a usable app — it IS the screen until answered. Declining
+ * is styled as a real choice, not a greyed-out escape hatch. */
+
+.gate {
+  padding: 0.5rem 1.5rem 3rem;
+}
+
+.gate__panel {
+  padding: 1.5rem 1.4rem 1.4rem;
+  background: var(--paper-lift);
+  border: 1px solid var(--rule);
+  border-radius: 1.1rem;
+}
+
+.gate__title {
+  margin: 0 0 0.5rem;
+  font-family: var(--serif);
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.gate__intro {
+  margin: 0 0 1.25rem;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.gate__none {
+  padding: 0.9rem 1rem;
+  margin-bottom: 1.35rem;
+  background: var(--paper-sunk);
+  border-radius: 0.8rem;
+}
+
+.gate__none-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--green);
+}
+
+.gate__none-body {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.gate__opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 0;
+  border-top: 1px solid var(--rule-soft);
+}
+
+.gate__opt input {
+  margin-top: 0.15rem;
+  flex: none;
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: var(--green);
+}
+
+.gate__opt--off {
+  opacity: 0.45;
+}
+
+.gate__opt-label {
+  display: block;
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+
+.gate__opt-help {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+.gate__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1.4rem;
+}
+
+.gate__primary {
+  padding: 0.95rem 1rem;
+  border: none;
+  border-radius: 0.9rem;
+  background: var(--green);
+  color: var(--paper);
+  font-size: 0.98rem;
+  font-weight: 500;
+}
+
+.gate__quiet {
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.9rem;
+  background: transparent;
+  color: var(--green);
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.gate__footer {
+  margin: 1.2rem 0 0;
+  font-size: 0.79rem;
+  line-height: 1.55;
+  color: var(--ink-faint);
+}
+
+.consent__row--off {
+  opacity: 0.45;
+}
+
+.consent__help {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}

@@ -38,6 +38,14 @@ const STRINGS = {
     retry_short_body: "Oyat toʻliq oʻqilmagan koʻrinadi.",
     retry_long_title: "Yozuv juda uzun",
     retry_long_body: "Faqat shu oyatni oʻqing, keyingisiga oʻtmang.",
+    retry_quiet_title: "Ovoz eshitilmadi",
+    retry_quiet_body:
+      "Yozuvda deyarli ovoz yoʻq. Mikrofonga ruxsat berilganini tekshiring.",
+    retry_unclear_title: "Oʻqishni aniq eshita olmadik",
+    retry_unclear_body:
+      "Oyat toʻliq va tinch oʻqilsa, bahomiz ancha aniq boʻladi. Shoshilmasdan qaytadan oʻqing.",
+    retry_tip_full: "Oyatni boshidan oxirigacha oʻqing",
+    retry_tip_pause: "Yozishni boshlagach, bir lahza kutib, keyin oʻqing",
     retry_tip_room: "Tinchroq xonaga oʻting",
     retry_tip_close: "Telefonni ogʻzingizga yaqinroq tuting",
     retry_tip_wait: "Deraza yoki fen ovozi tinganini kuting",
@@ -64,12 +72,35 @@ const STRINGS = {
     log_noted: "Izoh bor",
     log_retry: "Qayta yozilgan",
 
+    // pilot banner
+    pilot_title: "Sinov versiyasi",
+    pilot_body:
+      "Bu dastur hali sinovdan oʻtmoqda. Tajweed boʻyicha izohlar toʻliq tasdiqlanmagan — ustozingiz bilan tekshirib boring.",
+
     // consent
     consent_title: "Maʼlumotlaringiz",
     consent_body:
       "Oʻqishlaringizni saqlashga ruxsat bersangiz, tarixni koʻrasiz va biz baholash sifatini yaxshilaymiz. Istagan vaqtda oʻchirib tashlashingiz mumkin.",
     consent_toggle: "Oʻqishlarimni saqlashga ruxsat beraman",
     consent_delete: "Barcha maʼlumotlarim oʻchirildi.",
+
+    // first-run consent screen
+    consent_gate_title: "Maʼlumotlaringiz sizniki",
+    consent_gate_intro:
+      "Boshlashdan oldin bir narsani aniq qilib olaylik: nimani saqlashimizni siz hal qilasiz. Hech narsa avtomatik saqlanmaydi.",
+    consent_gate_none_title: "Hech narsa saqlanmaydi",
+    consent_gate_none_body:
+      "Ruxsat bermasangiz, oʻqishingiz baholanadi va darhol unutiladi. Dasturdan toʻliq foydalanaveramiz.",
+    consent_attempts_label: "Oʻqishlarim tarixini saqlash",
+    consent_attempts_help:
+      "Qaysi oyatni oʻqiganingiz va qanday izoh olganingiz saqlanadi. Ovozingiz saqlanmaydi.",
+    consent_audio_label: "Ovoz yozuvlarimni saqlash",
+    consent_audio_help:
+      "Ovozingiz saqlanadi va faqat baholash sifatini yaxshilash uchun ishlatiladi. Bu alohida ruxsat — istamasangiz belgilamang.",
+    consent_gate_accept: "Davom etish",
+    consent_gate_skip: "Hech narsa saqlamasdan davom etish",
+    consent_gate_footer:
+      "Fikringizni istagan vaqtda «Yozuvlar» boʻlimida oʻzgartirishingiz mumkin. Oʻchirsangiz, saqlangan hamma narsa haqiqatan oʻchiriladi.",
 
     // generic
     error_generic: "Xatolik yuz berdi. Qayta urinib koʻring.",
@@ -102,6 +133,14 @@ const STRINGS = {
     retry_short_body: "Похоже, аят прочитан не полностью.",
     retry_long_title: "Запись слишком длинная",
     retry_long_body: "Прочитайте только этот аят, не переходя к следующему.",
+    retry_quiet_title: "Звук не слышен",
+    retry_quiet_body:
+      "В записи почти нет звука. Проверьте, разрешён ли доступ к микрофону.",
+    retry_unclear_title: "Не расслышали чтение отчётливо",
+    retry_unclear_body:
+      "Если прочитать аят полностью и спокойно, оценка будет намного точнее. Не торопитесь и прочитайте ещё раз.",
+    retry_tip_full: "Прочитайте аят от начала до конца",
+    retry_tip_pause: "Начав запись, выждите мгновение и затем читайте",
     retry_tip_room: "Перейдите в тихую комнату",
     retry_tip_close: "Держите телефон ближе ко рту",
     retry_tip_wait: "Дождитесь, пока стихнет шум за окном",
@@ -125,11 +164,32 @@ const STRINGS = {
     log_noted: "Есть замечание",
     log_retry: "Перезаписано",
 
+    pilot_title: "Пробная версия",
+    pilot_body:
+      "Приложение ещё тестируется. Замечания по таджвиду пока не полностью выверены — сверяйтесь с вашим устозом.",
+
     consent_title: "Ваши данные",
     consent_body:
       "Если разрешите сохранять чтения, вы увидите историю, а мы улучшим качество оценки. Удалить можно в любой момент.",
     consent_toggle: "Разрешаю сохранять мои чтения",
     consent_delete: "Все ваши данные удалены.",
+
+    consent_gate_title: "Ваши данные принадлежат вам",
+    consent_gate_intro:
+      "Прежде чем начать, договоримся: вы решаете, что сохранять. По умолчанию не сохраняется ничего.",
+    consent_gate_none_title: "Ничего не сохраняется",
+    consent_gate_none_body:
+      "Без разрешения чтение будет оценено и сразу забыто. Приложением можно пользоваться полностью.",
+    consent_attempts_label: "Сохранять историю моих чтений",
+    consent_attempts_help:
+      "Сохраняется, какой аят вы читали и какое замечание получили. Голос не сохраняется.",
+    consent_audio_label: "Сохранять мои голосовые записи",
+    consent_audio_help:
+      "Голос сохраняется и используется только для улучшения качества оценки. Это отдельное разрешение — не отмечайте, если не хотите.",
+    consent_gate_accept: "Продолжить",
+    consent_gate_skip: "Продолжить, ничего не сохраняя",
+    consent_gate_footer:
+      "Решение можно изменить в разделе «Записи» в любой момент. При отзыве всё сохранённое действительно удаляется.",
 
     error_generic: "Произошла ошибка. Попробуйте ещё раз.",
     loading: "Загрузка",
@@ -154,6 +214,24 @@ export function retryCopy(lang: Lang, reason: string) {
       title: t(lang, "retry_long_title"),
       body: t(lang, "retry_long_body"),
       tips: [] as string[],
+    };
+  if (reason === "too_quiet")
+    return {
+      title: t(lang, "retry_quiet_title"),
+      body: t(lang, "retry_quiet_body"),
+      tips: [t(lang, "retry_tip_close")],
+    };
+  // The model returned huruf muqatta'at — it could not resolve the recitation.
+  // Usually a truncated take, so lead with reciting the ayah in full.
+  if (reason === "unclear_recitation")
+    return {
+      title: t(lang, "retry_unclear_title"),
+      body: t(lang, "retry_unclear_body"),
+      tips: [
+        t(lang, "retry_tip_full"),
+        t(lang, "retry_tip_pause"),
+        t(lang, "retry_tip_room"),
+      ],
     };
   return {
     title: t(lang, "retry_noisy_title"),

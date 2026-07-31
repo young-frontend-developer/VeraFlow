@@ -13,12 +13,16 @@ export default function Log({
   lang,
   ayat,
   consented,
+  audioConsented,
+  audioOffered,
   onConsent,
 }: {
   lang: Lang;
   ayat: Ayah[];
   consented: boolean;
-  onConsent: (v: boolean) => void;
+  audioConsented: boolean;
+  audioOffered: boolean;
+  onConsent: (v: boolean, audio: boolean) => void;
 }) {
   const [rows, setRows] = useState<Attempt[] | null>(null);
   const [deleted, setDeleted] = useState(false);
@@ -76,8 +80,11 @@ export default function Log({
             checked={consented}
             onChange={(e) => {
               const next = e.target.checked;
-              setConsent(next).catch(() => {});
-              onConsent(next);
+              // Revoking attempt consent revokes audio with it: there is no
+              // coherent state where we keep the voice but not the record.
+              const nextAudio = next && audioConsented;
+              setConsent(next, nextAudio).catch(() => {});
+              onConsent(next, nextAudio);
               if (!next) {
                 setRows([]);
                 setDeleted(true);
@@ -86,6 +93,32 @@ export default function Log({
           />
           <span>{t(lang, "consent_toggle")}</span>
         </label>
+
+        {audioOffered && (
+          <label
+            className={
+              consented ? "consent__row" : "consent__row consent__row--off"
+            }
+          >
+            <input
+              type="checkbox"
+              checked={audioConsented}
+              disabled={!consented}
+              onChange={(e) => {
+                const next = e.target.checked;
+                setConsent(consented, next).catch(() => {});
+                onConsent(consented, next);
+              }}
+            />
+            <span>
+              {t(lang, "consent_audio_label")}
+              <span className="consent__help">
+                {t(lang, "consent_audio_help")}
+              </span>
+            </span>
+          </label>
+        )}
+
         {deleted && !consented && (
           <p className="notice__body" style={{ marginTop: "0.75rem" }}>
             {t(lang, "consent_delete")}

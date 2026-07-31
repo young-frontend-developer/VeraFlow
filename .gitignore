@@ -4,6 +4,8 @@ __pycache__/
 *.pyc
 api/.env
 api/tilawah.db
+# raw learner voice captured for diagnosis - never commit
+api/debug_audio/
 
 # node
 node_modules/
@@ -13,6 +15,8 @@ web/dist/
 # spike artefacts - the clips are personal recitations, keep them local
 spike/clips/
 spike/.cache_transcribe/
+# reciter mp3s pulled from everyayah for duration calibration - re-downloadable
+spike/.cache_mp3/
 spike/results.json
 spike/scored.csv
 spike/typed.csv

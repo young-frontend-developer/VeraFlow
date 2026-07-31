@@ -1,0 +1,422 @@
+[
+ {
+  "sura": 103,
+  "aya": 1,
+  "reciter": "Husary",
+  "n_phonemes": 7,
+  "duration_s": 1.49
+ },
+ {
+  "sura": 103,
+  "aya": 1,
+  "reciter": "Alafasy",
+  "n_phonemes": 7,
+  "duration_s": 1.4
+ },
+ {
+  "sura": 79,
+  "aya": 3,
+  "reciter": "Husary",
+  "n_phonemes": 23,
+  "duration_s": 4.54
+ },
+ {
+  "sura": 79,
+  "aya": 3,
+  "reciter": "Alafasy",
+  "n_phonemes": 23,
+  "duration_s": 3.17
+ },
+ {
+  "sura": 81,
+  "aya": 2,
+  "reciter": "Husary",
+  "n_phonemes": 27,
+  "duration_s": 5.29
+ },
+ {
+  "sura": 81,
+  "aya": 2,
+  "reciter": "Alafasy",
+  "n_phonemes": 27,
+  "duration_s": 3.63
+ },
+ {
+  "sura": 26,
+  "aya": 172,
+  "reciter": "Husary",
+  "n_phonemes": 31,
+  "duration_s": 6.54
+ },
+ {
+  "sura": 26,
+  "aya": 172,
+  "reciter": "Alafasy",
+  "n_phonemes": 31,
+  "duration_s": 6.28
+ },
+ {
+  "sura": 77,
+  "aya": 34,
+  "reciter": "Husary",
+  "n_phonemes": 34,
+  "duration_s": 7.3
+ },
+ {
+  "sura": 77,
+  "aya": 34,
+  "reciter": "Alafasy",
+  "n_phonemes": 34,
+  "duration_s": 6.49
+ },
+ {
+  "sura": 92,
+  "aya": 18,
+  "reciter": "Husary",
+  "n_phonemes": 37,
+  "duration_s": 7.06
+ },
+ {
+  "sura": 92,
+  "aya": 18,
+  "reciter": "Alafasy",
+  "n_phonemes": 37,
+  "duration_s": 4.84
+ },
+ {
+  "sura": 75,
+  "aya": 5,
+  "reciter": "Husary",
+  "n_phonemes": 41,
+  "duration_s": 6.54
+ },
+ {
+  "sura": 75,
+  "aya": 5,
+  "reciter": "Alafasy",
+  "n_phonemes": 41,
+  "duration_s": 5.41
+ },
+ {
+  "sura": 54,
+  "aya": 55,
+  "reciter": "Husary",
+  "n_phonemes": 46,
+  "duration_s": 9.73
+ },
+ {
+  "sura": 54,
+  "aya": 55,
+  "reciter": "Alafasy",
+  "n_phonemes": 46,
+  "duration_s": 7.38
+ },
+ {
+  "sura": 37,
+  "aya": 67,
+  "reciter": "Husary",
+  "n_phonemes": 50,
+  "duration_s": 8.39
+ },
+ {
+  "sura": 37,
+  "aya": 67,
+  "reciter": "Alafasy",
+  "n_phonemes": 50,
+  "duration_s": 9.86
+ },
+ {
+  "sura": 27,
+  "aya": 27,
+  "reciter": "Husary",
+  "n_phonemes": 55,
+  "duration_s": 11.56
+ },
+ {
+  "sura": 27,
+  "aya": 27,
+  "reciter": "Alafasy",
+  "n_phonemes": 55,
+  "duration_s": 8.82
+ },
+ {
+  "sura": 51,
+  "aya": 45,
+  "reciter": "Husary",
+  "n_phonemes": 60,
+  "duration_s": 8.67
+ },
+ {
+  "sura": 51,
+  "aya": 45,
+  "reciter": "Alafasy",
+  "n_phonemes": 60,
+  "duration_s": 10.27
+ },
+ {
+  "sura": 3,
+  "aya": 163,
+  "reciter": "Husary",
+  "n_phonemes": 66,
+  "duration_s": 16.44
+ },
+ {
+  "sura": 3,
+  "aya": 163,
+  "reciter": "Alafasy",
+  "n_phonemes": 66,
+  "duration_s": 13.26
+ },
+ {
+  "sura": 21,
+  "aya": 62,
+  "reciter": "Husary",
+  "n_phonemes": 71,
+  "duration_s": 13.86
+ },
+ {
+  "sura": 21,
+  "aya": 62,
+  "reciter": "Alafasy",
+  "n_phonemes": 71,
+  "duration_s": 11.2
+ },
+ {
+  "sura": 20,
+  "aya": 55,
+  "reciter": "Husary",
+  "n_phonemes": 76,
+  "duration_s": 12.76
+ },
+ {
+  "sura": 20,
+  "aya": 55,
+  "reciter": "Alafasy",
+  "n_phonemes": 76,
+  "duration_s": 13.31
+ },
+ {
+  "sura": 17,
+  "aya": 72,
+  "reciter": "Husary",
+  "n_phonemes": 81,
+  "duration_s": 16.75
+ },
+ {
+  "sura": 17,
+  "aya": 72,
+  "reciter": "Alafasy",
+  "n_phonemes": 81,
+  "duration_s": 11.18
+ },
+ {
+  "sura": 16,
+  "aya": 8,
+  "reciter": "Husary",
+  "n_phonemes": 86,
+  "duration_s": 17.8
+ },
+ {
+  "sura": 16,
+  "aya": 8,
+  "reciter": "Alafasy",
+  "n_phonemes": 86,
+  "duration_s": 12.65
+ },
+ {
+  "sura": 39,
+  "aya": 61,
+  "reciter": "Husary",
+  "n_phonemes": 91,
+  "duration_s": 19.93
+ },
+ {
+  "sura": 39,
+  "aya": 61,
+  "reciter": "Alafasy",
+  "n_phonemes": 91,
+  "duration_s": 21.11
+ },
+ {
+  "sura": 28,
+  "aya": 39,
+  "reciter": "Husary",
+  "n_phonemes": 97,
+  "duration_s": 18.66
+ },
+ {
+  "sura": 28,
+  "aya": 39,
+  "reciter": "Alafasy",
+  "n_phonemes": 97,
+  "duration_s": 15.15
+ },
+ {
+  "sura": 38,
+  "aya": 35,
+  "reciter": "Husary",
+  "n_phonemes": 103,
+  "duration_s": 23.88
+ },
+ {
+  "sura": 38,
+  "aya": 35,
+  "reciter": "Alafasy",
+  "n_phonemes": 103,
+  "duration_s": 16.82
+ },
+ {
+  "sura": 4,
+  "aya": 42,
+  "reciter": "Husary",
+  "n_phonemes": 110,
+  "duration_s": 14.43
+ },
+ {
+  "sura": 4,
+  "aya": 42,
+  "reciter": "Alafasy",
+  "n_phonemes": 110,
+  "duration_s": 18.12
+ },
+ {
+  "sura": 2,
+  "aya": 183,
+  "reciter": "Husary",
+  "n_phonemes": 117,
+  "duration_s": 23.38
+ },
+ {
+  "sura": 2,
+  "aya": 183,
+  "reciter": "Alafasy",
+  "n_phonemes": 117,
+  "duration_s": 14.54
+ },
+ {
+  "sura": 11,
+  "aya": 50,
+  "reciter": "Husary",
+  "n_phonemes": 124,
+  "duration_s": 21.35
+ },
+ {
+  "sura": 11,
+  "aya": 50,
+  "reciter": "Alafasy",
+  "n_phonemes": 124,
+  "duration_s": 19.24
+ },
+ {
+  "sura": 16,
+  "aya": 31,
+  "reciter": "Husary",
+  "n_phonemes": 132,
+  "duration_s": 29.42
+ },
+ {
+  "sura": 16,
+  "aya": 31,
+  "reciter": "Alafasy",
+  "n_phonemes": 132,
+  "duration_s": 23.48
+ },
+ {
+  "sura": 2,
+  "aya": 29,
+  "reciter": "Husary",
+  "n_phonemes": 142,
+  "duration_s": 31.28
+ },
+ {
+  "sura": 2,
+  "aya": 29,
+  "reciter": "Alafasy",
+  "n_phonemes": 142,
+  "duration_s": 21.48
+ },
+ {
+  "sura": 28,
+  "aya": 20,
+  "reciter": "Husary",
+  "n_phonemes": 151,
+  "duration_s": 32.81
+ },
+ {
+  "sura": 28,
+  "aya": 20,
+  "reciter": "Alafasy",
+  "n_phonemes": 151,
+  "duration_s": 27.92
+ },
+ {
+  "sura": 12,
+  "aya": 19,
+  "reciter": "Husary",
+  "n_phonemes": 164,
+  "duration_s": 36.22
+ },
+ {
+  "sura": 12,
+  "aya": 19,
+  "reciter": "Alafasy",
+  "n_phonemes": 164,
+  "duration_s": 25.55
+ },
+ {
+  "sura": 16,
+  "aya": 86,
+  "reciter": "Husary",
+  "n_phonemes": 179,
+  "duration_s": 36.42
+ },
+ {
+  "sura": 16,
+  "aya": 86,
+  "reciter": "Alafasy",
+  "n_phonemes": 179,
+  "duration_s": 29.86
+ },
+ {
+  "sura": 2,
+  "aya": 203,
+  "reciter": "Husary",
+  "n_phonemes": 199,
+  "duration_s": 45.77
+ },
+ {
+  "sura": 2,
+  "aya": 203,
+  "reciter": "Alafasy",
+  "n_phonemes": 199,
+  "duration_s": 32.46
+ },
+ {
+  "sura": 3,
+  "aya": 15,
+  "reciter": "Husary",
+  "n_phonemes": 224,
+  "duration_s": 56.12
+ },
+ {
+  "sura": 3,
+  "aya": 15,
+  "reciter": "Alafasy",
+  "n_phonemes": 224,
+  "duration_s": 38.02
+ },
+ {
+  "sura": 9,
+  "aya": 34,
+  "reciter": "Husary",
+  "n_phonemes": 267,
+  "duration_s": 44.38
+ },
+ {
+  "sura": 9,
+  "aya": 34,
+  "reciter": "Alafasy",
+  "n_phonemes": 267,
+  "duration_s": 45.46
+ }
+]

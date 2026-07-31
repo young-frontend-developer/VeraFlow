@@ -45,23 +45,95 @@ def test_target_is_deterministic():
     assert target_for(103, 1).uthmani
 
 
-def test_quality_gate_rejects_noise():
-    rng = np.random.default_rng(0)
-    noise = rng.normal(0, 0.1, SR * 2).astype(np.float32)
-    q = check_quality(noise)
-    assert not q.ok and q.reason == "too_noisy"
+def _speech_like(seconds=2.0, amp=0.3, lead_silence_s=0.0):
+    t = np.linspace(0, seconds, int(SR * seconds), dtype=np.float32)
+    env = (np.sin(2 * np.pi * 3 * t) > 0).astype(np.float32)   # bursts and silence
+    wave = (np.sin(2 * np.pi * 200 * t) * env * amp).astype(np.float32)
+    if lead_silence_s:
+        pad = np.zeros(int(SR * lead_silence_s), dtype=np.float32)
+        wave = np.concatenate([pad, wave])
+    return wave
 
 
 def test_quality_gate_rejects_short():
     assert check_quality(np.zeros(int(SR * 0.2), dtype=np.float32)).reason == "too_short"
 
 
+def test_quality_gate_rejects_silence():
+    """A muted mic or an unanswered permission prompt, not a recitation."""
+    q = check_quality(np.zeros(SR * 2, dtype=np.float32))
+    assert not q.ok and q.reason == "too_quiet"
+
+
 def test_quality_gate_accepts_speech_like_signal():
-    t = np.linspace(0, 2, SR * 2, dtype=np.float32)
-    env = (np.sin(2 * np.pi * 3 * t) > 0).astype(np.float32)   # bursts and silence
-    wave = (np.sin(2 * np.pi * 200 * t) * env * 0.3).astype(np.float32)
-    q = check_quality(wave)
+    q = check_quality(_speech_like())
     assert q.ok and q.snr_db > MIN_SNR_DB
+
+
+def test_snr_is_stable_once_room_tone_is_present():
+    """The noise floor is only estimable when the clip CONTAINS some. Given a
+    lead-in of room tone - which recorder.ts guarantees via SETTLE_MS - the
+    figure must not drift as more of it is added. Measured on the real clips:
+    1.6 dB mean drift between a 250 ms and a 1000 ms lead-in.
+
+    Note the limitation this test encodes: with NO silence anywhere in the clip
+    the number is not meaningful, which is exactly why nothing gates on it."""
+    from tilawah.engine.audio import measure
+
+    floor = 0.002
+    rng = np.random.default_rng(0)
+    tone = lambda n: rng.normal(0, floor, n).astype(np.float32)  # noqa: E731
+    body = _speech_like(seconds=1.5) + tone(int(SR * 1.5))
+    short = np.concatenate([tone(int(SR * 0.25)), body])
+    long_ = np.concatenate([tone(int(SR * 1.0)), body])
+    drift = abs(measure(long_)["snr_db"] - measure(short)["snr_db"])
+    assert drift < 6.0, f"SNR moved {drift:.1f} dB on identical audio"
+
+
+def test_tight_recording_is_not_rejected():
+    """REGRESSION. The old gate computed p90/p10 of frame energy and called it
+    SNR, but it was measuring how much SILENCE the clip contained: padding a
+    clip with a copy of its own noise floor moved it 33 -> 67 dB, and trimming
+    silence pushed all five expert reciters below the 35 dB reject threshold.
+
+    Browser takes have almost no lead-in, so every one of them was rejected as
+    "too_noisy" while the same recitation passed from a .wav. A learner who taps
+    record, recites, and taps stop must get through."""
+    q = check_quality(_speech_like(seconds=1.5, lead_silence_s=0.0))
+    assert q.ok, f"rejected a clean tight take as {q.reason}"
+
+
+# ------------------------------------------------------------------- collapse
+def test_collapse_detects_muqattaat_on_ordinary_ayah():
+    """The real failure mode: unusable audio makes the model emit huruf
+    muqatta'at fluently at 0.94-0.97 confidence rather than reporting doubt.
+    These four strings are actual predictions from the spike clips."""
+    from tilawah.engine.collapse import looks_collapsed
+
+    target = target_for(103, 1).phonemes
+    for heard in ("ءَلِفلَااممرَاا", "ءَلِفلَااااممممِۦۦ",
+                  "كَفهَايَااعِقَدڇ", "ءَلِفلَمرَ"):
+        collapsed, detail = looks_collapsed(heard, 103, 1, target)
+        assert collapsed, f"missed collapse {heard}: {detail}"
+
+
+def test_collapse_passes_real_recitations():
+    """Good takes of 103:1, including the learner's sad-as-seen substitution,
+    must never be mistaken for a collapse."""
+    from tilawah.engine.collapse import looks_collapsed
+
+    target = target_for(103, 1).phonemes
+    for heard in ("وَلعَصر", "وَلعَسر", "وَلءَسر", "وَلءَصر", "وَلءَسَر"):
+        collapsed, detail = looks_collapsed(heard, 103, 1, target)
+        assert not collapsed, f"false collapse on {heard}: {detail}"
+
+
+def test_collapse_allows_ayat_that_really_are_muqattaat():
+    """Reciting 2:1 correctly is alif-lam-meem. Never flag it."""
+    from tilawah.engine.collapse import looks_collapsed
+
+    collapsed, _ = looks_collapsed("ءَلِفلَاامم", 2, 1, "ءَلِفلَاامم")
+    assert not collapsed
 
 
 @pytest.mark.parametrize("code", ["SUB_AYN_HAMZA", "MADD_SHORT", "DELETION"])
