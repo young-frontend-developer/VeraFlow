@@ -416,6 +416,44 @@ button {
   border-left: 2px solid var(--brass);
 }
 
+/* Unreviewed content, surfaced only under TILAWAH_SHOW_UNREVIEWED. Dashed and
+   set apart on purpose — an operator scanning results must be able to tell at a
+   glance which cards no qori has read, without reading each chip. */
+.card--draft {
+  border-left: 2px dashed var(--brass);
+  border-style: dashed;
+  background: transparent;
+}
+
+.card__draft {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 0.9rem;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+.card__draft-chip {
+  flex: none;
+  padding: 0.1rem 0.42rem;
+  border: 1px solid var(--brass);
+  border-radius: 0.3rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--brass);
+}
+
+.card__code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+  word-break: break-all;
+}
+
 .card__rule {
   font-family: var(--serif);
   font-size: 1.1rem;
@@ -546,6 +584,301 @@ button {
   font-weight: 500;
   color: var(--green);
   background: var(--paper-lift);
+}
+
+/* The affirmative sibling of .btn-quiet. Used by the review tool for the one
+   action that commits something — approving a ruling. */
+.btn-primary {
+  flex: 1;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--green);
+  border-radius: 0.9rem;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--paper);
+  background: var(--green);
+}
+
+.btn-primary:disabled,
+.btn-quiet:disabled {
+  opacity: 0.45;
+}
+
+/* ── qori review tool (/review) ─────────────────────────────────────────── */
+
+.app__tool-tag {
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brass);
+  border: 1px solid var(--brass);
+  border-radius: 0.3rem;
+  padding: 0.12rem 0.4rem;
+}
+
+.review {
+  padding-bottom: 3rem;
+}
+
+.review__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.review__progress {
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.review__counts {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.review__who {
+  margin-left: auto;
+  min-width: 9rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--rule-soft);
+  border-radius: 0.4rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.82rem;
+}
+
+.review__meter {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--rule-soft);
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+}
+
+.review__meter-fill {
+  display: block;
+  height: 100%;
+  background: var(--brass);
+  transition: width 0.25s ease;
+}
+
+.review__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.review__nav button {
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+  background: none;
+  border: none;
+  padding: 0.3rem 0;
+}
+
+.review__nav button:disabled {
+  opacity: 0.35;
+}
+
+.review__pos {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.review__reach,
+.review__source {
+  margin: 0 0 0.4rem;
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+}
+
+.review__source--missing {
+  color: var(--brass);
+}
+
+.review__status {
+  margin: 0.6rem 0 0;
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+}
+
+.review__status--ok {
+  color: var(--green);
+}
+
+.review__status--no {
+  color: var(--brass);
+}
+
+.review__preview {
+  margin-top: 1rem;
+}
+
+.review__edited {
+  color: var(--brass);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.review__actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.review__reject {
+  margin-left: auto;
+}
+
+.review__field {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.review__field-label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.review__field textarea {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--rule-soft);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.review__field textarea:focus-visible {
+  outline: none;
+  border-color: var(--brass);
+}
+
+.review__error {
+  margin: 1rem 0 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--brass);
+  border-radius: 0.5rem;
+  font-size: 0.84rem;
+  color: var(--brass);
+}
+
+.review__warn {
+  margin: 0 0 1rem;
+  font-size: 0.78rem;
+  color: var(--brass);
+}
+
+/* ── picker ─────────────────────────────────────────────────────────────── */
+
+.search {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  margin: 0 0 1rem;
+  border: 1px solid var(--rule-soft);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.95rem;
+}
+
+.search:focus-visible {
+  outline: none;
+  border-color: var(--brass);
+}
+
+/* 114 suras and up to 286 ayat: the list scrolls inside the pane so the record
+   button and the tab bar never get pushed off the screen. */
+.list--scroll {
+  max-height: 58vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.list--scroll > ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.row__num {
+  flex: none;
+  min-width: 2.1rem;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+  text-align: right;
+}
+
+.row__alt {
+  color: var(--ink-faint);
+  font-weight: 400;
+}
+
+.row__meta {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The sura's own name, set at reading size rather than the wrapped-line size
+   .row__ar uses for ayah text. */
+.row__ar--name {
+  font-size: 1.15rem;
+  line-height: 1.4;
+  margin-top: 0;
+  flex: none;
+  max-width: 40%;
+}
+
+.crumb {
+  display: inline-block;
+  margin: 0 0 0.75rem;
+  padding: 0.25rem 0;
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+  background: none;
+  border: none;
+  text-align: left;
+}
+
+.crumb:hover,
+.crumb:focus-visible {
+  color: var(--brass);
+}
+
+.crumb--change {
+  margin: -0.25rem 0 1rem;
+}
+
+.estimate {
+  margin: 0.35rem 0 1.1rem;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── library ────────────────────────────────────────────────────────────── */
@@ -808,6 +1141,20 @@ button {
   background: var(--brass-wash);
   border: 1px solid rgba(161, 120, 54, 0.3);
   border-radius: 0.85rem;
+}
+
+/* TILAWAH_SHOW_UNREVIEWED. Hatched rather than merely coloured: this must not
+   be mistakable for a normal state at a glance on a dev box. */
+.pilot--draft {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--brass-wash),
+    var(--brass-wash) 7px,
+    transparent 7px,
+    transparent 14px
+  );
+  border-style: dashed;
+  border-width: 1.5px;
 }
 
 .pilot__mark {

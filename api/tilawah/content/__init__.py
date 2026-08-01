@@ -25,6 +25,25 @@ def ayat() -> list[dict]:
 
 
 @lru_cache(maxsize=1)
+def suras() -> list[dict]:
+    """All 114, for the picker. Built by tools/build_suras.py.
+
+    Names and ayah counts come from quran_transcript, not from the file's own
+    table - see that tool. This is the whole catalogue, not the curated subset
+    in ayat.json, which is a shortlist of worked examples and nothing more.
+    """
+    path = _DIR / "suras.json"
+    if not path.exists():
+        return []
+    return json.loads(path.read_text(encoding="utf-8"))["suras"]
+
+
+@lru_cache(maxsize=1)
+def sura_index() -> dict[int, dict]:
+    return {s["number"]: s for s in suras()}
+
+
+@lru_cache(maxsize=1)
 def ayat_index() -> dict[tuple[int, int], dict]:
     return {(a["sura"], a["aya"]): a for a in ayat()}
 

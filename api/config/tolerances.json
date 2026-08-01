@@ -1,0 +1,66 @@
+{
+  "_meta": {
+    "purpose": "Per-check firing thresholds. THIS FILE IS THE KNOB - never tune a threshold by editing engine code.",
+    "who_reads_it": [
+      "tilawah/engine/tolerances.py - applied on every live attempt",
+      "tools/calibrate.py - the same numbers are what the harness scores against"
+    ],
+    "how_to_use": [
+      "1. Record N takes you certify as CORRECT, list them in calibration/manifest.csv",
+      "2. py -3.13 tools/calibrate.py            (transcribes, caches, reports)",
+      "3. Read the 'would need' column - the threshold that silences every false positive",
+      "4. Edit 'checks' below, then re-run: py -3.13 tools/calibrate.py",
+      "   Step 4 reuses the cached transcription, so it takes seconds, not minutes."
+    ],
+    "margin_semantics": {
+      "duration": "margin = |heard_count - expected_count| in QPS units (one unit ~= one harakah). Fires when margin >= min_delta.",
+      "discrete": "no gradient - the letter is either right or wrong. Only min_mean_prob can gate it."
+    },
+    "min_mean_prob": "Clip-level CTC confidence floor. 0.0 disables. This gates the WHOLE attempt's check, not one phoneme - a per-phoneme confidence is not exposed by the model wrapper yet.",
+    "calibration_status": "UNCALIBRATED. Every min_delta is 1, which reproduces the pre-tolerance behaviour exactly (any deviation fires). Guessing thresholds before measuring would invent the number this file exists to discover.",
+    "see_also": "tilawah/content/rules.json -> _meta.how_to_promote: a code may only move to status 'ship' once it has a measured false-positive rate on correct recitation from a verified reciter. That measurement is calibrate.py's output."
+  },
+
+  "defaults": {
+    "min_delta": 1,
+    "min_mean_prob": 0.0
+  },
+
+  "checks": {
+    "MADD_SHORT":   { "kind": "duration", "min_delta": 1, "min_mean_prob": 0.0 },
+    "MADD_LONG":    { "kind": "duration", "min_delta": 1, "min_mean_prob": 0.0 },
+    "GHUNNA_SHORT": { "kind": "duration", "min_delta": 1, "min_mean_prob": 0.0 },
+    "GHUNNA_LONG":  { "kind": "duration", "min_delta": 1, "min_mean_prob": 0.0 },
+    "SHADDA_SHORT": { "kind": "duration", "min_delta": 1, "min_mean_prob": 0.0 },
+    "SHADDA_LONG":  { "kind": "duration", "min_delta": 1, "min_mean_prob": 0.0 },
+
+    "QALQALA_DROP":   { "kind": "discrete", "min_mean_prob": 0.0 },
+    "DELETION":       { "kind": "discrete", "min_mean_prob": 0.0 },
+    "INSERTION":      { "kind": "discrete", "min_mean_prob": 0.0 },
+    "SUBSTITUTION":   { "kind": "discrete", "min_mean_prob": 0.0 },
+    "SUB_AYN_HAMZA":  { "kind": "discrete", "min_mean_prob": 0.0 },
+    "SUB_HA_KHA":     { "kind": "discrete", "min_mean_prob": 0.0 },
+    "SUB_HA_HEH":     { "kind": "discrete", "min_mean_prob": 0.0 },
+    "SUB_SAD_SEEN":   { "kind": "discrete", "min_mean_prob": 0.0 },
+    "SUB_TA_PLAIN":   { "kind": "discrete", "min_mean_prob": 0.0 },
+    "SUB_DAD_DAL":    { "kind": "discrete", "min_mean_prob": 0.0 },
+    "SUB_DHA_ZAY":    { "kind": "discrete", "min_mean_prob": 0.0 },
+    "SUB_QAF_KAF":    { "kind": "discrete", "min_mean_prob": 0.0 },
+    "SUB_DHAL_ZAY":   { "kind": "discrete", "min_mean_prob": 0.0 },
+    "SUB_THA_SEEN":   { "kind": "discrete", "min_mean_prob": 0.0 },
+    "SUB_WAW_V":      { "kind": "discrete", "min_mean_prob": 0.0 }
+  },
+
+  "sifa_observed": {
+    "_note": "OBSERVATION ONLY - no learner ever sees these. typed_diff compares phoneme strings and does not read the predicted sifat at all, so tafkheem / hams / shidda / jahr have no detector yet. calibrate.py still reports reference-vs-predicted sifa disagreement on certified-correct audio, because that disagreement rate is the evidence that decides whether such a detector is buildable AT ALL. Treat every number here as a false-positive rate for a detector that does not exist yet.",
+    "min_prob": 0.0,
+    "fields": [
+      "tafkheem_or_taqeeq",
+      "hams_or_jahr",
+      "shidda_or_rakhawa",
+      "ghonna",
+      "qalqla",
+      "itbaq"
+    ]
+  }
+}

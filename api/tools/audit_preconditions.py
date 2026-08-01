@@ -8,12 +8,15 @@ rather than assertion - and names the ones that could not be narrowed.
 
 Run:  python tools/audit_preconditions.py [n_suras]
 """
+import json
 import sys
 from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
+
+V2_PATH = ROOT.parent / "tajweed_error_registry_v2.json"
 
 from quran_transcript import Aya, quran_phonetizer  # noqa: E402
 
@@ -30,8 +33,11 @@ def loose_codes(phonemes: str, sifat) -> set[str]:
     groups = _sifa_groups(sifat)
     found = set()
     from tilawah.engine.coverage import SUBSTITUTION_SOURCE
-    for code, letter in SUBSTITUTION_SOURCE.items():
-        if letter in phonemes:
+    for code, letters in SUBSTITUTION_SOURCE.items():
+        # `letters` may be a PAIR now (وف, ذظ) - a plain `in` would be a
+        # substring test and would silently match almost nothing, which showed
+        # up as a nonsensical "narrowing" from 1.0% to 78.2%.
+        if any(ch in phonemes for ch in letters):
             found.add(code)
     tafkheem = [f["tafkheem_or_taqeeq"] for _, f in groups]
     if "mofakham" in tafkheem:
@@ -91,12 +97,21 @@ def main() -> int:
             print(f"  ...sura {sura} ({n} segments)", flush=True)
 
     print(f"\n{n} segments\n")
-    print(f"{'code':<26} {'loose':>8} {'tight':>8} {'change':>9}  note")
-    print("-" * 78)
+    print(f"{'code':<30} {'loose':>8} {'tight':>8} {'change':>9}  note")
+    print("-" * 82)
+    # Entries introduced by the v3 patch have no v2 precondition to compare
+    # against, so a "change" column for them would be measuring this tool's own
+    # loose stand-in, not a real narrowing.
+    v2_codes = set(json.loads(V2_PATH.read_text(encoding="utf-8"))["errors"]) \
+        if V2_PATH.exists() else set(in_scope())
+
     rows = sorted(in_scope(), key=lambda c: -tight.get(c, 0))
     for code in rows:
         lo = loose.get(code, 0) / n * 100
         ti = tight.get(code, 0) / n * 100
+        if code not in v2_codes:
+            print(f"{code:<30} {'-':>7}  {ti:7.1f}% {'-':>9}  NEW in v3")
+            continue
         note = ""
         if code in UNIVERSAL:
             note = "UNIVERSAL - could not be narrowed"
@@ -104,7 +119,7 @@ def main() -> int:
             note = "narrowed"
         elif ti > 99:
             note = "still ~universal"
-        print(f"{code:<26} {lo:7.1f}% {ti:7.1f}% {ti - lo:+8.1f}%  {note}")
+        print(f"{code:<30} {lo:7.1f}% {ti:7.1f}% {ti - lo:+8.1f}%  {note}")
     return 0
 
 

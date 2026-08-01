@@ -48,6 +48,21 @@ class Settings:
     debug_audio: bool = os.getenv("TILAWAH_DEBUG_AUDIO", "0") == "1"
     debug_dir: str = os.getenv("TILAWAH_DEBUG_DIR", "")
 
+    # OPERATOR DIAGNOSTIC MODE - bypasses the content review gate entirely and
+    # renders EVERY detected error, including codes no qori has reviewed and
+    # codes with no authored content at all. Also lifts the two-error display
+    # cap, because the point is to see everything the engine found.
+    #
+    # This exists so the engine can be inspected end to end without flipping
+    # `reviewed` in rules.json - which is the one flag that must never be
+    # loosened for convenience, since it is what keeps unreviewed rulings about
+    # the Quran away from learners.
+    #
+    # main.py refuses to start with this on unless TILAWAH_ENV=dev, exactly like
+    # debug_audio. Everything it surfaces is marked `draft` on the wire so the
+    # client cannot render it as settled guidance even by accident.
+    show_unreviewed: bool = os.getenv("TILAWAH_SHOW_UNREVIEWED", "0") == "1"
+
     env: str = os.getenv("TILAWAH_ENV", "dev")           # dev | production
     # Shows the "not yet fully verified" banner. Also raised automatically while
     # any learner-facing correction is unreviewed, so it cannot be forgotten.

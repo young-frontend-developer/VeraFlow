@@ -7,7 +7,8 @@ Order matters:
   3. computed target (decision 1)
   4. transcribe
   5. typed errors (decision 2)
-  6. precision gate + cap at 2 (decisions 5 and 2)
+  6. TOLERANCE GATE - drop deviations too small to be real (config/tolerances.json)
+  7. precision gate + cap at 2 (decisions 5 and 2)
 
 Everything the learner sees comes from content/rules.json. This module decides
 WHICH errors to mention and in what order; it never writes a sentence.
@@ -16,12 +17,14 @@ import logging
 from dataclasses import dataclass, field
 
 from .. import content
+from ..config import settings
 from .audio import DecodeInfo, check_quality, decode
 from .collapse import looks_collapsed
 from .debug_capture import capture
 from .model import transcribe
 from .ranges import Range, is_legal_range, n_words, reference
 from .target import Target
+from .tolerances import apply as apply_tolerances
 from .typed_errors import TypedError, typed_diff
 
 log = logging.getLogger(__name__)
@@ -43,6 +46,9 @@ class Feedback:
     suppressed: bool = False         # detected something, showed nothing
     errors: list[dict] = field(default_factory=list)      # shown to the learner
     silent_errors: list[dict] = field(default_factory=list)  # logged only
+    # Deviations measured but judged too small to be real - see the tolerance
+    # gate below. Logged, never shown, and the input to threshold calibration.
+    within_tolerance: list[dict] = field(default_factory=list)
     snr_db: float = 0.0
     duration_s: float = 0.0
     mean_prob: float = 0.0
@@ -51,6 +57,57 @@ class Feedback:
 def _rank(e: TypedError) -> tuple:
     rule = content.rules().get(e.code, {})
     return (SEVERITY_RANK.get(rule.get("severity", "medium"), 1), e.at)
+
+
+def _unauthored_body(code: str) -> dict:
+    """Stand-in for a code nobody has written content for.
+
+    Only reachable under TILAWAH_SHOW_UNREVIEWED. It deliberately does NOT
+    invent a rule, a correction or a reason - decision 4 forbids exactly that,
+    and a diagnostic view is not an exemption. It carries the raw code so an
+    operator can see WHICH check fired, and empty strings everywhere a sentence
+    about tajweed would otherwise go.
+    """
+    return {"rule": code, "you_did": "", "fix": "", "drill": "",
+            "severity": content.rules().get(code, {}).get("severity", "medium"),
+            "reviewed": False, "unauthored": True}
+
+
+def present(raw: list[TypedError], lang: str) -> tuple[list[dict], list[dict]]:
+    """Detected errors -> (shown to the learner, logged only).
+
+    Split out of analyze() so the gate is testable without the 2.42 GB model.
+    This function is the whole of decision 5's display half: what a learner is
+    allowed to see, and how many of them.
+    """
+    shown, silent = [], []
+    for e in sorted(raw, key=_rank):
+        status = content.status_of(e.code)
+        body = content.render(e.code, lang, e.dict())
+        reviewed = status != "collect" and bool(body) and body.get("reviewed", False)
+        record = {**e.dict(), "status": status, "content": body, "draft": False}
+
+        if settings.show_unreviewed:
+            # Diagnostic mode: everything, uncapped. `draft` is the contract
+            # with the client - it must render a visible marker on any record
+            # carrying it, and never present one as settled guidance.
+            record["draft"] = not reviewed
+            record["needs_teacher"] = status == "teacher"
+            if body is None:
+                record["content"] = _unauthored_body(e.code)
+            shown.append(record)
+            continue
+
+        if not reviewed:
+            # Unreviewed content never reaches a learner. Flip `reviewed` in
+            # rules.json once a qualified qori has signed the string off.
+            silent.append(record)
+        elif len(shown) < MAX_SHOWN:
+            record["needs_teacher"] = status == "teacher"
+            shown.append(record)
+        else:
+            silent.append(record)
+    return shown, silent
 
 
 def analyze(audio: bytes, sura: int, aya: int, lang: str = "uz", *,
@@ -126,30 +183,32 @@ def analyze(audio: bytes, sura: int, aya: int, lang: str = "uz", *,
                         expected_phonemes=target.phonemes,
                         heard_phonemes=pred.phonemes)
 
-    raw = typed_diff(target.phonemes, pred.phonemes)
+    detected = typed_diff(target.phonemes, pred.phonemes)
 
-    shown, silent = [], []
-    for e in sorted(raw, key=_rank):
-        status = content.status_of(e.code)
-        body = content.render(e.code, lang, e.dict())
-        record = {**e.dict(), "status": status, "content": body}
+    # Two correct takes of the same ayah by the same reciter do not produce the
+    # same phoneme string - a madd held 4 counts in one reads as 5 in the other -
+    # so an untoleranced duration check reports an error on correct recitation.
+    # Thresholds come from config/tolerances.json and are calibrated by
+    # tools/calibrate.py against recordings certified correct. The shipped
+    # defaults are deliberately inert (min_delta = 1, i.e. no change in
+    # behaviour) until that calibration has actually been run.
+    raw, within_tolerance = apply_tolerances(detected, pred.mean_prob)
 
-        if status == "collect" or body is None or not body.get("reviewed", False):
-            # Unreviewed content never reaches a learner. Flip `reviewed` in
-            # rules.json once a qualified qori has signed the string off.
-            silent.append(record)
-        elif len(shown) < MAX_SHOWN:
-            record["needs_teacher"] = (status == "teacher")
-            shown.append(record)
-        else:
-            silent.append(record)
+    shown, silent = present(raw, lang)
+
+    # Within-tolerance deviations are logged in full, never just counted. They
+    # are the raw material tools/calibrate.py turns into thresholds, and once a
+    # threshold is raised this list is where you find out what it started hiding.
+    tolerated = [{**e.dict(), "margin": v.margin, "threshold": v.threshold,
+                  "reason": v.reason} for e, v in within_tolerance]
 
     capture(audio, wave, sura, aya, info.as_dict(), meas,
             {"outcome": "ok", "expected": target.phonemes,
              "heard": pred.phonemes, "mean_prob": pred.mean_prob,
              "errors_detected": [e.code for e in raw],
              "errors_shown": [e["code"] for e in shown],
-             "errors_suppressed": [e["code"] for e in silent]},
+             "errors_suppressed": [e["code"] for e in silent],
+             "within_tolerance": tolerated},
             device_id=device_id, audio_consented=audio_consented)
 
     # `clean` must mean "nothing was detected", not "nothing was displayed".
@@ -157,10 +216,18 @@ def analyze(audio: bytes, sura: int, aya: int, lang: str = "uz", *,
     # reviewed content - is a false reassurance, and decision 5 cuts both ways:
     # do not claim an error you are unsure of, and do not claim perfection you
     # are equally unsure of. The UI shows a neutral "not fully assessed" instead.
+    #
+    # A within-tolerance deviation does NOT block `clean`, and that is the one
+    # deliberate difference. Suppressing for lack of reviewed content means "we
+    # found something and cannot talk about it"; falling under a tolerance means
+    # "we measured it and it is not an error". Only the first is uncertainty.
+    # That distinction is only as good as the thresholds, which is why the
+    # shipped ones are inert until calibrate.py has been run against real
+    # certified-correct takes.
     return Feedback(
         status="ok", sura=sura, aya=aya,
         expected_phonemes=target.phonemes, heard_phonemes=pred.phonemes,
         clean=not raw, suppressed=bool(raw) and not shown,
-        errors=shown, silent_errors=silent,
+        errors=shown, silent_errors=silent, within_tolerance=tolerated,
         snr_db=q.snr_db, duration_s=q.duration_s, mean_prob=pred.mean_prob,
     )

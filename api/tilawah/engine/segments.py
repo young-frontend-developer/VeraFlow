@@ -61,15 +61,33 @@ def unit_char_spans(phonemes: str) -> list[tuple[int, int]]:
 
 @lru_cache(maxsize=512)
 def segments_for(sura: int, aya: int) -> list[dict]:
-    """[{text, start, end, units}] covering the whole ayah in Uthmani order.
+    """[{text, start, end, units}] covering the whole ayah in Uthmani order."""
+    return _build(Aya(sura, aya).get().uthmani, _phonetized(sura, aya))
 
-    `units` is empty for word gaps and for anything the phonetizer drops.
+
+@lru_cache(maxsize=1024)
+def segments_for_range(sura: int, aya: int, start_word: int,
+                       num_words: int) -> list[dict]:
+    """The same, for a practice sub-range.
+
+    Unit indices must be relative to the RANGE, because that is what the engine
+    diffs and therefore what TypedError.at counts against. Reusing the whole
+    ayah's segments for a sub-range would land every highlight on the wrong
+    letter, silently, and only when the learner practised part of an ayah.
+    """
+    from .ranges import Range, reference
+
+    uthmani, out = reference(Range(sura, aya, start_word, num_words))
+    return _build(uthmani, out)
+
+
+def _build(uthmani: str, out) -> list[dict]:
+    """`units` is empty for word gaps and for anything the phonetizer drops.
+
     Concatenating every `text` reproduces the Uthmani text exactly, and the
     spans tile it without gaps or overlap - the UI must never invent, drop or
     reorder a character.
     """
-    out = _phonetized(sura, aya)
-    uthmani = Aya(sura, aya).get().uthmani
     spans = unit_char_spans(out.phonemes)
 
     char_to_unit: dict[int, int] = {}

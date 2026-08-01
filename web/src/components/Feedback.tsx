@@ -104,7 +104,17 @@ function Correction({
 }) {
   const c = error.content;
   return (
-    <article className="card card--lit">
+    <article className={error.draft ? "card card--draft" : "card card--lit"}>
+      {/* The server sends `draft` precisely so this cannot be omitted: nothing
+          here has been reviewed by a qori, and it must not read as if it had. */}
+      {error.draft && (
+        <p className="card__draft">
+          <span className="card__draft-chip">{t(lang, "draft_chip")}</span>
+          {c.unauthored ? t(lang, "draft_unauthored") : t(lang, "draft_note")}
+          <code className="card__code">{error.code}</code>
+        </p>
+      )}
+
       <h3 className="card__rule">
         {c.rule}
         {letter && (
@@ -114,14 +124,26 @@ function Correction({
         )}
       </h3>
 
-      <p className="card__label">{t(lang, "label_heard")}</p>
-      <p className="card__said">{c.you_did}</p>
-
-      <p className="card__label">{t(lang, "label_fix")}</p>
-      <p className="card__body">{c.fix}</p>
-
-      <p className="card__label">{t(lang, "label_drill")}</p>
-      <p className="card__body">{c.drill}</p>
+      {/* An unauthored code has no sentences to show — only the code itself.
+          Rendering empty labelled sections would imply content that is missing. */}
+      {c.you_did && (
+        <>
+          <p className="card__label">{t(lang, "label_heard")}</p>
+          <p className="card__said">{c.you_did}</p>
+        </>
+      )}
+      {c.fix && (
+        <>
+          <p className="card__label">{t(lang, "label_fix")}</p>
+          <p className="card__body">{c.fix}</p>
+        </>
+      )}
+      {c.drill && (
+        <>
+          <p className="card__label">{t(lang, "label_drill")}</p>
+          <p className="card__body">{c.drill}</p>
+        </>
+      )}
 
       <button className="card__replay" onClick={onReplay}>
         <svg width="10" height="10" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">

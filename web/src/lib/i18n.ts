@@ -59,6 +59,27 @@ const STRINGS = {
     wrong_button: "Bu baho notoʻgʻri",
     wrong_thanks: "Rahmat. Buni koʻrib chiqamiz.",
 
+    // TILAWAH_SHOW_UNREVIEWED — developer diagnostic, never a learner build
+    draft_chip: "QORALAMA",
+    draft_note: "Bu izohni qori tekshirmagan. Faqat sinov uchun.",
+    draft_unauthored: "Bu xato uchun matn umuman yozilmagan. Faqat kod:",
+    draft_banner_title: "Tekshirilmagan izohlar koʻrsatilmoqda",
+    draft_banner_body:
+      "TILAWAH_SHOW_UNREVIEWED yoqilgan: aniqlangan barcha xatolar, jumladan qori tekshirmaganlari ham koʻrsatilmoqda. Bu faqat dasturchi rejimi.",
+
+    // picker — the whole Quran, not a shortlist
+    pick_sura: "Sura tanlang",
+    search_sura: "Sura nomi yoki raqami",
+    no_matches: "Hech narsa topilmadi.",
+    pick_ayah: "Oyatni tanlang.",
+    pick_segment: "Qaysi qismini oʻqiysiz?",
+    ayat_count: "oyat",
+    parts: "qism",
+    words: "soʻz",
+    seconds_short: "s",
+    estimate: "Taxminiy davomiylik",
+    change_selection: "Boshqa oyat tanlash",
+
     // library
     library_title: "Oyatlar",
     library_sub: "Mashq qilish uchun oyatni tanlang.",
@@ -152,6 +173,25 @@ const STRINGS = {
     teacher_note: "Мы не вполне уверены — проверьте с вашим устозом.",
     wrong_button: "Оценка неверна",
     wrong_thanks: "Спасибо. Мы это разберём.",
+
+    draft_chip: "ЧЕРНОВИК",
+    draft_note: "Это замечание не проверено чтецом. Только для тестирования.",
+    draft_unauthored: "Для этой ошибки текст вообще не написан. Только код:",
+    draft_banner_title: "Показываются непроверенные замечания",
+    draft_banner_body:
+      "Включён TILAWAH_SHOW_UNREVIEWED: показываются все найденные ошибки, включая непроверенные чтецом. Это режим разработчика.",
+
+    pick_sura: "Выберите суру",
+    search_sura: "Название или номер суры",
+    no_matches: "Ничего не найдено.",
+    pick_ayah: "Выберите аят.",
+    pick_segment: "Какую часть будете читать?",
+    ayat_count: "аятов",
+    parts: "частей",
+    words: "слова",
+    seconds_short: "с",
+    estimate: "Примерная длительность",
+    change_selection: "Выбрать другой аят",
 
     library_title: "Аяты",
     library_sub: "Выберите аят для практики.",

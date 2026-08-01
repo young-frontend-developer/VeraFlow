@@ -1,0 +1,8 @@
+path,sura,aya,start_word,num_words,reciter,note
+# Copy to manifest.csv and replace with your own certified-correct takes.
+# start_word/num_words blank = whole ayah. reciter is required for the
+# per-reciter table, which is the one that decides whether a number is real.
+clips/103_001_take1.wav,103,1,,,rahmatulloh,murattal, quiet room
+clips/103_001_take2.wav,103,1,,,rahmatulloh,same ayah again - the variance between takes is the point
+clips/112_001_take1.wav,112,1,,,SECOND-RECITER,phone mic
+clips/002_255_seg1.wav,2,255,0,6,SECOND-RECITER,first segment only

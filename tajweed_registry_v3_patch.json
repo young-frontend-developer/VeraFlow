@@ -1,0 +1,292 @@
+{
+  "_meta": {
+    "version": "0.3-sourced",
+    "supersedes": "tajweed_error_registry_v2.json (partial — merge, do not replace)",
+    "source": {
+      "title": "Тажвид қоидалари",
+      "authors": "Зиёвуддин Раҳим; Одилхон қори Юнусхон ўғли",
+      "reviewers": "Абдулазиз Мансур (Ўзбекистон мусулмонлари идораси раиси муовини); Т. Ш. Қодиров; Н. М. Орифхўжаев",
+      "publisher": "«Тошкент ислом университети» нашриёт-матбаа бирлашмаси, 2011",
+      "isbn": "978-9943-390-26-3",
+      "approval": "Ўзбекистон Республикаси Вазирлар Маҳкамаси ҳузуридаги Дин ишлари қўмитасининг 2011 йил 17 июндаги 1204-рақамли тавсияси",
+      "note": "Explanations below are written for Tilawah and grounded in this book; they are not reproductions of its text. Each entry cites the lesson it derives from. The book permits иқтибос (citation in the path of knowledge) and forbids reproduction without the authors' permission."
+    },
+    "instructions_for_claude_code": [
+      "1. Apply the global_terminology map below as find-and-replace across ALL uz blocks in v2.",
+      "2. Merge the entries below into the registry — new ones added, listed rewrites replacing their v2 counterparts.",
+      "3. Every entry still has status='draft'. The safety gate stays.",
+      "4. Implement the qalqala_shadda_exception in detection logic before shipping QALQALAH_* — see detection_notes."
+    ],
+    "global_terminology": {
+      "qalin": "yo'g'on",
+      "mufaxxam": "iste'lo harfi",
+      "moraqaq": "istifola harfi",
+      "shadid": "shiddat",
+      "rixv": "raxovat",
+      "safeer": "sofiyr",
+      "safir": "sofiyr",
+      "tikraar": "takror",
+      "tafashie": "tafashshiy",
+      "makhraj": "maxraj",
+      "madd": "mad",
+      "nun sokin": "sukunli «nuvn»",
+      "mim sokin": "sukunli «miym»",
+      "ikhfo": "ixfo",
+      "nun harfi": "«nuvn» harfi",
+      "mim harfi": "«miym» harfi",
+      "seen": "siyn",
+      "_letter_names_uz": "ب bo · ت to · ث so · ج jiym · ح ho · خ xo · د dol · ذ zol · ر ro · ز zoy · س siyn · ش shiyn · ص sod · ض dzod · ط to · ظ zo · ع ayn · غ g'ayn · ف fo · ق qof · ك kof · ل lom · م miym · ن nuvn · ه ho · و vov · ي yo"
+    },
+    "detection_notes": {
+      "qalqala_shadda_exception": "Book, 2-dars: a qalqala letter carrying shadda mid-word, when joined to what follows, takes NO qalqala. Qalqala applies at lozim sukun (permanent) and oriz sukun (temporary, arising from stopping). Detection must exclude joined-shadda positions or it will false-fire constantly.",
+      "ghunna_thickness": "Book, 5-dars: when sukunli nuvn or tanvin meets one of the yo'g'on ixfo letters, the g'unna itself is read yo'g'on. Otherwise the g'unna is ingichka (with tarqiq). A g'unna-thickness check is possible but is NOT currently an entry — consider adding once the base g'unna entries are live.",
+      "mim_sakin_izhar_edge": "Book, 6-dars: special care is required for izhor shafaviya when sukunli miym meets ف or و, because the maxraj proximity invites an unintended ixfo. Weight detection confidence higher at those two positions."
+    }
+  },
+
+  "new_entries": {
+
+    "MIM_IDGHAM_MISLAYN_MISSING": {
+      "status": "draft", "group": "ahkam", "severity": "medium", "detection_confidence": "low",
+      "source_ref": "6-dars «Сукунли мийм»",
+      "detection_signal": "UNTESTED: sukunli miym followed by miym; the two miym phonemes surface separately instead of merging into one held ghunna-bearing miym.",
+      "uz": {
+        "name": "Idg'om mislayn qilinmagan",
+        "short": "Ikki «miym» qo'shilmadi.",
+        "nima_xato": "Sukunli «miym»dan keyin yana «miym» keldi, lekin siz ularni alohida o'qidingiz. Birinchi «miym» ikkinchisining ichiga kirishi kerak edi.",
+        "qoida": "Sukunli «miym» «miym»ga yo'liqqanda, avvalgisi keyingisining ichiga kiritib o'qiladi. Bu idg'om mislayn deyiladi va g'unna bilan, ikki harakat miqdorida ushlab turiladi. Har uchala sukunli «miym» qoidasi shafaviy, ya'ni lab-lab undoshi hisoblanadi.",
+        "nega_muhim": "Ikki «miym»ni alohida chiqarish idg'omni tark qilishdir. Tajvidda bu qoida buzilgan hisoblanadi.",
+        "tuzatish": "Lablaringizni bir marta yoping va ochmang. Ikki «miym» bitta uzun «miym» bo'lib chiqsin, burunda ikki harakat ushlang. Lab orasida uzilish bo'lsa — idg'om bo'lmagan.",
+        "mashq": "Lablarni ochmasdan 10 marta o'qing: «am-man», «va kam-mim-malakin», «lahum-mag'firotun». Har safar bitta uzluksiz «miym» chiqayotganini tekshiring."
+      },
+      "ru": {
+        "name": "Идгам мислайн не выполнен",
+        "short": "Два «мийм» не слились.",
+        "chto_ne_tak": "После сукунного «мийм» следует ещё один «мийм», но вы произнесли их раздельно. Первый должен войти во второй.",
+        "pravilo": "Когда сукунный «мийм» встречает «мийм», первый вводится во второй. Это идгам мислайн; читается с гунной, удерживается на два хараката. Все три правила сукунного «мийм» относятся к шафавий — губно-губным.",
+        "pochemu_vazhno": "Раздельное произнесение двух «мийм» есть оставление идгама и нарушение правила таджвида.",
+        "kak_ispravit": "Сомкните губы один раз и не размыкайте. Два «мийм» должны прозвучать как один долгий, удерживайте в носу два счёта. Разрыв между губами означает, что идгам не состоялся.",
+        "uprazhnenie": "Не размыкая губ, 10 раз: «ам-ман», «ва кам-мим-малакин», «лаҳум-мағфиротун». Проверяйте непрерывность."
+      }
+    },
+
+    "MIM_IKHFA_SHAFAWIYA_MISSING": {
+      "status": "draft", "group": "ahkam", "severity": "medium", "detection_confidence": "low",
+      "source_ref": "6-dars «Сукунли мийм»",
+      "detection_signal": "UNTESTED: sukunli miym followed by ب; miym surfaces fully articulated with closed lips instead of a light ghunna-bearing approach.",
+      "uz": {
+        "name": "Ixfo shafaviya qilinmagan",
+        "short": "«Miym» «bo» oldida yashirilmadi.",
+        "nima_xato": "Sukunli «miym»dan keyin «bo» keldi. Siz «miym»ni to'liq aytdingiz, holbuki uni yashirib, g'unna bilan o'qish kerak edi.",
+        "qoida": "Sukunli «miym» «bo»ga yo'liqqanda, «miym» «bo»ning ichiga kiritilib, g'unna (dimog') bilan o'qiladi. Bu ixfo shafaviya deyiladi.",
+        "nega_muhim": "Ixfo shafaviya sukunli «miym»ning uchta asosiy qoidasidan biri. Uni bajarmaslik tajvid xatosi.",
+        "tuzatish": "Lablarni to'liq bosmang — yengil yaqinlashtiring va tovushni burun orqali chiqaring. Lab qattiq yopilsa, bu izhor bo'lib qoladi, ixfo emas.",
+        "mashq": "10 marta: «hum-bborizuvna», «kalbuhum-bbositun», «inna robbahum-bihim». Har safar burunda titrash borligini va lab qattiq yopilmaganini tekshiring."
+      },
+      "ru": {
+        "name": "Ихфа шафавия не выполнено",
+        "short": "«Мийм» не скрыт перед «бо».",
+        "chto_ne_tak": "После сукунного «мийм» следует «бо». Вы произнесли «мийм» полностью, тогда как его следует скрыть и читать с гунной.",
+        "pravilo": "Когда сукунный «мийм» встречает «бо», он вводится в «бо» и читается с гунной (носовым звуком). Это ихфа шафавия.",
+        "pochemu_vazhno": "Ихфа шафавия — одно из трёх основных правил сукунного «мийм». Его невыполнение является ошибкой таджвида.",
+        "kak_ispravit": "Не смыкайте губы полностью — лишь слегка сблизьте и выводите звук через нос. Плотное смыкание превращает это в изхар, а не ихфа.",
+        "uprazhnenie": "10 раз: «ҳум-ббризувна», «калбуҳум-ббситун», «инна роббаҳум-биҳим». Проверяйте вибрацию в носу и отсутствие плотного смыкания."
+      }
+    },
+
+    "MIM_IZHAR_SHAFAWIYA_WRONG": {
+      "status": "draft", "group": "ahkam", "severity": "medium", "detection_confidence": "low",
+      "source_ref": "6-dars «Сукунли мийм», Эслатма",
+      "detection_signal": "UNTESTED: sukunli miym followed by any of the 26 letters other than م and ب, but ghonna detected where none expected. Weight higher when the following letter is ف or و.",
+      "uz": {
+        "name": "Izhor shafaviya o'rnida g'unna qilingan",
+        "short": "«Miym» aniq o'qilishi kerak edi.",
+        "nima_xato": "Sukunli «miym»ni yashirib yoki g'unna qo'shib o'qidingiz. Bu o'rinda uni to'liq, bildirib aytish kerak edi.",
+        "qoida": "Sukunli «miym» «miym» va «bo»dan boshqa yigirma olti harfga yo'liqqanda, «miym» bildirib, aniq o'qiladi. Bu izhor shafaviya deyiladi.",
+        "nega_muhim": "Izhor o'rnida ixfo qilish qoidalar chegarasini buzadi. Ayniqsa «fo» va «vov» oldida ehtiyot bo'lish kerak: bu harflarning maxraji «miym»ga yaqin bo'lgani uchun beixtiyor ixfo qilib yuborish oson.",
+        "tuzatish": "Lablarni to'liq yoping va «miym»ni aniq chiqaring, keyin darhol keyingi harfga o'ting. Burun orqali cho'zmang.",
+        "mashq": "«Fo» va «vov» oldidagi misollarni alohida mashq qiling, har birini 10 marta. Har safar «miym» aniq eshitilyaptimi va cho'zilmayaptimi — tekshiring."
+      },
+      "ru": {
+        "name": "На месте изхара шафавия добавлена гунна",
+        "short": "«Мийм» должен был звучать отчётливо.",
+        "chto_ne_tak": "Вы скрыли сукунный «мийм» или добавили гунну. Здесь его следует произнести полностью и отчётливо.",
+        "pravilo": "Когда сукунный «мийм» встречает любую из двадцати шести букв, кроме «мийм» и «бо», он произносится отчётливо. Это изхар шафавия.",
+        "pochemu_vazhno": "Ихфа на месте изхара нарушает границы правил. Особая осторожность нужна перед «фо» и «вов»: их махрадж близок к «мийм», и ихфа получается непроизвольно.",
+        "kak_ispravit": "Сомкните губы полностью, произнесите «мийм» отчётливо и сразу переходите к следующей букве. Не тяните через нос.",
+        "uprazhnenie": "Отдельно отработайте примеры перед «фо» и «вов», по 10 раз каждый. Проверяйте отчётливость и отсутствие протяжения."
+      }
+    },
+
+    "MAKHARIJ_SHEEN_TO_JEEM": {
+      "status": "draft", "group": "makharij", "severity": "high", "detection_confidence": "high",
+      "source_ref": "3-dars «Шийн» ва «жийм» ҳарфлари ўртасидаги фарқ",
+      "detection_signal": "phoneme substitution: ش -> ج, odatda hams_or_jahr o'zgarishi bilan",
+      "uz": {
+        "name": "«Shiyn» harfi o'rniga «jiym» o'qish",
+        "short": "Siz «shiyn»ni «jiym» kabi o'qidingiz.",
+        "nima_xato": "Siz «shiyn» harfini «jiym» kabi talaffuz qildingiz — tilni tanglayga tegizdingiz va tovushni kuch bilan chiqardingiz.",
+        "qoida": "«Shiyn» va «jiym» ikkalasi ham til o'rtasida talaffuz qilinadi — maxraj bir xil. Farq shundaki: «shiyn» kuchsiz chiqadi, til yuqori tanglayga yopishmaydi, havo til va tanglay orasidan yoyilib o'tadi. «Jiym» esa jahr — kuchli, jarangli; til tanglayga tegib turadi.",
+        "nega_muhim": "Maxraj bir xil bo'lgani uchun bu xato oson yuz beradi, lekin «shiyn» va «jiym» butunlay boshqa harflar va so'z ma'nosini o'zgartiradi.",
+        "tuzatish": "«Shiyn»ni cho'zib aytib ko'ring — havo uzluksiz yoyilib chiqishi kerak, tilingiz tanglayga tegmasin. «Jiym»da esa til tanglayga tegadi va tovush uzilib, kuch bilan ochiladi.",
+        "mashq": "10 marta navbatma-navbat: «shа — ja — shа — ja». «Shiyn»ni har safar 3 soniya cho'zing; agar cho'zilmasa, til tanglayga tegib qolgan."
+      },
+      "ru": {
+        "name": "Буква «шийн» произнесена как «жийм»",
+        "short": "Вы произнесли «шийн» как «жийм».",
+        "chto_ne_tak": "Вы произнесли «шийн» как «жийм» — коснулись языком нёба и вывели звук с силой.",
+        "pravilo": "«Шийн» и «жийм» обе произносятся серединой языка — махрадж одинаковый. Разница: «шийн» слабая, язык не прилегает к верхнему нёбу, воздух рассеивается между языком и нёбом. «Жийм» — джахр, сильная и звонкая; язык касается нёба.",
+        "pochemu_vazhno": "При одинаковом махрадже ошибка возникает легко, но «шийн» и «жийм» — совершенно разные буквы, и смысл слова меняется.",
+        "kak_ispravit": "Попробуйте протянуть «шийн» — воздух должен идти непрерывно, язык не касается нёба. При «жийм» язык касается нёба, звук прерывается и раскрывается с силой.",
+        "uprazhnenie": "10 раз поочерёдно: «ша — жа — ша — жа». Тяните «шийн» по 3 секунды; если не тянется — язык касается нёба."
+      }
+    },
+
+    "MAKHARIJ_WAW_TO_FA": {
+      "status": "draft", "group": "makharij", "severity": "high", "detection_confidence": "high",
+      "source_ref": "3-dars «Вбв» ва «фб» ҳарфлари ўртасидаги фарқ",
+      "detection_signal": "phoneme substitution: و -> ف yoki ف -> و",
+      "uz": {
+        "name": "«Vov» va «fo» harflarini aralashtirish",
+        "short": "Lab-lab tovushi lab-tish tovushiga aylandi.",
+        "nima_xato": "Siz «vov» va «fo» harflarini aralashtirdingiz. Bu ikkisi lablarning turlicha holatidan hosil bo'ladi.",
+        "qoida": "«Vov» ikki labning juftlashishidan hosil bo'ladi — u lab-lab tovushi. «Fo»da esa yuqori tishlar pastki lab ustida turadi — u lab-tish tovushi. Asosan shu jihatga e'tibor berilsa, farq yaqqol namoyon bo'ladi.",
+        "nega_muhim": "Ixlos surasida «kufuvan ahad» deb o'qiladi, «kuffan ahad» emas. Bu farqni saqlamaslik so'zni o'zgartiradi.",
+        "tuzatish": "Oynaga qarang. «Vov»da ikkala lab bir-biriga qaraydi, tishlar ishtirok etmaydi. «Fo»da yuqori tishlaringiz pastki labingiz ustiga tushishi ko'rinadi. Ko'zingiz bilan tekshiring.",
+        "mashq": "Oyna oldida 10 marta: «va — fa — va — fa». So'ng Ixlos surasidan «kufuvan ahad» ni sekin 10 marta o'qing va har safar tishlar ishtirok etmaganini tasdiqlang."
+      },
+      "ru": {
+        "name": "Смешение букв «вов» и «фо»",
+        "short": "Губно-губной звук стал губно-зубным.",
+        "chto_ne_tak": "Вы смешали «вов» и «фо». Они образуются разным положением губ.",
+        "pravilo": "«Вов» образуется смыканием двух губ — это губно-губной звук. При «фо» верхние зубы стоят на нижней губе — это губно-зубной звук. Именно на это и нужно смотреть.",
+        "pochemu_vazhno": "В суре «Ихлас» читается «куфуван ахад», а не «куффан ахад». Несоблюдение различия меняет слово.",
+        "kak_ispravit": "Посмотрите в зеркало. При «вов» обе губы обращены друг к другу, зубы не участвуют. При «фо» видно, как верхние зубы опускаются на нижнюю губу.",
+        "uprazhnenie": "Перед зеркалом 10 раз: «ва — фа — ва — фа». Затем медленно прочитайте «куфуван ахад» 10 раз, каждый раз проверяя, что зубы не участвуют."
+      }
+    },
+
+    "MAKHARIJ_THAL_TO_ZAA_CONFUSION": {
+      "status": "draft", "group": "makharij", "severity": "high", "detection_confidence": "high",
+      "source_ref": "3-dars «Збл» ва «зб» ҳарфлари ўртасидаги фарқ",
+      "detection_signal": "phoneme substitution: ذ <-> ظ",
+      "uz": {
+        "name": "«Zol» va «zo» harflarini aralashtirish",
+        "short": "Til holati noto'g'ri edi.",
+        "nima_xato": "Siz «zol» va «zo» harflarini aralashtirdingiz. Bu ikkisining farqi tilning qaysi qismi va qayerga tegishida.",
+        "qoida": "«Zol» talaffuzida til o'rtasi old tishlar yuqori qismining uch tomoniga yopishib turadi; bu holatda tilning yon tomoni ham ishtirok etadi. «Zo»da esa til uchi yuqori tishlarning pastki qismiga yaqinlashtiriladi. Bundan tashqari «zo» iste'lo — yo'g'on o'qiladi, «zol» esa istifola — ingichka.",
+        "nega_muhim": "Ikki harf bir-biriga yaqin eshitiladi, lekin ular alohida harflardir va so'z ma'nosini o'zgartiradi.",
+        "tuzatish": "«Zol»da til kengroq yuza bilan tegadi va tovush ingichka chiqadi. «Zo»da til uchi tegadi va tilning orqasi ko'tarilib, tovush yo'g'on chiqadi. Avval ingichka-yo'g'on farqini ushlang, keyin til holatini.",
+        "mashq": "10 marta navbatma-navbat: «zа (zol) — zа (zo)». Har safar og'iz ichida yo'g'onlik bor-yo'qligini tekshiring — bu eng oson ajratuvchi belgi."
+      },
+      "ru": {
+        "name": "Смешение букв «зол» и «зо»",
+        "short": "Положение языка было неверным.",
+        "chto_ne_tak": "Вы смешали «зол» и «зо». Их различие — в том, какая часть языка и куда прилегает.",
+        "pravilo": "При «зол» середина языка прилегает к краю верхней части передних зубов; участвует и боковая часть языка. При «зо» кончик языка приближается к нижней части верхних зубов. Кроме того, «зо» — истеъло, читается тяжело, а «зол» — истифола, легко.",
+        "pochemu_vazhno": "Буквы звучат близко, но это разные буквы, и смысл слова меняется.",
+        "kak_ispravit": "При «зол» язык касается более широкой поверхностью, звук лёгкий. При «зо» касается кончик, задняя часть языка поднимается, звук тяжёлый. Сначала уловите различие лёгкий/тяжёлый, затем положение языка.",
+        "uprazhnenie": "10 раз поочерёдно: «за (зол) — за (зо)». Каждый раз проверяйте тяжесть во рту — это самый простой различительный признак."
+      }
+    }
+  },
+
+  "rewritten_entries": {
+
+    "TAFKHEEM_LOST": {
+      "status": "draft", "group": "sifat", "severity": "medium", "detection_confidence": "high",
+      "source_ref": "2-dars «Истеъло ва истифола ҳарфлари»",
+      "detection_signal": "sifat tafkheem_or_taqeeq: kutilgan 'mofakham' o'rniga 'moraqaq' (harf o'zgarmagan holda)",
+      "uz": {
+        "name": "Iste'lo harfi ingichka o'qilgan",
+        "short": "Harf to'g'ri, lekin yo'g'onligi yo'qolgan.",
+        "nima_xato": "Siz harfni to'g'ri aytdingiz, lekin ingichka o'qidingiz. Bu harf yo'g'on o'qilishi kerak edi.",
+        "qoida": "Iste'lo — harf talaffuzida tilning orqa tanglay oxiri tomon ko'tarilishidir; shuning uchun bunday harf yo'g'on, baland o'qiluvchi deyiladi. Iste'lo harflari yettita. Ular harakati zamma, fatha yoki kasra bo'lishidan qat'i nazar doim yo'g'on o'qilaveradi. Qolgan barcha harflar istifola deyiladi va ularni talaffuz qilishda til pastki jag' tomon tushadi.",
+        "nega_muhim": "Yo'g'onlikni yo'qotish harfni istifola juftiga yaqinlashtiradi. Ayniqsa kasra harakatidagi iste'lo harflarida bu xato ko'p uchraydi — kasra tilni pastga tortadi, siz esa uni ko'tarib turishingiz kerak.",
+        "tuzatish": "Harfdan oldin tilingizning orqa qismini tanglay oxiri tomon ko'taring va shu holatda ushlab turing. Og'iz ichida bo'shliq kengayganini sezasiz. Kasrali holatda ayniqsa diqqat qiling.",
+        "mashq": "Har bir iste'lo harfini kasra bilan 5 martadan o'qing — bu eng qiyin holat. Keyin istifola juftlari bilan solishtiring."
+      },
+      "ru": {
+        "name": "Буква истеъло прочитана легко",
+        "short": "Буква верная, но потеряна тяжесть.",
+        "chto_ne_tak": "Вы произнесли букву правильно, но легко. Эта буква должна читаться тяжело.",
+        "pravilo": "Истеъло — подъём задней части языка к концу нёба; такая буква называется тяжёлой, высокой. Букв истеъло семь. Они читаются тяжело независимо от огласовки — дамма, фатха или кясра. Все остальные буквы называются истифола; при их произнесении язык опускается к нижней челюсти.",
+        "pochemu_vazhno": "Потеря тяжести сближает букву с её лёгкой парой. Ошибка особенно часта при кясре: кясра тянет язык вниз, а вам нужно удерживать его поднятым.",
+        "kak_ispravit": "Перед буквой поднимите заднюю часть языка к концу нёба и удерживайте. Почувствуйте расширение полости рта. При кясре будьте особенно внимательны.",
+        "uprazhnenie": "Каждую букву истеъло с кясрой по 5 раз — это самый трудный случай. Затем сравните с парами истифола."
+      }
+    },
+
+    "SHIDDA_LOST": {
+      "status": "draft", "group": "sifat", "severity": "medium", "detection_confidence": "high",
+      "source_ref": "2-dars «Шиддат ва раховат»",
+      "detection_signal": "sifat shidda_or_rakhawa: kutilgan 'shadeed' o'rniga 'rikhw' yoki 'between'",
+      "uz": {
+        "name": "Shiddat harfi raxovat kabi o'qilgan",
+        "short": "Tovush to'siqqa uchramadi.",
+        "nima_xato": "Siz shiddat harfini raxovat kabi sirg'altib o'qidingiz — tovush to'siqqa uchramadi va havo to'xtamadi.",
+        "qoida": "Shiddat harflari talaffuzida tovush to'siqqa uchrab, kuchli chiqadi; shuning uchun ular portlovchi, kuch bilan talaffuz qilinuvchi harflar deyiladi. Raxovat esa shiddatning aksi — harflar kuchsiz tarzda sirg'alib chiqadi.",
+        "nega_muhim": "Shiddat harfini sirg'altib o'qish uni boshqa harfga o'xshatib yuboradi.",
+        "tuzatish": "Sinov: harfni cho'zishga urinib ko'ring. Shiddat harfi cho'zilmaydi — maxraj to'liq yopilib, havo butunlay to'xtaydi, keyin birdan ochiladi. Agar cho'zilsa, siz uni raxovat qilib o'qigansiz.",
+        "mashq": "Har bir shiddat harfini sukun bilan 5 martadan ayting va har safar havo to'liq to'xtayotganini tekshiring. Keyin raxovat harfi bilan solishtiring: raxovat cho'ziladi, shiddat cho'zilmaydi."
+      },
+      "ru": {
+        "name": "Буква шиддат прочитана как раховат",
+        "short": "Звук не встретил преграды.",
+        "chto_ne_tak": "Вы произнесли букву шиддат скользяще, как раховат — звук не встретил преграды и воздух не остановился.",
+        "pravilo": "При буквах шиддат звук встречает преграду и выходит сильно; поэтому их называют взрывными, произносимыми с силой. Раховат — противоположность: буквы выходят слабо, скользя.",
+        "pochemu_vazhno": "Скользящее произнесение буквы шиддат уподобляет её другой букве.",
+        "kak_ispravit": "Проверка: попробуйте протянуть букву. Шиддат не тянется — махрадж полностью смыкается, воздух останавливается, затем резко раскрывается. Если тянется — вы произнесли её как раховат.",
+        "uprazhnenie": "Каждую букву шиддат с сукуном по 5 раз, проверяя полную остановку воздуха. Затем сравните с буквой раховат: раховат тянется, шиддат — нет."
+      }
+    },
+
+    "QALQALAH_EXCESSIVE": {
+      "status": "draft", "group": "sifat", "severity": "medium", "detection_confidence": "medium",
+      "source_ref": "2-dars «Қалқала»",
+      "detection_signal": "qalqala harfidan keyin kutilmagan unli fonema aniqlangan. MUHIM: joined shadda pozitsiyalarini istisno qiling — detection_notes ga qarang.",
+      "uz": {
+        "name": "Qalqala haddan ortiq kuchli qilingan",
+        "short": "Qalqala harakatga aylanib ketdi.",
+        "nima_xato": "Siz qalqalani shunchalik kuchli qildingizki, sukun o'rniga zamma yoki kasra harakati kelib qoldi.",
+        "qoida": "Qalqala — harfni tebratib o'qishdir, lekin bu tebranish harakat hosil qilmasligi kerak. Ba'zi kitoblarda «qof» va «to» qalqalasi zammaga, «bo», «jiym», «dol» qalqalasi kasraga yaqinroq qilinadi deyilgan. Lekin qoidaga muvofiq tebratib o'qilsa, bu mayl o'z-o'zidan yuzaga keladi — uni atayin qilish shart emas. Aks holda sukun o'rniga harakat kelib qoladi.",
+        "nega_muhim": "Qalqalani harakatga aylantirish so'zga mavjud bo'lmagan unli qo'shadi — bu ham qoidaning buzilishi. To'g'ri: «at·vabru». Xato: «atuvabru». To'g'ri: «ab·tar». Xato: «abitar».",
+        "tuzatish": "Tebranishni juda qisqa qiling — bu unli emas, balki maxrajning ochilish sasi. Harfni sukunli holida qoldiring va undan keyin hech qanday unli eshitilmasin.",
+        "mashq": "«Ab·tar» ni 10 marta o'qing va oxirida «abitar» emas, faqat qisqa tebranish chiqishini tekshiring. Ovozingizni yozib eshiting — bu xatoni o'z qulog'ingiz bilan eshitish eng ishonchli usul."
+      },
+      "ru": {
+        "name": "Калькаля выполнена чрезмерно",
+        "short": "Калькаля превратилась в огласовку.",
+        "chto_ne_tak": "Вы сделали калькаля настолько сильной, что вместо сукуна появилась дамма или кясра.",
+        "pravilo": "Калькаля — это чтение буквы с колебанием, но это колебание не должно образовывать огласовку. В некоторых книгах говорится, что калькаля «қоф» и «то» ближе к дамме, а «бо», «жийм», «дол» — к кясре. Но при чтении по правилу этот наклон возникает сам собой; специально его делать не нужно. Иначе вместо сукуна появится огласовка.",
+        "pochemu_vazhno": "Превращение калькаля в огласовку добавляет к слову отсутствующий гласный. Верно: «ат·вабру». Неверно: «атувабру». Верно: «аб·тар». Неверно: «абитар».",
+        "kak_ispravit": "Делайте колебание очень коротким — это не гласный, а призвук раскрытия махраджа. Оставьте букву с сукуном, после неё не должно быть слышно гласного.",
+        "uprazhnenie": "Прочитайте «аб·тар» 10 раз, проверяя, что получается короткое колебание, а не «абитар». Запишите себя — услышать эту ошибку собственным ухом надёжнее всего."
+      }
+    },
+
+    "GHUNNA_MISSING": {
+      "status": "draft", "group": "ghunna", "severity": "medium", "detection_confidence": "high",
+      "source_ref": "2-dars «Ғунна»; 6-dars «Ташдидли мийм ва нувн»",
+      "detection_signal": "sifat ghonna: kutilgan 'maghnoon' o'rniga 'not_maghnoon'",
+      "uz": {
+        "name": "G'unna qilinmagan",
+        "short": "Siz burun tovushini qilmadingiz.",
+        "nima_xato": "Siz «nuvn» yoki «miym» harfida g'unna qilmadingiz — tovushni burun orqali ushlab turish o'rniga tez o'tib ketdingiz.",
+        "qoida": "G'unna — dimog'dan, ya'ni burun bo'shlig'idan chiqadigan tovush. Tashdidli «miym» va «nuvn» g'unnali o'qiladi, ikki harakat miqdorida ushlab turiladi va so'ngra keyingi so'zga o'tiladi. Tashdidli «miym» va «nuvn» harf, ism va fe'llar tarkibida kelishi mumkin — barchasida qoida bir xil.",
+        "nega_muhim": "G'unna tajvidning asosiy belgilaridan biri. Uni tark qilish Qur'on tilovatining o'lchovini buzadi.",
+        "tuzatish": "Barmoq bilan burun qanotlarini yengil ushlang va tashdidli «nuvn»ni ayting. Titrash sezmasangiz, g'unna yetarli emas. Ichingizda ikkigacha sanang, keyin keyingi so'zga o'ting.",
+        "mashq": "Burnini ushlab 10 marta o'qing. Har safar titrash borligini va aynan ikki harakat davom etganini tekshiring — kam ham, ko'p ham emas."
+      },
+      "ru": {
+        "name": "Гунна не выполнена",
+        "short": "Вы не сделали носовой звук.",
+        "chto_ne_tak": "Вы не сделали гунну на «нувн» или «мийм» — вместо удержания через нос быстро перешли дальше.",
+        "pravilo": "Гунна — звук из носовой полости. «Мийм» и «нувн» с ташдидом читаются с гунной, удерживаются на два хараката, затем следует переход к следующему слову. Ташдидные «мийм» и «нувн» могут встречаться в частицах, именах и глаголах — правило везде одно.",
+        "pochemu_vazhno": "Гунна — один из основных признаков таджвида. Её пропуск нарушает меру чтения Корана.",
+        "kak_ispravit": "Слегка зажмите крылья носа пальцами и произнесите ташдидный «нувн». Нет вибрации — гунна недостаточна. Сосчитайте про себя до двух, затем переходите дальше.",
+        "uprazhnenie": "Придерживая нос, 10 раз. Каждый раз проверяйте вибрацию и длительность ровно в два хараката — не меньше и не больше."
+      }
+    }
+  }
+}

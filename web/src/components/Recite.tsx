@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import AyahText from "./AyahText";
 import Feedback from "./Feedback";
-import { Attempt, Ayah, expertAudioUrl, submitAttempt } from "../lib/api";
+import { Selection } from "./Picker";
+import { Attempt, expertAudioUrl, submitAttempt } from "../lib/api";
 import { Lang, t } from "../lib/i18n";
 import { RecorderHandle, startRecording } from "../lib/recorder";
 
@@ -10,7 +11,15 @@ type Phase = "idle" | "recording" | "waiting";
 const mmss = (s: number) =>
   `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
-export default function Recite({ lang, ayah }: { lang: Lang; ayah: Ayah }) {
+export default function Recite({
+  lang,
+  selection,
+  onChange,
+}: {
+  lang: Lang;
+  selection: Selection;
+  onChange: () => void;
+}) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [result, setResult] = useState<Attempt | null>(null);
   const [elapsed, setElapsed] = useState(0);
@@ -21,7 +30,11 @@ export default function Recite({ lang, ayah }: { lang: Lang; ayah: Ayah }) {
   const ringOuterRef = useRef<HTMLSpanElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Reset when the learner moves to another ayah.
+  const { sura, ayah, segment } = selection;
+  // Identity of the exact range, so switching segments within one ayah resets
+  // too — not just switching ayah.
+  const key = `${sura.number}:${ayah.aya}:${segment.start_word}:${segment.num_words}`;
+
   useEffect(() => {
     handleRef.current?.cancel();
     handleRef.current = null;
@@ -29,7 +42,7 @@ export default function Recite({ lang, ayah }: { lang: Lang; ayah: Ayah }) {
     setResult(null);
     setElapsed(0);
     setFailed(false);
-  }, [ayah.slug]);
+  }, [key]);
 
   useEffect(() => () => handleRef.current?.cancel(), []);
 
@@ -74,7 +87,12 @@ export default function Recite({ lang, ayah }: { lang: Lang; ayah: Ayah }) {
     setPhase("waiting");
     try {
       const blob = await h.stop();
-      setResult(await submitAttempt(blob, ayah.sura, ayah.aya, lang));
+      setResult(
+        await submitAttempt(blob, sura.number, ayah.aya, lang, {
+          start_word: segment.start_word,
+          num_words: segment.num_words,
+        }),
+      );
     } catch {
       setFailed(true);
     } finally {
@@ -85,25 +103,36 @@ export default function Recite({ lang, ayah }: { lang: Lang; ayah: Ayah }) {
 
   const firstError = result?.status === "ok" ? result.errors[0] : undefined;
   const highlightUnit = firstError ? firstError.at : null;
+  // text_segments are relative to the SELECTED RANGE, which is what the engine
+  // diffed, so `at` indexes them directly.
   const letter =
     highlightUnit === null
       ? ""
-      : (ayah.segments.find((s) => s.units.includes(highlightUnit))?.text ?? "");
+      : (segment.text_segments.find((s) => s.units.includes(highlightUnit))
+          ?.text ?? "");
 
   return (
     <>
       <div className="eyebrow">
         <h2 className="eyebrow__name">
-          {lang === "uz" ? ayah.name_uz : ayah.name_ru}
+          {sura.number}. {sura.translit}
         </h2>
         <span className="eyebrow__meta">
-          {ayah.sura}:{ayah.aya}
+          {sura.number}:{ayah.aya}
+          {!selection.whole &&
+            ` · ${t(lang, "words")} ${segment.start_word + 1}–${
+              segment.start_word + segment.num_words
+            }`}
         </span>
       </div>
 
+      <button className="crumb crumb--change" onClick={onChange}>
+        {t(lang, "change_selection")}
+      </button>
+
       <AyahText
-        uthmani={ayah.uthmani}
-        segments={ayah.segments}
+        uthmani={segment.uthmani}
+        segments={segment.text_segments}
         highlightUnit={highlightUnit}
         mode={
           phase === "recording"
@@ -114,24 +143,46 @@ export default function Recite({ lang, ayah }: { lang: Lang; ayah: Ayah }) {
         }
       />
 
-      <button
-        className="listen"
-        disabled={phase !== "idle"}
-        onClick={() => audioRef.current?.play()}
-      >
-        <span className="listen__glyph" aria-hidden="true">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-            <path d="M3 1.6 10 6 3 10.4Z" />
-          </svg>
-        </span>
-        {t(lang, "listen")}
-      </button>
-      <audio ref={audioRef} src={expertAudioUrl(ayah.sura, ayah.aya)} preload="none" />
+      {/* What the learner is about to be measured against, before they commit
+          to recording: how long this should take at a normal pace. */}
+      <p className="estimate">
+        {t(lang, "estimate")} ≈ {segment.seconds.toFixed(1)}{" "}
+        {t(lang, "seconds_short")}
+      </p>
+
+      {/* Expert audio is per whole ayah, so it is only offered when the whole
+          ayah is selected — playing a full ayah against a one-part selection
+          would be teaching the wrong thing. */}
+      {selection.whole && (
+        <>
+          <button
+            className="listen"
+            disabled={phase !== "idle"}
+            onClick={() => audioRef.current?.play()}
+          >
+            <span className="listen__glyph" aria-hidden="true">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M3 1.6 10 6 3 10.4Z" />
+              </svg>
+            </span>
+            {t(lang, "listen")}
+          </button>
+          <audio
+            ref={audioRef}
+            src={expertAudioUrl(sura.number, ayah.aya)}
+            preload="none"
+          />
+        </>
+      )}
 
       {phase === "recording" && (
         <>
           <div className="breath">
-            <span className="breath__ring breath__ring--outer" ref={ringOuterRef} aria-hidden="true" />
+            <span
+              className="breath__ring breath__ring--outer"
+              ref={ringOuterRef}
+              aria-hidden="true"
+            />
             <span className="breath__ring" ref={ringRef} aria-hidden="true" />
             <span className="breath__timer">{mmss(elapsed)}</span>
           </div>

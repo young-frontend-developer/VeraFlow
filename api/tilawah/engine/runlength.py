@@ -11,7 +11,14 @@ import unicodedata
 
 QALQALA_MARK = "ڇ"                     # ڇ - appended to a qalqalah letter
 MADD_LETTERS = set("اۥۦوي")
-GHUNNA_LETTERS = set("نم")
+# ں and ۾ belong here. QPS writes the ikhfa noon as ں and the iqlab meem as ۾,
+# and those are precisely the positions carrying a RULED two-to-three count
+# ghunnah - the ones a learner actually shortens. Omitting them sent every
+# ikhfa and iqlab duration error through _duration_code's fallback branch and
+# out as SHADDA_SHORT, a code with no content, so it vanished silently. No
+# learner-visible change today (GHUNNA_SHORT is still status=collect), but the
+# calibration harness would otherwise have measured the wrong check.
+GHUNNA_LETTERS = set("نمں۾")
 
 
 def tokenize(ph: str) -> list[tuple[str, int, str]]:

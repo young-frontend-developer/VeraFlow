@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """HTTP surface. A handful of endpoints is the whole MVP."""
 import functools
+import json
 import threading
 
 import anyio
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from quran_transcript import Aya
 from sqlmodel import Session, select
 
 from .. import content
@@ -14,10 +16,12 @@ from ..db.models import Attempt, User
 from ..engine.pipeline import analyze
 from ..engine.ranges import (Range, estimate_seconds, legal_cuts, n_words,
                              uthmani_of)
-from ..engine.segments import segments_for
+from ..engine.segments import segments_for, segments_for_range
 from ..engine.target import target_for
-from .schemas import (AttemptOut, AyahOut, AyahSegmentsOut, MetaOut,
-                      PracticeSegmentOut, SegmentOut, WrongFlagIn)
+from .schemas import (AttemptOut, AyahBriefOut, AyahOut, AyahSegmentsOut,
+                      MetaOut, PracticeSegmentOut, ReviewDecisionIn,
+                      ReviewEntryOut, ReviewQueueOut, SegmentOut, SuraAyatOut,
+                      SuraOut, WrongFlagIn)
 
 router = APIRouter(prefix="/api")
 
@@ -48,6 +52,67 @@ def list_ayat() -> list[AyahOut]:
                            name_uz=a["uz"], name_ru=a["ru"],
                            segments=[SegmentOut(**s) for s in segments_for(a["sura"], a["aya"])]))
     return out
+
+
+@router.get("/suras", response_model=list[SuraOut])
+def list_suras() -> list[SuraOut]:
+    """All 114. Static, tiny, and the entry point to the whole catalogue.
+
+    Separate from /api/ayat on purpose: that one returns the curated worked
+    examples with their full text and letter-segments, which is a different
+    thing entirely and does not scale to 6236 ayat.
+    """
+    return [SuraOut(**s) for s in content.suras()]
+
+
+@functools.lru_cache(maxsize=16)
+def _sura_ayat(sura: int) -> SuraAyatOut:
+    """Every ayah of one sura, with enough text to recognise it.
+
+    Al-Baqara is 286 ayat, so this is the largest response in the app. It stays
+    a single call rather than paging: the picker needs to be searchable and
+    scrollable at once, and paging an ayah list is worse than the payload.
+
+    PERFORMANCE - two separate traps, both measured on al-Baqara's 286 ayat:
+
+      43.1 s  uthmani_of(Range(sura, aya, 0, n_words(...)))
+               Correct, but it routes a whole-ayah range through the
+               imlaey-to-uthmani encoder at ~150 ms a call. A whole ayah needs
+               no range encoding at all - read the text off Aya directly.
+       6.1 s  Aya(sura, aya).get() per ayah
+               The cost is CONSTRUCTION, ~23 ms each, not .get(). Building 286
+               Aya objects rebuilds the same lookup structure 286 times.
+       0.3 s  one Aya, .set(sura, aya) per ayah   <- what this does
+
+    The reuse is verified equivalent, not assumed: 492 ayat across 5 suras give
+    byte-identical uthmani, word counts, sura name and ayah count either way.
+    The lru_cache is a second line of defence - the first request has to be fast
+    too, and it is the one a learner actually waits on.
+    """
+    meta = content.sura_index().get(sura)
+    if meta is None:
+        raise HTTPException(404, "sura not found")
+
+    out = []
+    cursor = Aya(sura, 1)
+    for aya in range(1, meta["n_ayat"] + 1):
+        cursor.set(sura, aya)
+        got = cursor.get()
+        segs = content.segments_of(sura, aya)
+        n_phon = sum(s["n_phonemes"] for s in segs)
+        out.append(AyahBriefOut(
+            aya=aya, uthmani=got.uthmani, n_words=len(got.imlaey_words),
+            n_segments=len(segs) or 1,
+            seconds=round(estimate_seconds(n_phon), 1) if n_phon else 0.0))
+
+    return SuraAyatOut(sura=sura, name_ar=meta["name_ar"],
+                       translit=meta["translit"], n_ayat=meta["n_ayat"],
+                       ayat=out)
+
+
+@router.get("/suras/{sura}/ayat", response_model=SuraAyatOut)
+def sura_ayat(sura: int) -> SuraAyatOut:
+    return _sura_ayat(sura)
 
 
 @router.post("/attempts", response_model=AttemptOut)
@@ -139,14 +204,136 @@ def ayah_segments(sura: int, aya: int) -> AyahSegmentsOut:
     out = []
     for i, s in enumerate(segs):
         rng = Range(sura, aya, s["start_word"], s["num_words"])
+        # n_phonemes is 0 only on the degraded path above, where the artifact is
+        # missing; compute it rather than showing the learner "0 s".
+        n_phon = s["n_phonemes"]
+        text_segments = segments_for_range(sura, aya, s["start_word"],
+                                           s["num_words"])
+        if not n_phon:
+            n_phon = sum(len(t["text"]) for t in text_segments)
         out.append(PracticeSegmentOut(
             index=i, start_word=s["start_word"], num_words=s["num_words"],
             n_phonemes=s["n_phonemes"],
-            seconds=round(estimate_seconds(s["n_phonemes"]), 1),
+            seconds=round(estimate_seconds(n_phon), 1),
             uthmani=uthmani_of(rng),
+            text_segments=[SegmentOut(**t) for t in text_segments],
         ))
     return AyahSegmentsOut(sura=sura, aya=aya, n_words=total,
                            legal_cuts=list(legal_cuts(sura, aya)), segments=out)
+
+
+# ─────────────────────────────────────────────────────────────── review
+
+@functools.lru_cache(maxsize=1)
+def _ranking() -> dict[str, dict]:
+    """review_order and reach per code, from the frequency ranking artifact.
+
+    Regenerated by tools/rank_error_frequency.py. If it is missing the queue
+    still works - it just falls back to alphabetical, and says so.
+    """
+    from pathlib import Path
+
+    path = (Path(__file__).resolve().parents[3] / "spike" / "step0-results"
+            / "error_frequency_ranking.json")
+    if not path.exists():
+        return {}
+    rows = json.loads(path.read_text(encoding="utf-8"))["ranking"]
+    return {r["code"]: r for r in rows}
+
+
+def _guard_review() -> None:
+    """The review tool edits tajweed rulings and marks them approved.
+
+    It is unauthenticated, because it is a tool for one person on a laptop. That
+    is fine there and indefensible anywhere a stranger can reach it, so it is
+    refused outright in production rather than left to a firewall.
+    """
+    if settings.is_production:
+        raise HTTPException(
+            403,
+            "The review tool is unavailable in production. It edits tajweed "
+            "content and flips it to reviewed, with no authentication. Run it "
+            "locally against the repo and commit the result.")
+
+
+UNRANKED = 9999          # sorts last; never promotes an unknown code to the top
+
+
+def _review_entry(code: str, entry: dict) -> ReviewEntryOut:
+    r = _ranking().get(code, {})
+    return ReviewEntryOut(
+        code=code,
+        group=entry.get("group", ""),
+        severity=entry.get("severity", ""),
+        detection_confidence=entry.get("detection_confidence", ""),
+        source_ref=entry.get("source_ref", ""),
+        status=entry.get("status", "draft"),
+        reviewed_by=entry.get("reviewed_by", ""),
+        reviewed_at=entry.get("reviewed_at", ""),
+        review_note=entry.get("review_note", ""),
+        uz_edited_fields=entry.get("uz_edited_fields", []),
+        uz=entry.get("uz", {}) or {},
+        review_order=r.get("review_order", UNRANKED),
+        beginner_pct=r.get("beginner_pct", 0.0),
+        all_pct=r.get("all_pct", 0.0),
+    )
+
+
+@router.get("/review/queue", response_model=ReviewQueueOut)
+def review_queue() -> ReviewQueueOut:
+    """Everything in scope, highest reach first."""
+    _guard_review()
+    from ..engine.coverage import in_scope
+
+    entries = [_review_entry(c, e) for c, e in in_scope().items()]
+    # Highest reach first. Codes the ranking does not know about sort last
+    # rather than first, so a stale artifact cannot promote an unranked entry
+    # to the top of a qori's queue.
+    entries.sort(key=lambda e: (e.review_order, e.code))
+
+    reviewed = sum(1 for e in entries if e.status == "reviewed")
+    rejected = sum(1 for e in entries if e.status == "rejected")
+    return ReviewQueueOut(
+        total=len(entries), reviewed=reviewed, rejected=rejected,
+        remaining=len(entries) - reviewed - rejected,
+        entries=entries,
+        ranking_stale=any(e.review_order == UNRANKED for e in entries),
+    )
+
+
+@router.post("/review/{code}", response_model=ReviewEntryOut)
+def review_decide(code: str, body: ReviewDecisionIn) -> ReviewEntryOut:
+    """approve | reject | edit | reset. Persisted to tajweed_registry_review.json.
+
+    `edit` saves the Uzbek without deciding anything - a reviewer fixes the
+    wording first and approves second, and conflating the two would make it
+    impossible to correct a typo without also vouching for the ruling.
+    """
+    _guard_review()
+    from ..engine import review
+    from ..engine.coverage import in_scope
+
+    if code not in in_scope():
+        raise HTTPException(404, f"{code} is not a reviewable entry")
+
+    action = (body.action or "").lower()
+    status = {"approve": "reviewed", "reject": "rejected",
+              "reset": "draft", "edit": None}.get(action, ...)
+    if status is ...:
+        raise HTTPException(422, "action must be approve, reject, edit or reset")
+
+    if status is None:
+        # An edit keeps whatever decision already stood, which for an unreviewed
+        # entry is 'draft' - editing must never approve by side effect.
+        status = review.decisions().get(code, {}).get("status", "draft")
+
+    try:
+        review.record(code, status, reviewed_by=body.reviewed_by,
+                      uz=body.uz, note=body.note)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc))
+
+    return _review_entry(code, in_scope()[code])
 
 
 @router.get("/meta", response_model=MetaOut)
@@ -155,10 +342,12 @@ def meta() -> MetaOut:
     unverified = content.dev_overrides()
     return MetaOut(
         # Either the operator says this is a pilot, or a correction that reaches
-        # learners has not been reviewed by a qori. Both warrant the banner.
-        pilot=settings.pilot or bool(unverified),
+        # learners has not been reviewed by a qori, or the review gate is off
+        # entirely. All three warrant the banner, and the last one most of all.
+        pilot=settings.pilot or bool(unverified) or settings.show_unreviewed,
         unverified_codes=unverified,
         collect_audio_offered=settings.collect_audio,
+        show_unreviewed=settings.show_unreviewed,
     )
 
 

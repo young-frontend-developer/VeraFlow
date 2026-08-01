@@ -1,0 +1,72 @@
+{
+  "_meta": {
+    "purpose": "Structural corrections applied AFTER the v3 patch merge. Kept separate from both inputs on purpose: tajweed_error_registry_v2.json is the historical base and tajweed_registry_v3_patch.json is a sourced artifact from the book - neither should be rewritten to record a decision made later.",
+    "applied_by": "api/tools/apply_v3_patch.py (step D)",
+    "authority": "Requested by Rahmatulloh 2026-08-01 after the Phase 2 precondition audit.",
+    "CONTENT_AUTHORING_RULE": "This file performs STRUCTURAL surgery only - deleting, splitting and merging entries. Where a resulting entry needs new learner-facing text, the text is NOT written here. Architecture decision 4: an LLM must never author a tajweed rule, correction or reason. Such entries carry content_status and are left without usable uz/ru bodies so content.render() returns None and the pipeline suppresses them.",
+    "safety": "Every entry stays status='draft'. content/rules.json is untouched, so none of this reaches a learner either way."
+  },
+
+  "delete": {
+    "GHUNNA_ADDED": {
+      "reason": "The signal is unimplementable, not merely imprecise. It asks for expected 'not_maghnoon' surfacing as 'maghnoon' at izhar positions - but the reference marks even an izhar noon 'maghnoon', because ghunnah is a property of the LETTER nuvn/miym, not of the ruling. There is no ṣifa flip to detect anywhere in the Quran, so the entry could never fire correctly no matter how the precondition was narrowed.",
+      "what_would_replace_it": "An added ghunnah at izhar is a DURATION error: the izhar noon is one count, so holding it surfaces as a run in the hypothesis. That is a run-length check on the ن unit, i.e. the GHUNNA_LONG family in content/rules.json - not a ṣifa check. Re-add under the ghunna group only once that check exists and has a measured false-positive rate.",
+      "note": "The tightened izhar precondition that was built for it is retained in engine/coverage.py as mim/noon position logic, so the work is not lost."
+    },
+    "MAKHARIJ_THAL_TO_ZAY": {
+      "reason": "Merged into MAKHARIJ_INTERDENTAL_TO_ZAY - see merges below."
+    },
+    "MAKHARIJ_ZAA_TO_ZAY": {
+      "reason": "Merged into MAKHARIJ_INTERDENTAL_TO_ZAY - see merges below."
+    }
+  },
+
+  "merges": {
+    "MAKHARIJ_INTERDENTAL_TO_ZAY": {
+      "replaces": ["MAKHARIJ_THAL_TO_ZAY", "MAKHARIJ_ZAA_TO_ZAY"],
+      "rationale": "Both are the same articulatory failure with the same drill: the tongue tip never comes out between the teeth, so an interdental fricative collapses to the alveolar ز. This is the Uzbek/Russian interdental gap from risk 4 of the architecture doc. ظ additionally loses its heaviness, but heaviness is exactly what MAKHARIJ_THAL_TO_ZAA_CONFUSION covers, so splitting the two failures along that line gives one entry per correction rather than per letter.",
+      "why_not_collapsed_to_one": "MAKHARIJ_THAL_TO_ZAA_CONFUSION (ذ↔ظ) is deliberately NOT merged in. Its correction is 'fix the heaviness' while this entry's is 'get the tongue between the teeth'. Folding them together would put two incompatible drills behind one code and break the one-error-one-rule-one-drill principle the typed-error design rests on.",
+      "carried_content_from": "MAKHARIJ_THAL_TO_ZAY",
+      "content_status": "NEEDS_UPDATE",
+      "content_todo": "The carried uz/ru text describes ذ only. It must be rewritten to cover ذ and ظ together, and must NOT absorb the heaviness correction - that belongs to MAKHARIJ_THAL_TO_ZAA_CONFUSION. Severity is set to the higher of the two merged entries.",
+      "entry_overrides": {
+        "status": "draft",
+        "group": "makharij",
+        "severity": "high",
+        "detection_confidence": "high",
+        "detection_signal": "phoneme substitution: ذ -> ز yoki ظ -> ز (tishlararo tovush yo'qolgan). Yo'g'onlik xatosi uchun MAKHARIJ_THAL_TO_ZAA_CONFUSION ga qarang."
+      }
+    }
+  },
+
+  "splits": {
+    "MADD_ADDED": {
+      "rationale": "MADD_ADDED was the only precondition that could not be narrowed below 100.0% of segments, because a learner can over-lengthen any vowel. Measured over all 16366 segments: 'unlengthened madd letter present' 73.0% (not a restriction), 'contains a leen letter' 26.9% (a restriction, but a FALSE one as a definition of MADD_ADDED). Splitting resolves that: the detectable case becomes its own entry, and the residue stays an explicitly unscored catch-all.",
+      "into": {
+        "MADD_ADDED_LEEN": {
+          "precondition": "A leen letter - sakin و or ي preceded by fatha, as in خَوْف and عَلَيْهِمْ. 26.9% of segments.",
+          "content_status": "NEEDS_AUTHORING",
+          "content_todo": "No uz/ru body is written here. A qori must author it. Until then content.render() returns None and pipeline.analyze() routes it to silent_errors, which is the correct behaviour for an unauthored code.",
+          "entry": {
+            "status": "draft",
+            "group": "madd",
+            "severity": "medium",
+            "detection_confidence": "medium",
+            "source_ref": "harf leen - to be cited against the book when authored",
+            "detection_signal": "leen harfi (fathadan keyingi sukunli و yoki ي) cho'zilgan: ref da bir birlik, aniqlangan fonemada takror",
+            "content_status": "NEEDS_AUTHORING"
+          }
+        },
+        "MADD_ADDED": {
+          "precondition": "UNCHANGED - still 100.0%, still in engine/coverage.py UNIVERSAL, still excluded from the coverage score and sorted last in the review ranking.",
+          "keeps_existing_content": true,
+          "entry_overrides": {
+            "detection_confidence": "medium",
+            "detection_signal": "kutilmagan takroriy unli belgilari: ref da mad yo'q, lekin aniqlangan fonemada cho'zilish bor. DIQQAT: leen harfi holati MADD_ADDED_LEEN ga ajratildi; bu yozuv qolgan barcha holatlar uchun umumiy zaxira bo'lib, o'lchovga kirmaydi.",
+            "universal_note": "Cannot be narrowed. Kept as an unscored catch-all rather than deleted, so the case is still nameable when a learner really does lengthen an arbitrary haraka."
+          }
+        }
+      }
+    }
+  }
+}

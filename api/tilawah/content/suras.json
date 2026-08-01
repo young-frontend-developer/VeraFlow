@@ -1,0 +1,916 @@
+{
+ "suras": [
+  {
+   "number": 1,
+   "name_ar": "الفاتحة",
+   "translit": "Al-Fatiha",
+   "uz": "Fotiha",
+   "n_ayat": 7,
+   "search": "1 alfatiha fotiha fatiha الفاتحة"
+  },
+  {
+   "number": 2,
+   "name_ar": "البقرة",
+   "translit": "Al-Baqara",
+   "uz": "Baqara",
+   "n_ayat": 286,
+   "search": "2 albaqara baqara البقرة"
+  },
+  {
+   "number": 3,
+   "name_ar": "آل عمران",
+   "translit": "Ali 'Imran",
+   "uz": "Oli Imron",
+   "n_ayat": 200,
+   "search": "3 ali imran oli imron آل عمران"
+  },
+  {
+   "number": 4,
+   "name_ar": "النساء",
+   "translit": "An-Nisa",
+   "uz": "Niso",
+   "n_ayat": 176,
+   "search": "4 annisa niso nisa النساء"
+  },
+  {
+   "number": 5,
+   "name_ar": "المائدة",
+   "translit": "Al-Ma'ida",
+   "uz": "Moida",
+   "n_ayat": 120,
+   "search": "5 almaida moida maida المائدة"
+  },
+  {
+   "number": 6,
+   "name_ar": "الأنعام",
+   "translit": "Al-An'am",
+   "uz": "An'om",
+   "n_ayat": 165,
+   "search": "6 alanam anom anam الأنعام"
+  },
+  {
+   "number": 7,
+   "name_ar": "الأعراف",
+   "translit": "Al-A'raf",
+   "uz": "A'rof",
+   "n_ayat": 206,
+   "search": "7 alaraf arof araf الأعراف"
+  },
+  {
+   "number": 8,
+   "name_ar": "الأنفال",
+   "translit": "Al-Anfal",
+   "uz": "Anfol",
+   "n_ayat": 75,
+   "search": "8 alanfal anfol anfal الأنفال"
+  },
+  {
+   "number": 9,
+   "name_ar": "التوبة",
+   "translit": "At-Tawba",
+   "uz": "Tavba",
+   "n_ayat": 129,
+   "search": "9 attawba tavba tawba التوبة"
+  },
+  {
+   "number": 10,
+   "name_ar": "يونس",
+   "translit": "Yunus",
+   "uz": "Yunus",
+   "n_ayat": 109,
+   "search": "10 yunus يونس"
+  },
+  {
+   "number": 11,
+   "name_ar": "هود",
+   "translit": "Hud",
+   "uz": "Hud",
+   "n_ayat": 123,
+   "search": "11 hud هود"
+  },
+  {
+   "number": 12,
+   "name_ar": "يوسف",
+   "translit": "Yusuf",
+   "uz": "Yusuf",
+   "n_ayat": 111,
+   "search": "12 yusuf يوسف"
+  },
+  {
+   "number": 13,
+   "name_ar": "الرعد",
+   "translit": "Ar-Ra'd",
+   "uz": "Ra'd",
+   "n_ayat": 43,
+   "search": "13 arrad rad الرعد"
+  },
+  {
+   "number": 14,
+   "name_ar": "ابراهيم",
+   "translit": "Ibrahim",
+   "uz": "Ibrohim",
+   "n_ayat": 52,
+   "search": "14 ibrahim ibrohim ابراهيم"
+  },
+  {
+   "number": 15,
+   "name_ar": "الحجر",
+   "translit": "Al-Hijr",
+   "uz": "Hijr",
+   "n_ayat": 99,
+   "search": "15 alhijr hijr الحجر"
+  },
+  {
+   "number": 16,
+   "name_ar": "النحل",
+   "translit": "An-Nahl",
+   "uz": "Nahl",
+   "n_ayat": 128,
+   "search": "16 annahl nahl النحل"
+  },
+  {
+   "number": 17,
+   "name_ar": "الإسراء",
+   "translit": "Al-Isra",
+   "uz": "Isro",
+   "n_ayat": 111,
+   "search": "17 alisra isro isra الإسراء"
+  },
+  {
+   "number": 18,
+   "name_ar": "الكهف",
+   "translit": "Al-Kahf",
+   "uz": "Kahf",
+   "n_ayat": 110,
+   "search": "18 alkahf kahf الكهف"
+  },
+  {
+   "number": 19,
+   "name_ar": "مريم",
+   "translit": "Maryam",
+   "uz": "Maryam",
+   "n_ayat": 98,
+   "search": "19 maryam مريم"
+  },
+  {
+   "number": 20,
+   "name_ar": "طه",
+   "translit": "Ta-Ha",
+   "uz": "Toha",
+   "n_ayat": 135,
+   "search": "20 taha toha ha طه"
+  },
+  {
+   "number": 21,
+   "name_ar": "الأنبياء",
+   "translit": "Al-Anbiya",
+   "uz": "Anbiyo",
+   "n_ayat": 112,
+   "search": "21 alanbiya anbiyo anbiya الأنبياء"
+  },
+  {
+   "number": 22,
+   "name_ar": "الحج",
+   "translit": "Al-Hajj",
+   "uz": "Haj",
+   "n_ayat": 78,
+   "search": "22 alhajj haj hajj الحج"
+  },
+  {
+   "number": 23,
+   "name_ar": "المؤمنون",
+   "translit": "Al-Mu'minun",
+   "uz": "Mu'minun",
+   "n_ayat": 118,
+   "search": "23 almuminun muminun المؤمنون"
+  },
+  {
+   "number": 24,
+   "name_ar": "النور",
+   "translit": "An-Nur",
+   "uz": "Nur",
+   "n_ayat": 64,
+   "search": "24 annur nur النور"
+  },
+  {
+   "number": 25,
+   "name_ar": "الفرقان",
+   "translit": "Al-Furqan",
+   "uz": "Furqon",
+   "n_ayat": 77,
+   "search": "25 alfurqan furqon furqan الفرقان"
+  },
+  {
+   "number": 26,
+   "name_ar": "الشعراء",
+   "translit": "Ash-Shu'ara",
+   "uz": "Shuaro",
+   "n_ayat": 227,
+   "search": "26 ashshuara shuaro shuara الشعراء"
+  },
+  {
+   "number": 27,
+   "name_ar": "النمل",
+   "translit": "An-Naml",
+   "uz": "Naml",
+   "n_ayat": 93,
+   "search": "27 annaml naml النمل"
+  },
+  {
+   "number": 28,
+   "name_ar": "القصص",
+   "translit": "Al-Qasas",
+   "uz": "Qasas",
+   "n_ayat": 88,
+   "search": "28 alqasas qasas القصص"
+  },
+  {
+   "number": 29,
+   "name_ar": "العنكبوت",
+   "translit": "Al-'Ankabut",
+   "uz": "Ankabut",
+   "n_ayat": 69,
+   "search": "29 alankabut ankabut العنكبوت"
+  },
+  {
+   "number": 30,
+   "name_ar": "الروم",
+   "translit": "Ar-Rum",
+   "uz": "Rum",
+   "n_ayat": 60,
+   "search": "30 arrum rum الروم"
+  },
+  {
+   "number": 31,
+   "name_ar": "لقمان",
+   "translit": "Luqman",
+   "uz": "Luqmon",
+   "n_ayat": 34,
+   "search": "31 luqman luqmon لقمان"
+  },
+  {
+   "number": 32,
+   "name_ar": "السجدة",
+   "translit": "As-Sajda",
+   "uz": "Sajda",
+   "n_ayat": 30,
+   "search": "32 assajda sajda السجدة"
+  },
+  {
+   "number": 33,
+   "name_ar": "الأحزاب",
+   "translit": "Al-Ahzab",
+   "uz": "Ahzob",
+   "n_ayat": 73,
+   "search": "33 alahzab ahzob ahzab الأحزاب"
+  },
+  {
+   "number": 34,
+   "name_ar": "سبإ",
+   "translit": "Saba",
+   "uz": "Saba",
+   "n_ayat": 54,
+   "search": "34 saba سبإ"
+  },
+  {
+   "number": 35,
+   "name_ar": "فاطر",
+   "translit": "Fatir",
+   "uz": "Fotir",
+   "n_ayat": 45,
+   "search": "35 fatir fotir فاطر"
+  },
+  {
+   "number": 36,
+   "name_ar": "يس",
+   "translit": "Ya-Sin",
+   "uz": "Yosin",
+   "n_ayat": 83,
+   "search": "36 yasin yosin sin يس"
+  },
+  {
+   "number": 37,
+   "name_ar": "الصافات",
+   "translit": "As-Saffat",
+   "uz": "Soffat",
+   "n_ayat": 182,
+   "search": "37 assaffat soffat saffat الصافات"
+  },
+  {
+   "number": 38,
+   "name_ar": "ص",
+   "translit": "Sad",
+   "uz": "Sod",
+   "n_ayat": 88,
+   "search": "38 sad sod ص"
+  },
+  {
+   "number": 39,
+   "name_ar": "الزمر",
+   "translit": "Az-Zumar",
+   "uz": "Zumar",
+   "n_ayat": 75,
+   "search": "39 azzumar zumar الزمر"
+  },
+  {
+   "number": 40,
+   "name_ar": "غافر",
+   "translit": "Ghafir",
+   "uz": "G'ofir",
+   "n_ayat": 85,
+   "search": "40 ghafir gofir غافر"
+  },
+  {
+   "number": 41,
+   "name_ar": "فصلت",
+   "translit": "Fussilat",
+   "uz": "Fussilat",
+   "n_ayat": 54,
+   "search": "41 fussilat فصلت"
+  },
+  {
+   "number": 42,
+   "name_ar": "الشورى",
+   "translit": "Ash-Shura",
+   "uz": "Shuro",
+   "n_ayat": 53,
+   "search": "42 ashshura shuro shura الشورى"
+  },
+  {
+   "number": 43,
+   "name_ar": "الزخرف",
+   "translit": "Az-Zukhruf",
+   "uz": "Zuxruf",
+   "n_ayat": 89,
+   "search": "43 azzukhruf zuxruf zukhruf الزخرف"
+  },
+  {
+   "number": 44,
+   "name_ar": "الدخان",
+   "translit": "Ad-Dukhan",
+   "uz": "Duxon",
+   "n_ayat": 59,
+   "search": "44 addukhan duxon dukhan الدخان"
+  },
+  {
+   "number": 45,
+   "name_ar": "الجاثية",
+   "translit": "Al-Jathiya",
+   "uz": "Josiya",
+   "n_ayat": 37,
+   "search": "45 aljathiya josiya jathiya الجاثية"
+  },
+  {
+   "number": 46,
+   "name_ar": "الأحقاف",
+   "translit": "Al-Ahqaf",
+   "uz": "Ahqof",
+   "n_ayat": 35,
+   "search": "46 alahqaf ahqof ahqaf الأحقاف"
+  },
+  {
+   "number": 47,
+   "name_ar": "محمد",
+   "translit": "Muhammad",
+   "uz": "Muhammad",
+   "n_ayat": 38,
+   "search": "47 muhammad محمد"
+  },
+  {
+   "number": 48,
+   "name_ar": "الفتح",
+   "translit": "Al-Fath",
+   "uz": "Fath",
+   "n_ayat": 29,
+   "search": "48 alfath fath الفتح"
+  },
+  {
+   "number": 49,
+   "name_ar": "الحجرات",
+   "translit": "Al-Hujurat",
+   "uz": "Hujurot",
+   "n_ayat": 18,
+   "search": "49 alhujurat hujurot hujurat الحجرات"
+  },
+  {
+   "number": 50,
+   "name_ar": "ق",
+   "translit": "Qaf",
+   "uz": "Qof",
+   "n_ayat": 45,
+   "search": "50 qaf qof ق"
+  },
+  {
+   "number": 51,
+   "name_ar": "الذاريات",
+   "translit": "Adh-Dhariyat",
+   "uz": "Zoriyot",
+   "n_ayat": 60,
+   "search": "51 adhdhariyat zoriyot dhariyat الذاريات"
+  },
+  {
+   "number": 52,
+   "name_ar": "الطور",
+   "translit": "At-Tur",
+   "uz": "Tur",
+   "n_ayat": 49,
+   "search": "52 attur tur الطور"
+  },
+  {
+   "number": 53,
+   "name_ar": "النجم",
+   "translit": "An-Najm",
+   "uz": "Najm",
+   "n_ayat": 62,
+   "search": "53 annajm najm النجم"
+  },
+  {
+   "number": 54,
+   "name_ar": "القمر",
+   "translit": "Al-Qamar",
+   "uz": "Qamar",
+   "n_ayat": 55,
+   "search": "54 alqamar qamar القمر"
+  },
+  {
+   "number": 55,
+   "name_ar": "الرحمن",
+   "translit": "Ar-Rahman",
+   "uz": "Rahmon",
+   "n_ayat": 78,
+   "search": "55 arrahman rahmon rahman الرحمن"
+  },
+  {
+   "number": 56,
+   "name_ar": "الواقعة",
+   "translit": "Al-Waqi'a",
+   "uz": "Voqea",
+   "n_ayat": 96,
+   "search": "56 alwaqia voqea waqia الواقعة"
+  },
+  {
+   "number": 57,
+   "name_ar": "الحديد",
+   "translit": "Al-Hadid",
+   "uz": "Hadid",
+   "n_ayat": 29,
+   "search": "57 alhadid hadid الحديد"
+  },
+  {
+   "number": 58,
+   "name_ar": "المجادلة",
+   "translit": "Al-Mujadila",
+   "uz": "Mujodala",
+   "n_ayat": 22,
+   "search": "58 almujadila mujodala mujadila المجادلة"
+  },
+  {
+   "number": 59,
+   "name_ar": "الحشر",
+   "translit": "Al-Hashr",
+   "uz": "Hashr",
+   "n_ayat": 24,
+   "search": "59 alhashr hashr الحشر"
+  },
+  {
+   "number": 60,
+   "name_ar": "الممتحنة",
+   "translit": "Al-Mumtahina",
+   "uz": "Mumtahana",
+   "n_ayat": 13,
+   "search": "60 almumtahina mumtahana mumtahina الممتحنة"
+  },
+  {
+   "number": 61,
+   "name_ar": "الصف",
+   "translit": "As-Saff",
+   "uz": "Saff",
+   "n_ayat": 14,
+   "search": "61 assaff saff الصف"
+  },
+  {
+   "number": 62,
+   "name_ar": "الجمعة",
+   "translit": "Al-Jumu'a",
+   "uz": "Jumua",
+   "n_ayat": 11,
+   "search": "62 aljumua jumua الجمعة"
+  },
+  {
+   "number": 63,
+   "name_ar": "المنافقون",
+   "translit": "Al-Munafiqun",
+   "uz": "Munofiqun",
+   "n_ayat": 11,
+   "search": "63 almunafiqun munofiqun munafiqun المنافقون"
+  },
+  {
+   "number": 64,
+   "name_ar": "التغابن",
+   "translit": "At-Taghabun",
+   "uz": "Tag'obun",
+   "n_ayat": 18,
+   "search": "64 attaghabun tagobun taghabun التغابن"
+  },
+  {
+   "number": 65,
+   "name_ar": "الطلاق",
+   "translit": "At-Talaq",
+   "uz": "Taloq",
+   "n_ayat": 12,
+   "search": "65 attalaq taloq talaq الطلاق"
+  },
+  {
+   "number": 66,
+   "name_ar": "التحريم",
+   "translit": "At-Tahrim",
+   "uz": "Tahrim",
+   "n_ayat": 12,
+   "search": "66 attahrim tahrim التحريم"
+  },
+  {
+   "number": 67,
+   "name_ar": "الملك",
+   "translit": "Al-Mulk",
+   "uz": "Mulk",
+   "n_ayat": 30,
+   "search": "67 almulk mulk الملك"
+  },
+  {
+   "number": 68,
+   "name_ar": "القلم",
+   "translit": "Al-Qalam",
+   "uz": "Qalam",
+   "n_ayat": 52,
+   "search": "68 alqalam qalam القلم"
+  },
+  {
+   "number": 69,
+   "name_ar": "الحاقة",
+   "translit": "Al-Haqqa",
+   "uz": "Haqqa",
+   "n_ayat": 52,
+   "search": "69 alhaqqa haqqa الحاقة"
+  },
+  {
+   "number": 70,
+   "name_ar": "المعارج",
+   "translit": "Al-Ma'arij",
+   "uz": "Maorij",
+   "n_ayat": 44,
+   "search": "70 almaarij maorij maarij المعارج"
+  },
+  {
+   "number": 71,
+   "name_ar": "نوح",
+   "translit": "Nuh",
+   "uz": "Nuh",
+   "n_ayat": 28,
+   "search": "71 nuh نوح"
+  },
+  {
+   "number": 72,
+   "name_ar": "الجن",
+   "translit": "Al-Jinn",
+   "uz": "Jin",
+   "n_ayat": 28,
+   "search": "72 aljinn jin jinn الجن"
+  },
+  {
+   "number": 73,
+   "name_ar": "المزمل",
+   "translit": "Al-Muzzammil",
+   "uz": "Muzzammil",
+   "n_ayat": 20,
+   "search": "73 almuzzammil muzzammil المزمل"
+  },
+  {
+   "number": 74,
+   "name_ar": "المدثر",
+   "translit": "Al-Muddaththir",
+   "uz": "Muddassir",
+   "n_ayat": 56,
+   "search": "74 almuddaththir muddassir muddaththir المدثر"
+  },
+  {
+   "number": 75,
+   "name_ar": "القيامة",
+   "translit": "Al-Qiyama",
+   "uz": "Qiyoma",
+   "n_ayat": 40,
+   "search": "75 alqiyama qiyoma qiyama القيامة"
+  },
+  {
+   "number": 76,
+   "name_ar": "الانسان",
+   "translit": "Al-Insan",
+   "uz": "Inson",
+   "n_ayat": 31,
+   "search": "76 alinsan inson insan الانسان"
+  },
+  {
+   "number": 77,
+   "name_ar": "المرسلات",
+   "translit": "Al-Mursalat",
+   "uz": "Mursalot",
+   "n_ayat": 50,
+   "search": "77 almursalat mursalot mursalat المرسلات"
+  },
+  {
+   "number": 78,
+   "name_ar": "النبإ",
+   "translit": "An-Naba",
+   "uz": "Naba",
+   "n_ayat": 40,
+   "search": "78 annaba naba النبإ"
+  },
+  {
+   "number": 79,
+   "name_ar": "النازعات",
+   "translit": "An-Nazi'at",
+   "uz": "Noziot",
+   "n_ayat": 46,
+   "search": "79 annaziat noziot naziat النازعات"
+  },
+  {
+   "number": 80,
+   "name_ar": "عبس",
+   "translit": "'Abasa",
+   "uz": "Abasa",
+   "n_ayat": 42,
+   "search": "80 abasa عبس"
+  },
+  {
+   "number": 81,
+   "name_ar": "التكوير",
+   "translit": "At-Takwir",
+   "uz": "Takvir",
+   "n_ayat": 29,
+   "search": "81 attakwir takvir takwir التكوير"
+  },
+  {
+   "number": 82,
+   "name_ar": "الإنفطار",
+   "translit": "Al-Infitar",
+   "uz": "Infitor",
+   "n_ayat": 19,
+   "search": "82 alinfitar infitor infitar الإنفطار"
+  },
+  {
+   "number": 83,
+   "name_ar": "المطففين",
+   "translit": "Al-Mutaffifin",
+   "uz": "Mutaffifin",
+   "n_ayat": 36,
+   "search": "83 almutaffifin mutaffifin المطففين"
+  },
+  {
+   "number": 84,
+   "name_ar": "الإنشقاق",
+   "translit": "Al-Inshiqaq",
+   "uz": "Inshiqoq",
+   "n_ayat": 25,
+   "search": "84 alinshiqaq inshiqoq inshiqaq الإنشقاق"
+  },
+  {
+   "number": 85,
+   "name_ar": "البروج",
+   "translit": "Al-Buruj",
+   "uz": "Buruj",
+   "n_ayat": 22,
+   "search": "85 alburuj buruj البروج"
+  },
+  {
+   "number": 86,
+   "name_ar": "الطارق",
+   "translit": "At-Tariq",
+   "uz": "Toriq",
+   "n_ayat": 17,
+   "search": "86 attariq toriq tariq الطارق"
+  },
+  {
+   "number": 87,
+   "name_ar": "الأعلى",
+   "translit": "Al-A'la",
+   "uz": "A'lo",
+   "n_ayat": 19,
+   "search": "87 alala alo ala الأعلى"
+  },
+  {
+   "number": 88,
+   "name_ar": "الغاشية",
+   "translit": "Al-Ghashiya",
+   "uz": "G'oshiya",
+   "n_ayat": 26,
+   "search": "88 alghashiya goshiya ghashiya الغاشية"
+  },
+  {
+   "number": 89,
+   "name_ar": "الفجر",
+   "translit": "Al-Fajr",
+   "uz": "Fajr",
+   "n_ayat": 30,
+   "search": "89 alfajr fajr الفجر"
+  },
+  {
+   "number": 90,
+   "name_ar": "البلد",
+   "translit": "Al-Balad",
+   "uz": "Balad",
+   "n_ayat": 20,
+   "search": "90 albalad balad البلد"
+  },
+  {
+   "number": 91,
+   "name_ar": "الشمس",
+   "translit": "Ash-Shams",
+   "uz": "Shams",
+   "n_ayat": 15,
+   "search": "91 ashshams shams الشمس"
+  },
+  {
+   "number": 92,
+   "name_ar": "الليل",
+   "translit": "Al-Layl",
+   "uz": "Layl",
+   "n_ayat": 21,
+   "search": "92 allayl layl الليل"
+  },
+  {
+   "number": 93,
+   "name_ar": "الضحى",
+   "translit": "Ad-Duha",
+   "uz": "Zuho",
+   "n_ayat": 11,
+   "search": "93 adduha zuho duha الضحى"
+  },
+  {
+   "number": 94,
+   "name_ar": "الشرح",
+   "translit": "Ash-Sharh",
+   "uz": "Sharh",
+   "n_ayat": 8,
+   "search": "94 ashsharh sharh الشرح"
+  },
+  {
+   "number": 95,
+   "name_ar": "التين",
+   "translit": "At-Tin",
+   "uz": "Tiyn",
+   "n_ayat": 8,
+   "search": "95 attin tiyn tin التين"
+  },
+  {
+   "number": 96,
+   "name_ar": "العلق",
+   "translit": "Al-'Alaq",
+   "uz": "Alaq",
+   "n_ayat": 19,
+   "search": "96 alalaq alaq العلق"
+  },
+  {
+   "number": 97,
+   "name_ar": "القدر",
+   "translit": "Al-Qadr",
+   "uz": "Qadr",
+   "n_ayat": 5,
+   "search": "97 alqadr qadr القدر"
+  },
+  {
+   "number": 98,
+   "name_ar": "البينة",
+   "translit": "Al-Bayyina",
+   "uz": "Bayyina",
+   "n_ayat": 8,
+   "search": "98 albayyina bayyina البينة"
+  },
+  {
+   "number": 99,
+   "name_ar": "الزلزلة",
+   "translit": "Az-Zalzala",
+   "uz": "Zalzala",
+   "n_ayat": 8,
+   "search": "99 azzalzala zalzala الزلزلة"
+  },
+  {
+   "number": 100,
+   "name_ar": "العاديات",
+   "translit": "Al-'Adiyat",
+   "uz": "Odiyot",
+   "n_ayat": 11,
+   "search": "100 aladiyat odiyot adiyat العاديات"
+  },
+  {
+   "number": 101,
+   "name_ar": "القارعة",
+   "translit": "Al-Qari'a",
+   "uz": "Qoria",
+   "n_ayat": 11,
+   "search": "101 alqaria qoria qaria القارعة"
+  },
+  {
+   "number": 102,
+   "name_ar": "التكاثر",
+   "translit": "At-Takathur",
+   "uz": "Takosur",
+   "n_ayat": 8,
+   "search": "102 attakathur takosur takathur التكاثر"
+  },
+  {
+   "number": 103,
+   "name_ar": "العصر",
+   "translit": "Al-'Asr",
+   "uz": "Asr",
+   "n_ayat": 3,
+   "search": "103 alasr asr العصر"
+  },
+  {
+   "number": 104,
+   "name_ar": "الهمزة",
+   "translit": "Al-Humaza",
+   "uz": "Humaza",
+   "n_ayat": 9,
+   "search": "104 alhumaza humaza الهمزة"
+  },
+  {
+   "number": 105,
+   "name_ar": "الفيل",
+   "translit": "Al-Fil",
+   "uz": "Fil",
+   "n_ayat": 5,
+   "search": "105 alfil fil الفيل"
+  },
+  {
+   "number": 106,
+   "name_ar": "قريش",
+   "translit": "Quraysh",
+   "uz": "Quraysh",
+   "n_ayat": 4,
+   "search": "106 quraysh قريش"
+  },
+  {
+   "number": 107,
+   "name_ar": "الماعون",
+   "translit": "Al-Ma'un",
+   "uz": "Moun",
+   "n_ayat": 7,
+   "search": "107 almaun moun maun الماعون"
+  },
+  {
+   "number": 108,
+   "name_ar": "الكوثر",
+   "translit": "Al-Kawthar",
+   "uz": "Kavsar",
+   "n_ayat": 3,
+   "search": "108 alkawthar kavsar kawthar الكوثر"
+  },
+  {
+   "number": 109,
+   "name_ar": "الكافرون",
+   "translit": "Al-Kafirun",
+   "uz": "Kofirun",
+   "n_ayat": 6,
+   "search": "109 alkafirun kofirun kafirun الكافرون"
+  },
+  {
+   "number": 110,
+   "name_ar": "النصر",
+   "translit": "An-Nasr",
+   "uz": "Nasr",
+   "n_ayat": 3,
+   "search": "110 annasr nasr النصر"
+  },
+  {
+   "number": 111,
+   "name_ar": "المسد",
+   "translit": "Al-Masad",
+   "uz": "Masad",
+   "n_ayat": 5,
+   "search": "111 almasad masad المسد"
+  },
+  {
+   "number": 112,
+   "name_ar": "الإخلاص",
+   "translit": "Al-Ikhlas",
+   "uz": "Ixlos",
+   "n_ayat": 4,
+   "search": "112 alikhlas ixlos ikhlas الإخلاص"
+  },
+  {
+   "number": 113,
+   "name_ar": "الفلق",
+   "translit": "Al-Falaq",
+   "uz": "Falaq",
+   "n_ayat": 5,
+   "search": "113 alfalaq falaq الفلق"
+  },
+  {
+   "number": 114,
+   "name_ar": "الناس",
+   "translit": "An-Nas",
+   "uz": "Nos",
+   "n_ayat": 6,
+   "search": "114 annas nos nas الناس"
+  }
+ ]
+}

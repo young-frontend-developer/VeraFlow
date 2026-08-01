@@ -29,6 +29,8 @@ export type ErrorContent = {
   fix: string;
   drill: string;
   severity: string;
+  /** No qori has authored this code at all; `rule` holds the raw code. */
+  unauthored?: boolean;
 };
 
 export type TajweedError = {
@@ -37,6 +39,12 @@ export type TajweedError = {
   at: number;
   letter: string;
   needs_teacher?: boolean;
+  /**
+   * Reached the screen only because TILAWAH_SHOW_UNREVIEWED is on — no qori has
+   * signed this off. The UI MUST render a visible marker; that obligation is
+   * the whole reason the server sends the flag rather than just the content.
+   */
+  draft?: boolean;
   content: ErrorContent;
 };
 
@@ -71,6 +79,48 @@ async function json<T>(r: Response): Promise<T> {
 
 export const listAyat = () => fetch(`${BASE}/api/ayat`).then(json<Ayah[]>);
 
+/** One row of the sura picker. All 114 come down in a single small response. */
+export type Sura = {
+  number: number;
+  name_ar: string;
+  /** Standard Latin form — "Al-Fatiha". */
+  translit: string;
+  /** Uzbek form — "Fotiha". Different enough that search needs both. */
+  uz: string;
+  n_ayat: number;
+  /**
+   * Prefolded haystack: number, both transliterations and the Arabic name,
+   * lowercased with apostrophes and hyphens stripped. Filter with a plain
+   * `includes` against the query folded the same way — see `foldQuery`.
+   */
+  search: string;
+};
+
+export const listSuras = () => fetch(`${BASE}/api/suras`).then(json<Sura[]>);
+
+/** Strip what a learner will not type: "Ali 'Imran" gets typed "ali imran". */
+export const foldQuery = (q: string) =>
+  q.toLowerCase().replace(/['’`\-–—]/g, "").trim();
+
+export type AyahBrief = {
+  aya: number;
+  uthmani: string;
+  n_words: number;
+  n_segments: number;
+  seconds: number;
+};
+
+export type SuraAyat = {
+  sura: number;
+  name_ar: string;
+  translit: string;
+  n_ayat: number;
+  ayat: AyahBrief[];
+};
+
+export const suraAyat = (sura: number) =>
+  fetch(`${BASE}/api/suras/${sura}/ayat`).then(json<SuraAyat>);
+
 export const history = (limit = 20) =>
   fetch(
     `${BASE}/api/attempts?device_id=${encodeURIComponent(deviceId())}&limit=${limit}`,
@@ -89,6 +139,13 @@ export type PracticeSegment = PracticeRange & {
   /** Median-reciter estimate. The slow rate used for capping is never sent. */
   seconds: number;
   uthmani: string;
+  /**
+   * Letter-groups for THIS range, with unit indices relative to the range —
+   * which is what the engine diffs, so it is what `TajweedError.at` counts
+   * against. Using the whole ayah's segments for a sub-range would put every
+   * highlight on the wrong letter.
+   */
+  text_segments: Segment[];
 };
 
 export type AyahSegments = {
@@ -133,10 +190,96 @@ export async function flagWrong(attemptId: number): Promise<void> {
   });
 }
 
+/* ── qori review tool ─────────────────────────────────────────────────────
+   Operator-facing, not learner-facing. Unauthenticated by design and refused
+   outright by the server in production. */
+
+/** The Uzbek block of a registry entry, as a learner would eventually read it. */
+export type ReviewUz = {
+  name?: string;
+  short?: string;
+  nima_xato?: string;
+  qoida?: string;
+  nega_muhim?: string;
+  tuzatish?: string;
+  mashq?: string;
+};
+
+export const UZ_FIELDS: (keyof ReviewUz)[] = [
+  "name",
+  "short",
+  "nima_xato",
+  "qoida",
+  "nega_muhim",
+  "tuzatish",
+  "mashq",
+];
+
+export type ReviewEntry = {
+  code: string;
+  group: string;
+  severity: string;
+  detection_confidence: string;
+  source_ref: string;
+  status: "draft" | "reviewed" | "rejected";
+  reviewed_by: string;
+  reviewed_at: string;
+  review_note: string;
+  /** Fields a reviewer has edited away from the generated registry. */
+  uz_edited_fields: string[];
+  uz: ReviewUz;
+  review_order: number;
+  beginner_pct: number;
+  all_pct: number;
+};
+
+export type ReviewQueue = {
+  total: number;
+  reviewed: number;
+  rejected: number;
+  remaining: number;
+  entries: ReviewEntry[];
+  ranking_stale: boolean;
+};
+
+export const reviewQueue = () =>
+  fetch(`${BASE}/api/review/queue`).then(json<ReviewQueue>);
+
+export async function reviewDecide(
+  code: string,
+  action: "approve" | "reject" | "edit" | "reset",
+  opts: { reviewed_by?: string; note?: string; uz?: ReviewUz } = {},
+): Promise<ReviewEntry> {
+  const r = await fetch(`${BASE}/api/review/${encodeURIComponent(code)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action,
+      reviewed_by: opts.reviewed_by ?? "",
+      note: opts.note ?? "",
+      uz: opts.uz ?? {},
+    }),
+  });
+  if (!r.ok) {
+    // The server explains itself here — "reviewed_by is required to approve",
+    // "not a reviewable entry" — so surface it rather than a bare status code.
+    let detail = String(r.status);
+    try {
+      detail = (await r.json()).detail ?? detail;
+    } catch {
+      /* non-JSON error body */
+    }
+    throw new Error(detail);
+  }
+  return r.json();
+}
+
 export type Meta = {
   pilot: boolean;
   unverified_codes: string[];
   collect_audio_offered: boolean;
+  /** The server's content review gate is bypassed. Dev boxes only. */
+  show_unreviewed: boolean;
   version: string;
 };
 

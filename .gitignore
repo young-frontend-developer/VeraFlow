@@ -7,6 +7,22 @@ api/tilawah.db
 # raw learner voice captured for diagnosis - never commit
 api/debug_audio/
 
+# NOT ignored, listed here so nobody adds it later:
+#   tajweed_registry_review.json  — qori approvals and their edits to the Uzbek.
+# It is the scarcest data in the project, it is what makes coverage move, and it
+# is deliberately NOT inside the generated registry so a rebuild cannot lose it.
+# Commit it.
+
+# tolerance calibration. The harness and its config ARE committed; the
+# recitations and everything derived from them are not - they are personal
+# recordings, and a report is only meaningful next to the audio it came from.
+api/calibration/manifest.csv
+api/calibration/clips/
+api/calibration/.cache/
+api/calibration/report.json
+api/calibration/report.md
+api/calibration/tolerances.suggested.json
+
 # node
 node_modules/
 web/.env
