@@ -53,11 +53,18 @@ from dataclasses import dataclass, field
 import numpy as np
 import soundfile as sf
 
+from ..config import settings
+
 log = logging.getLogger(__name__)
 
 SR = 16000
 MIN_DURATION_S = 0.6
-MAX_DURATION_S = 30.0
+# The whole ayah is the default practice range now, so the old 30 s ceiling had
+# to go - it rejected the default outright on ~40% of the Quran while
+# segmentation hid the fact. What replaces it is not a taste judgement but a
+# measured memory limit; see Settings.max_audio_seconds for the arithmetic and
+# the two data points it is fitted to.
+MAX_DURATION_S = settings.max_audio_seconds
 
 # Applied only when the noise floor is actually measurable (see Quality.snr_measurable).
 # Deliberately well below the old 35 dB: that number was a silence-fraction

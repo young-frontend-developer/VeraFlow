@@ -38,12 +38,16 @@ class SuraOut(BaseModel):
 
 
 class AyahBriefOut(BaseModel):
-    """Enough to choose an ayah, not enough to recite one."""
+    """Enough to read an ayah and choose it, not enough to score one."""
     aya: int
     uthmani: str
     n_words: int
     n_segments: int
     seconds: float
+    # Translation in the requested language. Carried on the ayah rather than
+    # fetched per verse so the verse-by-verse reader's arrows are instant -
+    # a round trip per tap would make paging through a sura feel broken.
+    translation: str = ""
 
 
 class SuraAyatOut(BaseModel):
@@ -52,6 +56,26 @@ class SuraAyatOut(BaseModel):
     translit: str
     n_ayat: int
     ayat: list[AyahBriefOut]
+    # Whether the sura opens with the basmala as a separate line in the mushaf.
+    # True everywhere except al-Fatiha (where it is ayah 1) and at-Tawba (where
+    # there is none) - so it cannot be assumed and cannot be hardcoded to one
+    # exception. Drives the mushaf view's opening line.
+    has_basmala: bool = False
+    bismillah: str = ""
+
+
+class ReciterOut(BaseModel):
+    """One everyayah reciter, verified present at build time."""
+    id: str                    # the everyayah folder
+    name: str
+    style: str                 # muallim | murattal | mujawwad
+    bitrate_kbps: int = 0
+
+
+class RecitersOut(BaseModel):
+    default: str
+    base_url: str
+    reciters: list[ReciterOut]
 
 
 class PracticeSegmentOut(BaseModel):
@@ -76,11 +100,25 @@ class PracticeSegmentOut(BaseModel):
 
 
 class AyahSegmentsOut(BaseModel):
+    """The whole ayah, plus the optional way to break it up.
+
+    `whole` is THE practice range. It is always present, for every ayah, at any
+    length, and it is what the client selects unless the learner asks for
+    something narrower. Segmentation used to decide this - 72% of ayat were
+    split before anyone was asked - and that was the wrong call: the model reads
+    long ayat correctly, and everyayah serves whole-ayah audio only, so a split
+    range also had no reciter recording to play against it.
+
+    `parts` is the optional "practise part of this ayah" list. Empty when the
+    ayah is short enough to be a single part anyway, so a non-empty `parts` is
+    exactly the condition for offering the control.
+    """
     sura: int
     aya: int
     n_words: int
     legal_cuts: list[int]
-    segments: list[PracticeSegmentOut]
+    whole: PracticeSegmentOut
+    parts: list[PracticeSegmentOut] = []
 
 
 class ReviewEntryOut(BaseModel):
@@ -134,7 +172,13 @@ class AttemptOut(BaseModel):
     status: str                 # ok | retry_recording | error
     reason: str = ""            # too_noisy | too_short | ...
     clean: bool = False
+    # Detected something, showed nothing - the production content gate withheld
+    # every correction. A judgement WAS formed.
     suppressed: bool = False
+    # The model returned nothing to compare against, so no judgement was formed
+    # at all. Kept separate from `suppressed` because the two are different
+    # failures and printing one sentence for both makes them indistinguishable.
+    analysable: bool = True
     errors: list = []
     snr_db: float = 0.0
     duration_s: float = 0.0
@@ -154,8 +198,18 @@ class MetaOut(BaseModel):
     pilot: bool = False
     unverified_codes: list[str] = []
     collect_audio_offered: bool = False   # may the audio consent even be shown
-    # TILAWAH_SHOW_UNREVIEWED is on: the review gate is bypassed and errors
-    # arrive carrying `draft`. Exposed so the client can say so at the top of
+    # The review gate is open, so unreviewed errors arrive carrying `draft`.
+    # True outside production. Exposed so the client can say so at the top of
     # the screen rather than leaving the marker on individual cards to carry it.
     show_unreviewed: bool = False
+    # Longest recitation the engine will attempt, in seconds. Sent so the client
+    # can warn BEFORE recording: the wall-clock cost is ~10x realtime, so
+    # discovering the limit after the fact means a multi-minute wait for a
+    # rejection. See Settings.max_audio_seconds.
+    max_audio_seconds: float = 0.0
+    # Coaching registries the server expected and could not find. Non-empty
+    # means some codes are still rendering their older rules.json wording; it
+    # is surfaced rather than logged once at boot so the gap cannot quietly
+    # become permanent.
+    missing_registries: list[str] = []
     version: str = "0.1.0"

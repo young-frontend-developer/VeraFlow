@@ -1,0 +1,427 @@
+{
+  "_meta": {
+    "version": "0.5-lahn-taxonomy",
+    "purpose": "Adds the categories v4 was missing, and the generic fallbacks that make a gap degrade honestly instead of printing 'couldn't assess'.",
+
+    "why_this_exists": "v1–v4 were organised by my own ad-hoc grouping (makharij / sifat / ghunna / madd / ahkam). The classical science already has a taxonomy for recitation error — اللحن — and it is both more complete and better ordered by severity. Re-reading the registry against it exposed one whole missing category and several documented error types.",
+
+    "classical_taxonomy": {
+      "lahn_jaliy": {
+        "uz": "Ochiq xato",
+        "definition": "A clear error in the word itself. Changes meaning or is plainly audible. Forbidden by consensus when deliberate.",
+        "subtypes": [
+          "إبدال حرف — one letter substituted for another",
+          "إبدال حركة بحركة — one vowel substituted for another  ← MISSING FROM v4",
+          "إبدال حركة بسكون — vowel replaced by sukun  ← MISSING",
+          "إبدال سكون بحركة — sukun replaced by vowel  ← MISSING",
+          "إنقاص حرف — a letter dropped  ← MISSING",
+          "إضافة حرف — a letter added  ← MISSING"
+        ]
+      },
+      "lahn_khafiy_1": {
+        "uz": "Yashirin xato — umumiy",
+        "definition": "Does not change meaning. Recognised by ordinary reciters. Shortening a required madd, dropping ghunna on a mushaddad mim or nun, idgham where izhar is due, missing qalqala.",
+        "coverage": "v4 covers this well."
+      },
+      "lahn_khafiy_2": {
+        "uz": "Yashirin xato — nozik",
+        "definition": "Recognised only by trained reciters. Madd or ghunna measure slightly over or under, exaggerated tafkheem or tarqiq, misplaced نبر (stress).",
+        "coverage": "v4 covers measure and tafkheem. Nabr is not currently detectable — do not add an entry for it."
+      }
+    },
+
+    "detectability_note": "Harakat errors ARE detectable. The Muaalem phoneme string carries the vowel: in a real test the model returned بَ where بِ was expected and هُ where هِ was expected. Nothing was reading it. The whole lahn_jaliy vowel category is available today with no model change.",
+
+    "the_fallback_principle": "A registry can never enumerate every error in the Quran — any of 28 letters may replace any other, and that is over 750 ordered pairs before vowels, length or rules. Completeness is not the goal. The goal is that an unlisted error still tells the learner WHICH letter in WHICH word went wrong, and says plainly that the full explanation is not ready. GENERIC_* below are that floor. With them in place, 'Toʻliq baholay olmadik' should appear only when the model genuinely returned nothing analysable.",
+
+    "sources": [
+      "«Тажвид қоидалари» — Зиёвуддин Раҳим, Одилхон қори Юнусхон ўғли. Тошкент ислом университети, 2011.",
+      "Classical lahn taxonomy as set out in standard tajwid works (اللحن الجلي واللحن الخفي)",
+      "Documented common Fatiha errors: ض read as ظ or ز; غ read as ق; qalqala performed on ع, which is not a qalqala letter; anticipatory tafkheem of ل before ض"
+    ],
+    "status_note": "All entries status='draft'. Same gate, same review requirement."
+  },
+
+  "entries": {
+
+    "GENERIC_LETTER_SUBSTITUTED": {
+      "group": "fallback", "severity": "high", "priority": "SHIP FIRST",
+      "detection_signal": "any phoneme substitution with no specific entry",
+      "note": "This is the single most valuable entry in the whole registry. It converts every unlisted letter confusion from silence into useful feedback.",
+      "uz": {
+        "headline": "«{word}» — «{expected}» o'rniga «{actual}» aytdingiz.",
+        "fix": "Bu ikki harf boshqa-boshqa maxrajdan chiqadi. Qaysi so'zda va qaysi harfda xato bo'lganini bildingiz — endi shu harfni alohida, sekin mashq qiling.\n\nBu xato uchun to'liq izoh hali tayyorlanmagan. Ustozingiz bilan tekshiring.",
+        "rule": "Har bir harf o'z maxrajidan chiqishi shart. Bir harfni boshqasiga almashtirish — ochiq xato (lahn jaliy), va u so'z ma'nosini o'zgartirishi mumkin.",
+        "drill": "«{expected}» ni alohida 10 marta ayting. So'ng «{word}» so'zini sekin, harf-harf o'qing."
+      },
+      "ru": {
+        "headline": "«{word}» — вместо «{expected}» вы сказали «{actual}».",
+        "fix": "Эти буквы выходят из разных махраджей. Вы знаете слово и букву — теперь отработайте эту букву отдельно, медленно.\n\nПолное объяснение для этой ошибки пока не готово. Проверьте с учителем.",
+        "rule": "Каждая буква обязана выходить из своего махраджа. Замена одной буквы другой — явная ошибка (лахн джалий), и она может изменить смысл слова.",
+        "drill": "Произнесите «{expected}» отдельно 10 раз. Затем прочитайте «{word}» медленно, по буквам."
+      }
+    },
+
+    "GENERIC_SIFAT_MISMATCH": {
+      "group": "fallback", "severity": "medium", "priority": "SHIP FIRST",
+      "detection_signal": "any sifat mismatch with no specific entry",
+      "uz": {
+        "headline": "«{word}» — «{letter}» harfining sifati to'g'ri chiqmadi.",
+        "fix": "Harfni to'g'ri tanladingiz, lekin uni chiqarish tarzida xato bor.\n\nBu xato uchun to'liq izoh hali tayyorlanmagan. Ustozingiz bilan tekshiring.",
+        "rule": "Harf faqat maxrajidan emas, o'z sifati bilan ham chiqishi kerak — yo'g'onmi ingichkami, jarangli yoki jarangsizmi, kuchli yoki sirg'aluvchimi.",
+        "drill": "«{letter}» ni qori o'qishidan eshiting va o'zingiznikini yozib solishtiring."
+      },
+      "ru": {
+        "headline": "«{word}» — сифат буквы «{letter}» вышел неверно.",
+        "fix": "Букву вы выбрали правильно, но ошибка в том, как она произнесена.\n\nПолное объяснение пока не готово. Проверьте с учителем.",
+        "rule": "Буква должна выходить не только из своего махраджа, но и со своим сифатом — тяжёлая или лёгкая, звонкая или глухая, сильная или скользящая.",
+        "drill": "Послушайте «{letter}» у чтеца и сравните с собственной записью."
+      }
+    },
+
+    "HARAKA_SUBSTITUTED": {
+      "group": "haraka", "severity": "high", "priority": "SHIP FIRST",
+      "detection_signal": "phoneme carries a different harakat than the reference (fatha ↔ kasra ↔ damma)",
+      "note": "Detectable today — the phoneme string carries the vowel. Nothing currently reads it.",
+      "uz": {
+        "headline": "«{word}» — «{letter}» ni {expected} bilan o'qish kerak edi, siz {actual} bilan o'qidingiz.",
+        "fix": "Harakatni almashtirish — eng jiddiy xato turi, chunki u so'z ma'nosini butunlay o'zgartiradi.\n\nMushafga qarang va harakatni ko'zingiz bilan tasdiqlang: fatha — ustida, kasra — ostida, zamma — ustida kichik «vov».",
+        "rule": "Harakat almashtirish ochiq xato (lahn jaliy) hisoblanadi.\n\nMashhur misol: «أَنْعَمْتَ» — «ta» fatha bilan («Sen in'om qilding»). Zamma bilan «أَنْعَمْتُ» o'qilsa, ma'no «Men in'om qildim» ga aylanadi — Alloh haqidagi gap o'quvchi haqidagi gapga aylanib qoladi.",
+        "drill": "«{word}» ni sekin, har bir harakatni ovoz chiqarib nomlab o'qing: «bu fatha, bu kasra». 5 marta."
+      },
+      "ru": {
+        "headline": "«{word}» — «{letter}» нужно читать с {expected}, вы прочитали с {actual}.",
+        "fix": "Замена огласовки — самый серьёзный вид ошибки: она полностью меняет смысл слова.\n\nПосмотрите в мусхаф и подтвердите огласовку глазами: фатха сверху, кясра снизу, дамма — маленький «вов» сверху.",
+        "rule": "Замена огласовки — явная ошибка (лахн джалий).\n\nИзвестный пример: «أَنْعَمْتَ» — с фатхой («Ты облагодетельствовал»). С даммой «أَنْعَمْتُ» смысл становится «я облагодетельствовал» — речь об Аллахе превращается в речь о чтеце.",
+        "drill": "Прочитайте «{word}» медленно, называя вслух каждую огласовку: «это фатха, это кясра». 5 раз."
+      }
+    },
+
+    "HARAKA_TO_SUKUN": {
+      "group": "haraka", "severity": "high",
+      "detection_signal": "reference phoneme carries a harakat, produced phoneme carries none",
+      "uz": {
+        "headline": "«{word}» — «{letter}» harakatli edi, siz sukunli o'qidingiz.",
+        "fix": "Harfni yutib yubordingiz. Harakatni to'liq ayting — uni tashlab ketmang.\n\nSekin o'qing: har bir harakatli harf eshitilishi kerak.",
+        "rule": "Harakatni sukunga aylantirish ochiq xato hisoblanadi va so'z shaklini buzadi.",
+        "drill": "«{word}» ni 5 marta juda sekin o'qing, har bir harakatni to'liq chiqaring."
+      },
+      "ru": {
+        "headline": "«{word}» — «{letter}» была с огласовкой, вы прочитали с сукуном.",
+        "fix": "Вы проглотили букву. Произнесите огласовку полностью — не отбрасывайте её.\n\nЧитайте медленно: каждая огласованная буква должна быть слышна.",
+        "rule": "Замена огласовки сукуном — явная ошибка, искажающая форму слова.",
+        "drill": "Прочитайте «{word}» 5 раз очень медленно, полностью произнося каждую огласовку."
+      }
+    },
+
+    "SUKUN_TO_HARAKA": {
+      "group": "haraka", "severity": "high",
+      "detection_signal": "reference phoneme carries sukun, produced phoneme carries a harakat",
+      "uz": {
+        "headline": "«{word}» — «{letter}» sukunli edi, siz {actual} qo'shdingiz.",
+        "fix": "Sukunli harfga unli qo'shib yubordingiz. Harf jim qolishi kerak — undan keyin darhol keyingi harfga o'ting.\n\nKo'pincha bu qalqala harflarida yuz beradi: tebranish haddan kuchli bo'lsa, u harakatga aylanadi.",
+        "rule": "Sukunni harakatga aylantirish ochiq xato hisoblanadi — so'zga mavjud bo'lmagan unli qo'shiladi.",
+        "drill": "«{word}» ni 5 marta o'qing, sukunli harfdan keyin hech qanday unli eshitilmasligini tekshiring. Ovozingizni yozib eshiting."
+      },
+      "ru": {
+        "headline": "«{word}» — «{letter}» была с сукуном, вы добавили {actual}.",
+        "fix": "Вы добавили гласный к букве с сукуном. Буква должна остаться безгласной — сразу переходите к следующей.\n\nЧаще всего это происходит на буквах калькаля: слишком сильный отскок превращается в огласовку.",
+        "rule": "Замена сукуна огласовкой — явная ошибка: к слову добавляется отсутствующий гласный.",
+        "drill": "Прочитайте «{word}» 5 раз, проверяя, что после безгласной буквы не слышно гласного. Запишите себя."
+      }
+    },
+
+    "LETTER_DROPPED": {
+      "group": "haraka", "severity": "high",
+      "detection_signal": "reference phoneme absent from produced sequence",
+      "uz": {
+        "headline": "«{word}» — «{expected}» harfini tushirib qoldirdingiz.",
+        "fix": "Harf umuman aytilmadi. Ko'pincha bu tez o'qiganda yuz beradi.\n\nSekinlashtiring. So'zni harf-harf ayting, keyin normal tezlikda takrorlang.",
+        "rule": "Harfni tushirib qoldirish (inqos) ochiq xato hisoblanadi. Bu ayniqsa mad harflarida ko'p uchraydi — «الرَّحْمَـٰن» dagi alif, «الرَّحِيم» dagi yo kabi.",
+        "drill": "«{word}» ni harf-harf 5 marta, so'ng butun holda 5 marta o'qing."
+      },
+      "ru": {
+        "headline": "«{word}» — вы пропустили букву «{expected}».",
+        "fix": "Буква не была произнесена вовсе. Чаще всего это происходит при быстром чтении.\n\nЗамедлитесь. Произнесите слово по буквам, затем повторите в обычном темпе.",
+        "rule": "Пропуск буквы (инкос) — явная ошибка. Особенно часто с буквами мадда: алиф в «الرَّحْمَـٰن», йа в «الرَّحِيم».",
+        "drill": "Прочитайте «{word}» по буквам 5 раз, затем целиком 5 раз."
+      }
+    },
+
+    "LETTER_ADDED": {
+      "group": "haraka", "severity": "high",
+      "detection_signal": "produced phoneme absent from reference sequence",
+      "uz": {
+        "headline": "«{word}» — ortiqcha «{actual}» qo'shdingiz.",
+        "fix": "So'zda yo'q harfni qo'shib yubordingiz. Mushafga qarang va yozilganini aynan o'qing.\n\nKo'pincha bu ohang uchun yoki odat bo'yicha yuz beradi.",
+        "rule": "Harf qo'shish (iydofa) ochiq xato hisoblanadi. Qur'onda nima yozilgan bo'lsa, aynan shu o'qiladi.",
+        "drill": "Mushafdan qarab «{word}» ni 5 marta o'qing, har bir harfni ko'zingiz bilan kuzatib."
+      },
+      "ru": {
+        "headline": "«{word}» — вы добавили лишнюю «{actual}».",
+        "fix": "Вы добавили букву, которой в слове нет. Посмотрите в мусхаф и читайте ровно то, что написано.\n\nЧасто это происходит ради мелодии или по привычке.",
+        "rule": "Добавление буквы (иydофа) — явная ошибка. Читается ровно то, что записано в Коране.",
+        "drill": "Читайте «{word}» по мусхафу 5 раз, отслеживая каждую букву глазами."
+      }
+    },
+
+    "QALQALAH_ON_WRONG_LETTER": {
+      "group": "sifat", "severity": "medium",
+      "detection_signal": "qalqla: 'moqalqal' produced on a letter outside ق ط ب ج د",
+      "note": "Documented common error — qalqala performed on ع in «الْمَغْضُوبِ عَلَيْهِمْ».",
+      "uz": {
+        "headline": "«{word}» — «{letter}» qalqala harfi emas, unga tebranish qo'shmang.",
+        "fix": "Sukunli harfni tebratdingiz, lekin bu harf qalqala harflaridan emas.\n\nUni jim, tebranishsiz qoldiring va darhol keyingi harfga o'ting.",
+        "rule": "Qalqala harflari faqat beshta: ق ط ب ج د. Boshqa harflarga tebranish qo'shish xato.\n\nKeng tarqalgan xato: «الْمَغْضُوبِ عَلَيْهِمْ» da «ع» ga qalqala qilish.",
+        "drill": "«{word}» ni 10 marta, sukunli harfni butunlay jim qoldirib o'qing."
+      },
+      "ru": {
+        "headline": "«{word}» — «{letter}» не относится к буквам калькаля, не добавляйте отскок.",
+        "fix": "Вы сделали отскок на безгласной букве, но она не входит в буквы калькаля.\n\nОставьте её беззвучной и сразу переходите к следующей.",
+        "rule": "Букв калькаля только пять: ق ط ب ج د. Отскок на других буквах — ошибка.\n\nРаспространённая ошибка: калькаля на «ع» в «الْمَغْضُوبِ عَلَيْهِمْ».",
+        "drill": "Прочитайте «{word}» 10 раз, полностью оставляя безгласную букву без отскока."
+      }
+    },
+
+    "LAM_TAFKHEEM_WRONG": {
+      "group": "sifat", "severity": "medium",
+      "detection_signal": "phoneme ل with tafkheem_or_taqeeq: mofakham where reference expects moraqaq",
+      "note": "Documented anticipatory error — ل read heavy in «وَلَا الضَّالِّينَ» because the mouth is preparing for ض.",
+      "uz": {
+        "headline": "«{word}» — «lom» ingichka o'qilishi kerak edi.",
+        "fix": "Keyingi yo'g'on harfga tayyorgarlik ko'rib, «lom» ni ham yo'g'on qilib yubordingiz.\n\nHar bir harfni alohida chiqaring. «Lom» aytilib bo'lgach, keyin tilni ko'taring.",
+        "rule": "«Lom» faqat «Alloh» ismida, undan oldingi harakat fatha yoki zamma bo'lganda yo'g'on o'qiladi. Qolgan barcha o'rinlarda ingichka.\n\nKeng tarqalgan xato: «وَلَا الضَّالِّينَ» da «lom» ni yo'g'on o'qish — chunki og'iz «ض» ga tayyorlanadi.",
+        "drill": "«وَلَا» ni alohida 10 marta ayting — ingichka. So'ng «وَلَا الضَّالِّينَ» ni sekin, «lom» ingichka qolishini kuzatib."
+      },
+      "ru": {
+        "headline": "«{word}» — «лом» должна была звучать легко.",
+        "fix": "Готовясь к следующей тяжёлой букве, вы сделали тяжёлой и «лом».\n\nПроизносите каждую букву отдельно. Сначала закончите «лом», затем поднимайте язык.",
+        "rule": "«Лом» читается тяжело только в имени «Аллах», когда предыдущая огласовка — фатха или дамма. Во всех остальных случаях — легко.\n\nРаспространённая ошибка: тяжёлая «лом» в «وَلَا الضَّالِّينَ», потому что рот готовится к «ض».",
+        "drill": "Скажите «وَلَا» отдельно 10 раз — легко. Затем «وَلَا الضَّالِّينَ» медленно, следя за лёгкостью «лом»."
+      }
+    },
+
+    "MAKHARIJ_AIN_TO_GHAYN": {
+      "group": "makharij", "severity": "high", "audio_pair": "audio/ain_ghayn.mp3",
+      "detection_signal": "phoneme substitution: ع -> غ",
+      "uz": {
+        "headline": "«{word}» — «ع» ni «غ» kabi o'qidingiz.",
+        "fix": "Tovush yuqoriroqdan chiqdi va yo'g'onlashdi. «ع» bo'g'izning o'rtasidan, ingichka chiqadi.\n\n«غ» esa yuqoridan, tomoq tozalayotgandek, va yo'g'on. Yo'g'onlik bor-yo'qligini ushlang.",
+        "rule": "«ع» — bo'g'iz o'rtasi, istifola (ingichka). «غ» — bo'g'izning yuqorisi, iste'lo (yo'g'on).",
+        "drill": "«عَ — غَ», 10 marta. So'ng «أَنْعَمْتَ» (ع) va «الْمَغْضُوب» (غ)."
+      },
+      "ru": {
+        "headline": "«{word}» — вы произнесли «ع» как «غ».",
+        "fix": "Звук вышел выше и стал тяжёлым. «ع» выходит из середины горла, легко.\n\n«غ» — сверху, как при прочищении горла, и тяжело. Ловите наличие тяжести.",
+        "rule": "«ع» — середина горла, истифола (лёгкая). «غ» — верх горла, истеъло (тяжёлая).",
+        "drill": "«عَ — غَ», 10 раз. Затем «أَنْعَمْتَ» (ع) и «الْمَغْضُوب» (غ)."
+      }
+    },
+
+    "MAKHARIJ_HHA_TO_KHA": {
+      "group": "makharij", "severity": "high", "audio_pair": "audio/hha_kha.mp3",
+      "detection_signal": "phoneme substitution: ح -> خ",
+      "uz": {
+        "headline": "«{word}» — «ح» ni «خ» kabi o'qidingiz.",
+        "fix": "Tovush yuqoriroqdan chiqdi va yo'g'onlashdi. «ح» pastroqda — bo'g'iz o'rtasida, va ingichka.\n\n«خ» da og'izda qalinlik seziladi, «ح» da yo'q.",
+        "rule": "«ح» — bo'g'iz o'rtasi, ingichka. «خ» — bo'g'izning eng yuqorisi, yo'g'on.",
+        "drill": "«حَ — خَ», 10 marta. So'ng «الرَّحْمَن» (ح) va «خَوْف» (خ)."
+      },
+      "ru": {
+        "headline": "«{word}» — вы произнесли «ح» как «خ».",
+        "fix": "Звук вышел выше и стал тяжёлым. «ح» ниже — середина горла, и легко.\n\nПри «خ» во рту чувствуется плотность, при «ح» — нет.",
+        "rule": "«ح» — середина горла, лёгкая. «خ» — самый верх горла, тяжёлая.",
+        "drill": "«حَ — خَ», 10 раз. Затем «الرَّحْمَن» (ح) и «خَوْف» (خ)."
+      }
+    },
+
+    "MAKHARIJ_HA_TO_HAMZA": {
+      "group": "makharij", "severity": "high", "audio_pair": "audio/ha_hamza.mp3",
+      "detection_signal": "phoneme substitution: ه -> ء",
+      "uz": {
+        "headline": "«{word}» — «ه» ni «ء» kabi o'qidingiz.",
+        "fix": "Bo'g'izni yopib yubordingiz. «ه» da bo'g'iz ochiq qoladi — bu shunchaki iliq nafas.\n\n«ء» da esa bo'g'iz to'liq yopiladi va birdan ochiladi.",
+        "rule": "Ikkalasi ham bo'g'izning eng chuqur qismidan chiqadi — maxraj bir xil. Farq: «ء» shiddat (to'liq yopiladi), «ه» raxovat (havo uzluksiz).",
+        "drill": "«ه» ni 3 soniya cho'zing — cho'ziladi. «ء» ni cho'zib bo'lmaydi. So'ng «هُوَ» va «أَحَد»."
+      },
+      "ru": {
+        "headline": "«{word}» — вы произнесли «ه» как «ء».",
+        "fix": "Вы сомкнули горло. При «ه» горло остаётся открытым — это просто тёплый выдох.\n\nПри «ء» горло смыкается полностью и резко раскрывается.",
+        "rule": "Обе выходят из самой глубокой части горла — махрадж одинаков. Разница: «ء» шиддат (полное смыкание), «ه» раховат (воздух непрерывен).",
+        "drill": "Протяните «ه» 3 секунды — тянется. «ء» протянуть нельзя. Затем «هُوَ» и «أَحَد»."
+      }
+    },
+
+    "MAKHARIJ_SEEN_TO_SHEEN": {
+      "group": "makharij", "severity": "high", "audio_pair": "audio/seen_sheen.mp3",
+      "detection_signal": "phoneme substitution: س <-> ش",
+      "uz": {
+        "headline": "«{word}» — «{expected}» ni «{actual}» kabi o'qidingiz.",
+        "fix": "«س» da til uchi tishlarga yaqin, tovush ingichka hushtakka o'xshaydi.\n\n«ش» da til o'rtasi ishlaydi, havo kengroq yoyiladi. Tovush «yassiroq» chiqadi.",
+        "rule": "«س» — til uchi va tishlar, sofiyr (hushtak) sifati bilan. «ش» — til o'rtasi va tanglay, tafashshiy (yoyilish) sifati bilan. Maxraj butunlay boshqa.",
+        "drill": "«سَ — شَ», 10 marta. So'ng «الْمُسْتَقِيم» (س) va «شَهْر» (ش)."
+      },
+      "ru": {
+        "headline": "«{word}» — вы произнесли «{expected}» как «{actual}».",
+        "fix": "При «س» кончик языка у зубов, звук — тонкий свист.\n\nПри «ش» работает середина языка, воздух рассеивается шире. Звук «площе».",
+        "rule": "«س» — кончик языка и зубы, с сифатом софийр (свист). «ش» — середина языка и нёбо, с сифатом тафашший (рассеивание). Махрадж совершенно разный.",
+        "drill": "«سَ — شَ», 10 раз. Затем «الْمُسْتَقِيم» (س) и «شَهْر» (ش)."
+      }
+    },
+
+    "MAKHARIJ_TA_TO_DAL": {
+      "group": "makharij", "severity": "high", "audio_pair": "audio/ta_dal.mp3",
+      "detection_signal": "phoneme substitution: ت <-> د",
+      "uz": {
+        "headline": "«{word}» — «{expected}» ni «{actual}» kabi o'qidingiz.",
+        "fix": "Maxraj bir xil — til uchi tishlar ildizida. Farq ovozda.\n\nBarmog'ingizni tomog'ingizga qo'ying: «د» da titrash bor, «ت» da yo'q, faqat nafas.",
+        "rule": "«ت» — mahmus (jarangsiz). «د» — majhur (jarangli). Maxraj bir xil, sifat boshqa.",
+        "drill": "Tomoqni ushlab «تَ — دَ», 10 marta. Titrash bor-yo'qligini har safar tekshiring."
+      },
+      "ru": {
+        "headline": "«{word}» — вы произнесли «{expected}» как «{actual}».",
+        "fix": "Махрадж одинаков — кончик языка у основания зубов. Разница в голосе.\n\nПалец на горло: при «د» вибрация есть, при «ت» нет, только выдох.",
+        "rule": "«ت» — глухая. «د» — звонкая. Махрадж одинаков, сифат разный.",
+        "drill": "Держа палец на горле: «تَ — دَ», 10 раз. Каждый раз проверяйте вибрацию."
+      }
+    },
+
+    "MAKHARIJ_LAM_TO_RAA": {
+      "group": "makharij", "severity": "high", "audio_pair": "audio/lam_raa.mp3",
+      "detection_signal": "phoneme substitution: ل <-> ر",
+      "uz": {
+        "headline": "«{word}» — «{expected}» ni «{actual}» kabi o'qidingiz.",
+        "fix": "«ل» da til uchi tanglayga tegib turadi, havo yon tomondan o'tadi — takror yo'q.\n\n«ر» da til uchi tebranadi — takror sifati bor. Shu tebranish bor-yo'qligini ushlang.",
+        "rule": "«ر» ning o'ziga xos sifati — takror (tebranish). «ل» da bunday tebranish yo'q.",
+        "drill": "«لَ — رَ», 10 marta. «ر» da til uchi tebrayaptimi — seziting."
+      },
+      "ru": {
+        "headline": "«{word}» — вы произнесли «{expected}» как «{actual}».",
+        "fix": "При «ل» кончик языка прилегает к нёбу, воздух идёт сбоку — вибрации нет.\n\nПри «ر» кончик языка вибрирует — это сифат такрор. Ловите наличие вибрации.",
+        "rule": "Отличительный сифат «ر» — такрор (вибрация). У «ل» её нет.",
+        "drill": "«لَ — رَ», 10 раз. Чувствуйте вибрацию кончика при «ر»."
+      }
+    },
+
+    "MAKHARIJ_BA_TO_MEEM": {
+      "group": "makharij", "severity": "high", "audio_pair": "audio/ba_meem.mp3",
+      "detection_signal": "phoneme substitution: ب <-> م",
+      "uz": {
+        "headline": "«{word}» — «{expected}» ni «{actual}» kabi o'qidingiz.",
+        "fix": "Ikkalasi ham lab-lab tovushi. Farq burunda.\n\nBurun qanotlarini ushlang: «م» da titrash bor (g'unna), «ب» da yo'q.",
+        "rule": "«م» g'unnali — tovush burun bo'shlig'idan ham o'tadi. «ب» da g'unna yo'q, u shiddat harfi va qalqalali.",
+        "drill": "Burnini ushlab «بَ — مَ», 10 marta. Titrash qaysi birida borligini tekshiring."
+      },
+      "ru": {
+        "headline": "«{word}» — вы произнесли «{expected}» как «{actual}».",
+        "fix": "Обе губно-губные. Разница в носе.\n\nЗажмите крылья носа: при «م» вибрация есть (гунна), при «ب» нет.",
+        "rule": "«م» с гунной — звук проходит и через носовую полость. У «ب» гунны нет, это буква шиддат с калькаля.",
+        "drill": "Придерживая нос: «بَ — مَ», 10 раз. Проверяйте, на какой есть вибрация."
+      }
+    },
+
+    "MAKHARIJ_NUN_TO_LAM": {
+      "group": "makharij", "severity": "high", "audio_pair": "audio/nun_lam.mp3",
+      "detection_signal": "phoneme substitution: ن <-> ل",
+      "uz": {
+        "headline": "«{word}» — «{expected}» ni «{actual}» kabi o'qidingiz.",
+        "fix": "Maxrajlari yaqin — ikkalasi ham til uchi va tanglay. Farq burunda.\n\nBurun qanotlarini ushlang: «ن» da titrash bor, «ل» da yo'q.",
+        "rule": "«ن» g'unnali — burun ishtirok etadi. «ل» da g'unna yo'q, havo tilning yon tomonidan o'tadi.",
+        "drill": "Burnini ushlab «نَ — لَ», 10 marta."
+      },
+      "ru": {
+        "headline": "«{word}» — вы произнесли «{expected}» как «{actual}».",
+        "fix": "Махраджи близки — обе кончиком языка у нёба. Разница в носе.\n\nЗажмите крылья носа: при «ن» вибрация есть, при «ل» нет.",
+        "rule": "«ن» с гунной — участвует нос. У «ل» гунны нет, воздух идёт сбоку языка.",
+        "drill": "Придерживая нос: «نَ — لَ», 10 раз."
+      }
+    },
+
+    "MAKHARIJ_JEEM_TO_YA": {
+      "group": "makharij", "severity": "high", "audio_pair": "audio/jeem_ya.mp3",
+      "detection_signal": "phoneme substitution: ج <-> ي",
+      "uz": {
+        "headline": "«{word}» — «{expected}» ni «{actual}» kabi o'qidingiz.",
+        "fix": "Maxraj bir xil — til o'rtasi va tanglay. Farq kuchda.\n\n«ج» da til tanglayga qattiq tegadi va tovush kuch bilan ochiladi — cho'zib bo'lmaydi. «ي» sirg'alib chiqadi — cho'ziladi.",
+        "rule": "«ج» — shiddat harfi, to'liq yopiladi. «ي» — raxovat, havo uzluksiz.",
+        "drill": "«ج» ni cho'zishga urinib ko'ring — cho'zilmaydi. «ي» ni cho'zing — cho'ziladi. So'ng «جَعَلَ» va «يَعْلَم»."
+      },
+      "ru": {
+        "headline": "«{word}» — вы произнесли «{expected}» как «{actual}».",
+        "fix": "Махрадж одинаков — середина языка и нёбо. Разница в силе.\n\nПри «ج» язык плотно касается нёба, звук раскрывается с силой — протянуть нельзя. «ي» скользит — тянется.",
+        "rule": "«ج» — буква шиддат, полное смыкание. «ي» — раховат, воздух непрерывен.",
+        "drill": "Попробуйте протянуть «ج» — не тянется. Протяните «ي» — тянется. Затем «جَعَلَ» и «يَعْلَم»."
+      }
+    },
+
+    "MAKHARIJ_KAF_TO_QAF": {
+      "group": "makharij", "severity": "high", "audio_pair": "audio/kaf_qaf.mp3",
+      "detection_signal": "phoneme substitution: ك -> ق",
+      "uz": {
+        "headline": "«{word}» — «ك» ni «ق» kabi o'qidingiz.",
+        "fix": "Til orqaroqdan tegdi va tovush yo'g'onlashdi. «ك» oldinroqda va ingichka.\n\nTilingizni biroz oldinga suring, og'izdagi qalinlikni tashlang.",
+        "rule": "«ك» — istifola (ingichka), «ق» dan biroz oldinroq. «ق» — iste'lo (yo'g'on), tilning eng orqasi.\n\n«كَلْب» (it) va «قَلْب» (yurak).",
+        "drill": "«كَ — قَ», 10 marta. So'ng «كُلْ» va «قُلْ»."
+      },
+      "ru": {
+        "headline": "«{word}» — вы произнесли «ك» как «ق».",
+        "fix": "Язык коснулся глубже, звук стал тяжёлым. «ك» впереди и лёгкая.\n\nСдвиньте язык чуть вперёд, уберите плотность во рту.",
+        "rule": "«ك» — истифола (лёгкая), чуть впереди «ق». «ق» — истеъло (тяжёлая), самая задняя часть языка.\n\n«كَلْب» (собака) и «قَلْب» (сердце).",
+        "drill": "«كَ — قَ», 10 раз. Затем «كُلْ» и «قُلْ»."
+      }
+    },
+
+    "MAKHARIJ_SAD_TO_ZAY": {
+      "group": "makharij", "severity": "high", "audio_pair": "audio/sad_zay.mp3",
+      "detection_signal": "phoneme substitution: ص -> ز",
+      "note": "Documented error type in the المغظوب family.",
+      "uz": {
+        "headline": "«{word}» — «ص» ni «ز» kabi o'qidingiz.",
+        "fix": "Ikki narsa birdan buzildi: ovoz qo'shildi va yo'g'onlik yo'qoldi.\n\n«ص» jarangsiz — tomoqda titrash bo'lmasligi kerak. Va tilning orqasi ko'tarilishi kerak.",
+        "rule": "«ص» — mahmus (jarangsiz) va iste'lo (yo'g'on). «ز» — majhur (jarangli) va istifola (ingichka). Ikki sifat ham qarama-qarshi.",
+        "drill": "Tomoqni ushlab «صَ — زَ», 10 marta. «ص» da titrash yo'qligini va og'izda qalinlik borligini birga tekshiring."
+      },
+      "ru": {
+        "headline": "«{word}» — вы произнесли «ص» как «ز».",
+        "fix": "Нарушены сразу две вещи: добавился голос и потерялась тяжесть.\n\n«ص» глухая — вибрации в горле быть не должно. И задняя часть языка должна подняться.",
+        "rule": "«ص» — глухая и истеъло (тяжёлая). «ز» — звонкая и истифола (лёгкая). Оба сифата противоположны.",
+        "drill": "Держа палец на горле: «صَ — زَ», 10 раз. Проверяйте одновременно отсутствие вибрации и наличие тяжести."
+      }
+    },
+
+    "MAKHARIJ_DAD_TO_ZAY": {
+      "group": "makharij", "severity": "high", "audio_pair": "audio/dad_zay.mp3",
+      "detection_signal": "phoneme substitution: ض -> ز",
+      "note": "Documented — the المغظوب / المغزوب family of Fatiha errors.",
+      "uz": {
+        "headline": "«{word}» — «ض» ni «ز» kabi o'qidingiz.",
+        "fix": "«ض» tilning YON qismidan chiqadi, til uchidan emas. Va u yo'g'on.\n\nTilingizning yon qismini yuqori oziq tishlarga bosing. «ز» da esa til uchi ishlaydi va tovush ingichka.",
+        "rule": "«ض» — yon tomondan, iste'lo, itbaqli, istitolali. «ز» — til uchi, ingichka, sofiyrli.\n\n«الْمَغْضُوب» ni «الْمَغْزُوب» deb o'qish keng tarqalgan xato.",
+        "drill": "Til yonini tishga bosib «ضَ», 10 marta. So'ng «زَ» bilan solishtiring. «الْمَغْضُوب» ni sekin 10 marta."
+      },
+      "ru": {
+        "headline": "«{word}» — вы произнесли «ض» как «ز».",
+        "fix": "«ض» выходит БОКОВОЙ частью языка, не кончиком. И она тяжёлая.\n\nПрижмите бок языка к верхним коренным зубам. При «ز» работает кончик, звук лёгкий.",
+        "rule": "«ض» — сбоку, истеъло, с итбаком и иститаля. «ز» — кончик языка, лёгкая, с софийром.\n\nЧтение «الْمَغْضُوب» как «الْمَغْزُوب» — распространённая ошибка.",
+        "drill": "Прижав бок языка: «ضَ», 10 раз. Сравните с «زَ». «الْمَغْضُوب» медленно 10 раз."
+      }
+    },
+
+    "MAKHARIJ_ZAY_TO_SEEN": {
+      "group": "makharij", "severity": "high", "audio_pair": "audio/zay_seen.mp3",
+      "detection_signal": "phoneme substitution: ز <-> س",
+      "uz": {
+        "headline": "«{word}» — «{expected}» ni «{actual}» kabi o'qidingiz.",
+        "fix": "Maxraj bir xil — til uchi va tishlar. Farq ovozda.\n\nBarmog'ingizni tomog'ingizga qo'ying: «ز» da titrash bor, «س» da yo'q.",
+        "rule": "«س» — mahmus (jarangsiz), «ز» — majhur (jarangli). Ikkalasida ham sofiyr sifati bor.",
+        "drill": "Tomoqni ushlab «سَ — زَ», 10 marta."
+      },
+      "ru": {
+        "headline": "«{word}» — вы произнесли «{expected}» как «{actual}».",
+        "fix": "Махрадж одинаков — кончик языка и зубы. Разница в голосе.\n\nПалец на горло: при «ز» вибрация есть, при «س» нет.",
+        "rule": "«س» — глухая, «ز» — звонкая. У обеих есть сифат софийр.",
+        "drill": "Держа палец на горле: «سَ — زَ», 10 раз."
+      }
+    }
+  }
+}

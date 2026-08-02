@@ -23,13 +23,26 @@ export type Ayah = {
   segments: Segment[];
 };
 
+/**
+ * A coaching card. Four fields, in the order they are read:
+ *
+ *   headline  what went wrong, in this word, with this letter — always visible
+ *   fix       what to do about it — open by default
+ *   rule      why, in tajweed terms — collapsed
+ *   drill     the exercise — collapsed
+ *
+ * Templates are substituted server-side and validated there: a string that
+ * still contains a brace never leaves the API.
+ */
 export type ErrorContent = {
-  rule: string;
-  you_did: string;
+  headline: string;
   fix: string;
+  rule: string;
   drill: string;
   severity: string;
-  /** No qori has authored this code at all; `rule` holds the raw code. */
+  /** rules.json's short label ("Ayn (ع) harfi"), for legacy entries only. */
+  label?: string;
+  /** Nothing is authored for this code; only the location is known. */
   unauthored?: boolean;
 };
 
@@ -38,11 +51,17 @@ export type TajweedError = {
   /** Run-length unit index — join to Segment.units to find the letter. */
   at: number;
   letter: string;
+  /**
+   * The Uthmani word the error falls in. Present even when nothing is authored
+   * for the code — locating the mistake never depends on having text for it.
+   */
+  word?: string;
   needs_teacher?: boolean;
   /**
-   * Reached the screen only because TILAWAH_SHOW_UNREVIEWED is on — no qori has
-   * signed this off. The UI MUST render a visible marker; that obligation is
-   * the whole reason the server sends the flag rather than just the content.
+   * No qori has signed this off. Outside production that is the normal case,
+   * not an exception — the UI MUST render a visible marker on every one of
+   * them. That obligation is the whole reason the server sends the flag rather
+   * than just the content.
    */
   draft?: boolean;
   content: ErrorContent;
@@ -54,8 +73,19 @@ export type Attempt = {
   aya: number;
   status: "ok" | "retry_recording" | "error";
   reason: string;
+  /** Nothing was detected — the only case where praise is honest. */
   clean: boolean;
+  /**
+   * Something WAS detected and every correction was withheld by the production
+   * content gate. A judgement exists; we are not allowed to show it.
+   */
   suppressed: boolean;
+  /**
+   * The model returned nothing to compare against, so no judgement was formed.
+   * Distinct from `suppressed` on purpose — these are different failures and
+   * they must not print the same sentence.
+   */
+  analysable: boolean;
   errors: TajweedError[];
   snr_db: number;
   duration_s: number;
@@ -108,6 +138,8 @@ export type AyahBrief = {
   n_words: number;
   n_segments: number;
   seconds: number;
+  /** Translation in the language this sura was requested in. */
+  translation: string;
 };
 
 export type SuraAyat = {
@@ -116,10 +148,37 @@ export type SuraAyat = {
   translit: string;
   n_ayat: number;
   ayat: AyahBrief[];
+  /**
+   * Whether the mushaf prints the basmala as an opening line for this sura.
+   * False for al-Fatiha (it IS ayah 1) and at-Tawba (there is none), so it
+   * cannot be assumed — the server decides and the reader obeys.
+   */
+  has_basmala: boolean;
+  bismillah: string;
 };
 
-export const suraAyat = (sura: number) =>
-  fetch(`${BASE}/api/suras/${sura}/ayat`).then(json<SuraAyat>);
+export const suraAyat = (sura: number, lang: string) =>
+  fetch(`${BASE}/api/suras/${sura}/ayat?lang=${lang}`).then(json<SuraAyat>);
+
+/* ── reciters ─────────────────────────────────────────────────────────── */
+
+export type Reciter = {
+  /** everyayah folder name; also the persisted key. */
+  id: string;
+  name: string;
+  /** muallim (repeats phrases, best for beginners) | murattal | mujawwad */
+  style: "muallim" | "murattal" | "mujawwad" | string;
+  bitrate_kbps: number;
+};
+
+export type Reciters = {
+  default: string;
+  base_url: string;
+  reciters: Reciter[];
+};
+
+export const listReciters = () =>
+  fetch(`${BASE}/api/reciters`).then(json<Reciters>);
 
 export const history = (limit = 20) =>
   fetch(
@@ -154,7 +213,17 @@ export type AyahSegments = {
   n_words: number;
   /** Boundaries that do not split an Uthmani word — the only legal cuts. */
   legal_cuts: number[];
-  segments: PracticeSegment[];
+  /**
+   * THE practice range: the entire ayah, whatever its length. Always present.
+   * This is what gets selected unless the learner deliberately asks for less.
+   */
+  whole: PracticeSegment;
+  /**
+   * Optional "practise part of this ayah" ranges. Empty when the ayah is a
+   * single part anyway, so a non-empty list is exactly when to offer the
+   * control — never a forced split.
+   */
+  parts: PracticeSegment[];
 };
 
 export const ayahSegments = (sura: number, aya: number) =>
@@ -278,8 +347,16 @@ export type Meta = {
   pilot: boolean;
   unverified_codes: string[];
   collect_audio_offered: boolean;
-  /** The server's content review gate is bypassed. Dev boxes only. */
+  /** The server's content review gate is open — true outside production. */
   show_unreviewed: boolean;
+  /**
+   * Longest recitation the engine will attempt, in seconds. A memory limit,
+   * quadratic in length, not a preference. Used to warn BEFORE recording:
+   * inference runs ~10x realtime, so finding out afterwards costs minutes.
+   */
+  max_audio_seconds: number;
+  /** Coaching registries the server could not find. Non-empty = a known gap. */
+  missing_registries: string[];
   version: string;
 };
 
@@ -301,8 +378,19 @@ export async function setConsent(
   await fetch(`${BASE}/api/consent`, { method: "POST", body: fd });
 }
 
-export function expertAudioUrl(sura: number, aya: number): string {
+/**
+ * everyayah serves ONE FILE PER WHOLE AYAH — there is no file for a fragment,
+ * which is why playback died while long ayat were being force-split.
+ *
+ * `reciter` is an everyayah folder name from /api/reciters, each probed at
+ * build time against 1:1, 2:282, 36:1 and 114:6.
+ */
+export function expertAudioUrl(
+  sura: number,
+  aya: number,
+  reciter: string,
+): string {
   const s = String(sura).padStart(3, "0");
   const a = String(aya).padStart(3, "0");
-  return `https://everyayah.com/data/Alafasy_128kbps/${s}${a}.mp3`;
+  return `https://everyayah.com/data/${reciter}/${s}${a}.mp3`;
 }

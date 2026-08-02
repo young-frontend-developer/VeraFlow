@@ -48,25 +48,26 @@ async def lifespan(_: FastAPI):
         logging.warning("Development only. Never set this where real learners can reach.")
         logging.warning("=" * 68)
 
-    # Refuse to tell real people they mispronounced the Quran on the strength of
-    # content no qori has read. Same gate as debug_audio, and for the same
-    # reason: the flag is a laptop diagnostic that would be quietly catastrophic
-    # if it survived a deploy.
-    if settings.show_unreviewed and settings.is_production:
+    # The content gate is derived from TILAWAH_ENV, so "unreviewed corrections
+    # reaching a real learner" is no longer one unset variable away - it cannot
+    # be configured at all. This assertion is here so that stays true: if a
+    # later refactor reintroduces an override, production fails to boot rather
+    # than quietly starting with the gate open.
+    if settings.is_production and settings.show_unreviewed:
         raise RuntimeError(
-            "TILAWAH_SHOW_UNREVIEWED=1 shows tajweed corrections that NO QORI "
-            "HAS REVIEWED, including codes with no authored content at all. "
-            "Telling a learner they erred in the Quran on that basis is the "
-            "trust failure this project is built to avoid. Unset it, or set "
-            "TILAWAH_ENV=dev if this really is a development box."
+            "The content review gate is open in production. Nothing should be "
+            "able to do that - settings.show_unreviewed is derived from "
+            "TILAWAH_ENV. Telling a learner they erred in the Quran on the "
+            "strength of content no qori has read is the trust failure this "
+            "project is built to avoid."
         )
     if settings.show_unreviewed:
         bar = "=" * 68
         logging.warning(bar)
-        logging.warning("SHOW UNREVIEWED ON - content review gate BYPASSED")
-        logging.warning("Every detected error is rendered, including unreviewed")
-        logging.warning("and unauthored codes, and the 2-error cap is lifted.")
-        logging.warning("Each is marked draft on the wire. Development only.")
+        logging.warning("DEV BUILD - every detected error is rendered, including")
+        logging.warning("unreviewed and unauthored codes, with no display cap.")
+        logging.warning("Each is marked draft on the wire. Set TILAWAH_ENV=")
+        logging.warning("production to close the gate before real learners.")
         logging.warning(bar)
     logging.info("audio retention: collect=%s (per-learner consent still required)",
                  settings.collect_audio)

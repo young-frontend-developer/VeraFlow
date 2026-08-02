@@ -58,11 +58,16 @@ export default function Log({
               />
               <span className="log__text">{name(r)}</span>
               <span className="log__meta">
+                {/* Same three-way split as Feedback. "Izoh bor" on a row where
+                    nothing was assessed would claim a note that never
+                    existed. */}
                 {r.status === "retry_recording"
                   ? t(lang, "log_retry")
-                  : r.clean
-                    ? t(lang, "log_clear")
-                    : t(lang, "log_noted")}
+                  : !r.analysable
+                    ? t(lang, "log_unassessed")
+                    : r.clean
+                      ? t(lang, "log_clear")
+                      : t(lang, "log_noted")}
               </span>
             </li>
           ))}

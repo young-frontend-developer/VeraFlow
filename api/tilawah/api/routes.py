@@ -11,6 +11,7 @@ from sqlmodel import Session, select
 
 from .. import content
 from ..config import settings
+from ..content import coaching
 from ..db import delete_stored_audio, get_session
 from ..db.models import Attempt, User
 from ..engine.pipeline import analyze
@@ -19,9 +20,9 @@ from ..engine.ranges import (Range, estimate_seconds, legal_cuts, n_words,
 from ..engine.segments import segments_for, segments_for_range
 from ..engine.target import target_for
 from .schemas import (AttemptOut, AyahBriefOut, AyahOut, AyahSegmentsOut,
-                      MetaOut, PracticeSegmentOut, ReviewDecisionIn,
-                      ReviewEntryOut, ReviewQueueOut, SegmentOut, SuraAyatOut,
-                      SuraOut, WrongFlagIn)
+                      MetaOut, PracticeSegmentOut, ReciterOut, RecitersOut,
+                      ReviewDecisionIn, ReviewEntryOut, ReviewQueueOut,
+                      SegmentOut, SuraAyatOut, SuraOut, WrongFlagIn)
 
 router = APIRouter(prefix="/api")
 
@@ -65,8 +66,8 @@ def list_suras() -> list[SuraOut]:
     return [SuraOut(**s) for s in content.suras()]
 
 
-@functools.lru_cache(maxsize=16)
-def _sura_ayat(sura: int) -> SuraAyatOut:
+@functools.lru_cache(maxsize=32)
+def _sura_ayat(sura: int, lang: str = "uz") -> SuraAyatOut:
     """Every ayah of one sura, with enough text to recognise it.
 
     Al-Baqara is 286 ayat, so this is the largest response in the app. It stays
@@ -103,16 +104,43 @@ def _sura_ayat(sura: int) -> SuraAyatOut:
         out.append(AyahBriefOut(
             aya=aya, uthmani=got.uthmani, n_words=len(got.imlaey_words),
             n_segments=len(segs) or 1,
-            seconds=round(estimate_seconds(n_phon), 1) if n_phon else 0.0))
+            seconds=round(estimate_seconds(n_phon), 1) if n_phon else 0.0,
+            translation=content.translation_of(sura, aya, lang)))
 
+    # The mushaf prints the basmala as an opening line above every sura except
+    # two, and the exceptions run in opposite directions: in al-Fatiha it IS
+    # ayah 1, so printing it again would duplicate it, and at-Tawba has none at
+    # all. Both are properties of the text, not preferences, so they are stated
+    # here rather than left to the client to remember.
+    has_basmala = sura not in (1, 9)
+    cursor.set(sura, 1)
+    bismillah = cursor.get().bismillah_uthmani if has_basmala else ""
     return SuraAyatOut(sura=sura, name_ar=meta["name_ar"],
                        translit=meta["translit"], n_ayat=meta["n_ayat"],
-                       ayat=out)
+                       ayat=out, has_basmala=has_basmala,
+                       bismillah=bismillah or "")
 
 
 @router.get("/suras/{sura}/ayat", response_model=SuraAyatOut)
-def sura_ayat(sura: int) -> SuraAyatOut:
-    return _sura_ayat(sura)
+def sura_ayat(sura: int, lang: str = "uz") -> SuraAyatOut:
+    if lang not in content.LANGS:
+        lang = "uz"
+    return _sura_ayat(sura, lang)
+
+
+@router.get("/reciters", response_model=RecitersOut)
+def list_reciters() -> RecitersOut:
+    """Reciters everyayah actually serves, probed at build time.
+
+    The client persists a choice from this list. It is served rather than
+    hardcoded in the frontend so that adding a reciter is a re-run of
+    tools/build_reciters.py, and so the probe result is what ships.
+    """
+    return RecitersOut(
+        default=content.default_reciter(),
+        base_url=content.reciter_base_url(),
+        reciters=[ReciterOut(**r) for r in content.reciters()],
+    )
 
 
 @router.post("/attempts", response_model=AttemptOut)
@@ -152,7 +180,7 @@ async def create_attempt(
         start_word=start_word, num_words=num_words,
         include_bismillah=include_bismillah,
         status=fb.status, clean=fb.clean,
-        suppressed=fb.suppressed,
+        suppressed=fb.suppressed, analysable=fb.analysable,
         snr_db=round(fb.snr_db, 1), duration_s=round(fb.duration_s, 2),
         mean_prob=round(fb.mean_prob, 4),
         expected_phonemes=fb.expected_phonemes, heard_phonemes=fb.heard_phonemes,
@@ -166,7 +194,7 @@ async def create_attempt(
     return AttemptOut(
         id=row.id, sura=sura, aya=aya,
         status=fb.status, reason=fb.reason, clean=fb.clean,
-        suppressed=fb.suppressed,
+        suppressed=fb.suppressed, analysable=fb.analysable,
         errors=fb.errors, snr_db=row.snr_db, duration_s=row.duration_s,
     )
 
@@ -186,40 +214,49 @@ def flag_wrong(attempt_id: int, body: WrongFlagIn,
     return {"ok": True}
 
 
+def _practice_segment(sura: int, aya: int, index: int, start_word: int,
+                      num_words: int, n_phonemes: int) -> PracticeSegmentOut:
+    rng = Range(sura, aya, start_word, num_words)
+    text_segments = segments_for_range(sura, aya, start_word, num_words)
+    # n_phonemes is 0 only when the prebuilt artifact is missing for this ayah;
+    # compute it rather than showing the learner "0 s".
+    n_phon = n_phonemes or sum(len(t["text"]) for t in text_segments)
+    return PracticeSegmentOut(
+        index=index, start_word=start_word, num_words=num_words,
+        n_phonemes=n_phonemes,
+        seconds=round(estimate_seconds(n_phon), 1),
+        uthmani=uthmani_of(rng),
+        text_segments=[SegmentOut(**t) for t in text_segments],
+    )
+
+
 @router.get("/segments/{sura}/{aya}", response_model=AyahSegmentsOut)
 def ayah_segments(sura: int, aya: int) -> AyahSegmentsOut:
-    """Precomputed practice ranges, plus the legal cut points so the UI can
-    offer custom ranges without ever constructing an illegal one."""
+    """The whole ayah, the optional parts, and the legal cut points.
+
+    `whole` is computed for every ayah regardless of length. The parts list is
+    only what segmentation would have forced, kept as a choice.
+    """
     try:
         total = n_words(sura, aya)
     except Exception:
         raise HTTPException(404, "ayah not found")
 
     segs = content.segments_of(sura, aya)
-    if not segs:
-        # Artifact missing or not yet built for this ayah - the whole ayah is
-        # always a legal range, so degrade to that rather than 500.
-        segs = [{"start_word": 0, "num_words": total, "n_phonemes": 0}]
+    whole_phonemes = sum(s["n_phonemes"] for s in segs)
+    whole = _practice_segment(sura, aya, 0, 0, total, whole_phonemes)
 
-    out = []
-    for i, s in enumerate(segs):
-        rng = Range(sura, aya, s["start_word"], s["num_words"])
-        # n_phonemes is 0 only on the degraded path above, where the artifact is
-        # missing; compute it rather than showing the learner "0 s".
-        n_phon = s["n_phonemes"]
-        text_segments = segments_for_range(sura, aya, s["start_word"],
-                                           s["num_words"])
-        if not n_phon:
-            n_phon = sum(len(t["text"]) for t in text_segments)
-        out.append(PracticeSegmentOut(
-            index=i, start_word=s["start_word"], num_words=s["num_words"],
-            n_phonemes=s["n_phonemes"],
-            seconds=round(estimate_seconds(n_phon), 1),
-            uthmani=uthmani_of(rng),
-            text_segments=[SegmentOut(**t) for t in text_segments],
-        ))
+    # A single segment IS the whole ayah, so it is not an alternative to it -
+    # offering a one-item "choose a part" list would be a control that does
+    # nothing. Parts are offered only where there is a real choice.
+    parts = ([_practice_segment(sura, aya, i, s["start_word"], s["num_words"],
+                                s["n_phonemes"])
+              for i, s in enumerate(segs)]
+             if len(segs) > 1 else [])
+
     return AyahSegmentsOut(sura=sura, aya=aya, n_words=total,
-                           legal_cuts=list(legal_cuts(sura, aya)), segments=out)
+                           legal_cuts=list(legal_cuts(sura, aya)),
+                           whole=whole, parts=parts)
 
 
 # ─────────────────────────────────────────────────────────────── review
@@ -348,6 +385,8 @@ def meta() -> MetaOut:
         unverified_codes=unverified,
         collect_audio_offered=settings.collect_audio,
         show_unreviewed=settings.show_unreviewed,
+        max_audio_seconds=settings.max_audio_seconds,
+        missing_registries=coaching.missing_sources(),
     )
 
 
@@ -388,6 +427,6 @@ def history(device_id: str, limit: int = 20,
     ).all()
     return [AttemptOut(id=r.id, sura=r.sura, aya=r.aya,
                        status=r.status, reason="", clean=r.clean,
-                       suppressed=r.suppressed,
+                       suppressed=r.suppressed, analysable=r.analysable,
                        errors=r.errors, snr_db=r.snr_db, duration_s=r.duration_s)
             for r in rows]

@@ -163,3 +163,45 @@ def unit_to_segment(sura: int, aya: int, unit: int) -> dict | None:
         if unit in seg["units"]:
             return seg
     return None
+
+
+def word_spans(uthmani: str) -> list[tuple[int, int]]:
+    """(start, end) of every whitespace-delimited word, in character offsets."""
+    spans, start = [], None
+    for i, ch in enumerate(uthmani):
+        if ch.isspace():
+            if start is not None:
+                spans.append((start, i))
+                start = None
+        elif start is None:
+            start = i
+    if start is not None:
+        spans.append((start, len(uthmani)))
+    return spans
+
+
+def unit_words(uthmani: str, segments: list[dict]) -> dict[int, str]:
+    """unit index -> the Uthmani word containing it.
+
+    Every coaching headline opens with the word ("«{word}» — you said X for
+    Y"), and an error located only to a letter is nearly useless: ص appears
+    many times in an ayah and the learner needs to know which one.
+
+    Built from the segments rather than by re-deriving offsets, so it agrees
+    with the highlight by construction: whatever character span the UI marks,
+    this reports the word that span sits in. A unit spanning a word boundary
+    cannot happen - the phonetizer does not merge across whitespace - but if it
+    ever did, the first word wins rather than the lookup failing.
+    """
+    spans = word_spans(uthmani)
+    out: dict[int, str] = {}
+    for seg in segments:
+        if not seg["units"]:
+            continue
+        for start, end in spans:
+            if seg["start"] < end and seg["end"] > start:
+                word = uthmani[start:end]
+                for u in seg["units"]:
+                    out.setdefault(u, word)
+                break
+    return out

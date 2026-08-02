@@ -75,6 +75,65 @@ def segments_of(sura: int, aya: int) -> list[dict]:
             for s, n, p in raw]
 
 
+@lru_cache(maxsize=1)
+def _translations_file() -> dict:
+    """Uzbek and Russian translations for all 6236 ayat.
+
+    Built by tools/build_translations.py and committed, for the same reason as
+    segments.json: the verse-by-verse reader shows one under every ayah, and
+    fetching that live would put a third party between a learner and the text.
+    """
+    path = _DIR / "translations.json"
+    if not path.exists():
+        return {"_meta": {}, "translations": {}}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def translations_meta() -> dict:
+    return _translations_file().get("_meta", {})
+
+
+def translation_of(sura: int, aya: int, lang: str) -> str:
+    """One ayah's translation, or "" if the artifact is missing.
+
+    Falls back to the other language rather than to nothing: a Russian reader
+    looking at a blank space learns less than one reading the Uzbek.
+    """
+    entry = _translations_file().get("translations", {}).get(f"{sura}:{aya}")
+    if not entry:
+        return ""
+    return entry.get(lang) or entry.get("uz") or ""
+
+
+@lru_cache(maxsize=1)
+def _reciters_file() -> dict:
+    """everyayah reciters, each probed at four ayat by tools/build_reciters.py.
+
+    Probed rather than listed: the host has partial mirrors, and a folder that
+    404s on 2:282 is exactly the "playback dies on long suras" bug.
+    """
+    path = _DIR / "reciters.json"
+    if not path.exists():
+        return {"default": "", "reciters": [], "_meta": {}}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def reciters() -> list[dict]:
+    return _reciters_file().get("reciters", [])
+
+
+def default_reciter() -> str:
+    return _reciters_file().get("default", "")
+
+
+def reciter_base_url() -> str:
+    return _reciters_file().get("_meta", {}).get("base_url", "")
+
+
+def is_known_reciter(rid: str) -> bool:
+    return any(r["id"] == rid for r in reciters())
+
+
 DEV_OVERRIDE = "DEV-OVERRIDE"
 
 
@@ -97,26 +156,65 @@ def dev_overrides() -> list[str]:
     )
 
 
-def render(code: str, lang: str, fields: dict) -> dict | None:
-    """Error code -> localised strings with {placeholders} filled.
+def substitution_context(fields: dict) -> dict:
+    """One namespace both authoring generations can be written against.
 
-    Returns None when the code has no authored content, which is a bug worth
-    surfacing rather than papering over - see unauthored_codes().
+    The coaching registries use {word} {letter} {expected} {actual}
+    {n_expected} {n_actual}; rules.json was written earlier against {heard}
+    {expected_count} {heard_count}. Rather than rewrite either set of authored
+    text, both names are provided and point at the same values.
     """
+    safe = {k: ("" if v is None else v) for k, v in fields.items()}
+    safe.setdefault("word", "")
+    safe["actual"] = safe.get("heard", "")
+    safe["n_expected"] = safe.get("expected_count", "")
+    safe["n_actual"] = safe.get("heard_count", "")
+    return safe
+
+
+def render(code: str, lang: str, fields: dict) -> dict | None:
+    """Error code -> the coaching card, or None if nothing is authored for it.
+
+    Prefers the v4/v5 coaching registries (headline / fix / rule / drill) and
+    falls back to the older rules.json shape, which is mapped onto the same
+    four fields so the client only ever handles one card:
+
+        headline <- you_did   "what we heard", the closest thing rules.json has
+        fix      <- fix
+        rule     <- ""        rules.json's `rule` is a LABEL, not an
+                              explanation, so it travels as `label` instead of
+                              being promoted into a field it does not fill
+        drill    <- drill
+
+    Nothing is invented in that mapping; a field with no source stays empty and
+    the UI omits its section.
+    """
+    from .coaching import render as render_coaching
+
+    safe = substitution_context(fields)
+
+    card = render_coaching(code, lang, safe)
+    if card is not None:
+        return card
+
     rule = rules().get(code)
     if not rule:
         return None
     block = rule.get(lang) or rule.get("uz")
-    safe = {k: ("" if v is None else v) for k, v in fields.items()}
-    out = {}
-    for key in ("rule", "you_did", "fix", "drill"):
-        text = block.get(key, "")
-        try:
-            out[key] = text.format(**safe)
-        except (KeyError, IndexError):
-            out[key] = text
-    out["severity"] = rule.get("severity", "medium")
-    out["reviewed"] = bool(rule.get("reviewed", False))
+
+    from .coaching import _fill
+
+    out = {
+        "headline": _fill(block.get("you_did", ""), safe, code=code,
+                          key="you_did"),
+        "fix": _fill(block.get("fix", ""), safe, code=code, key="fix"),
+        "rule": "",
+        "drill": _fill(block.get("drill", ""), safe, code=code, key="drill"),
+        "label": block.get("rule", ""),
+        "severity": rule.get("severity", "medium"),
+        "reviewed": bool(rule.get("reviewed", False)),
+        "unauthored": False,
+    }
     return out
 
 

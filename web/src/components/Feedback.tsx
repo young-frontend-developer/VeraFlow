@@ -51,6 +51,27 @@ export default function Feedback({
     );
   }
 
+  // THE THREE "NO CORRECTIONS" CASES ARE DIFFERENT AND SAY DIFFERENT THINGS.
+  //
+  // They all used to print "Toʻliq baholay olmadik", which made a content-gate
+  // decision indistinguishable from a model failure — for the learner AND for
+  // whoever was debugging it. Each now names its own cause:
+  //
+  //   !analysable  the model returned nothing to judge   -> "couldn't assess"
+  //   clean        judged, and nothing was wrong         -> praise
+  //   suppressed   judged, and we are not allowed to say -> "withheld"
+
+  // The model gave us nothing to compare against. This — and only this — is
+  // what "we could not assess it" means.
+  if (!attempt.analysable) {
+    return (
+      <div className="notice">
+        <p className="notice__title">{t(lang, "unsure_title")}</p>
+        <p className="notice__body">{t(lang, "unsure_body")}</p>
+      </div>
+    );
+  }
+
   // Nothing detected at all — the only case where praise is honest.
   if (attempt.clean) {
     return (
@@ -64,13 +85,14 @@ export default function Feedback({
     );
   }
 
-  // Something was found but nothing is shippable — say so plainly rather than
-  // implying the recitation was perfect.
-  if (attempt.suppressed || attempt.errors.length === 0) {
+  // Something was found and every correction was withheld by the review gate.
+  // Not the same as failing to assess: the assessment exists. Saying so plainly
+  // also keeps us from implying the recitation was perfect.
+  if (attempt.errors.length === 0) {
     return (
       <div className="notice">
-        <p className="notice__title">{t(lang, "unsure_title")}</p>
-        <p className="notice__body">{t(lang, "unsure_body")}</p>
+        <p className="notice__title">{t(lang, "withheld_title")}</p>
+        <p className="notice__body">{t(lang, "withheld_body")}</p>
       </div>
     );
   }
@@ -78,8 +100,13 @@ export default function Feedback({
   return (
     <>
       {attempt.errors.map((e, i) => (
+        // `code`+`at` is NOT unique: typed_diff reports every inserted phoneme
+        // in one opcode at the same index, so a take with six extra sounds
+        // yields six INSERTION errors all at the same `at`. That collided the
+        // moment the two-error cap came off, and React silently drops
+        // duplicate-keyed siblings — corrections would have gone missing.
         <Correction
-          key={`${e.code}-${e.at}`}
+          key={`${e.code}-${e.at}-${i}`}
           lang={lang}
           error={e}
           letter={i === 0 ? letter : ""}
@@ -115,34 +142,44 @@ function Correction({
         </p>
       )}
 
-      <h3 className="card__rule">
-        {c.rule}
-        {letter && (
+      {c.label && <p className="card__kicker">{c.label}</p>}
+
+      {/*
+        THE HEADLINE IS THE CARD. It names the word, the letter and what
+        happened, and it is the one thing that is never collapsed — a learner
+        who reads nothing else still learns where the mistake was.
+
+        When nothing is authored for the code we still have the location, so we
+        show that rather than falling back to silence. It is not a ruling about
+        tajweed, just a pointer: this word, this letter.
+      */}
+      <h3 className="card__headline">
+        {c.headline || <Located lang={lang} word={error.word} letter={letter || error.letter} />}
+        {c.headline && letter && (
           <span className="card__letter" dir="rtl" lang="ar">
             {letter}
           </span>
         )}
       </h3>
 
-      {/* An unauthored code has no sentences to show — only the code itself.
-          Rendering empty labelled sections would imply content that is missing. */}
-      {c.you_did && (
-        <>
-          <p className="card__label">{t(lang, "label_heard")}</p>
-          <p className="card__said">{c.you_did}</p>
-        </>
-      )}
-      {c.fix && (
-        <>
-          <p className="card__label">{t(lang, "label_fix")}</p>
-          <p className="card__body">{c.fix}</p>
-        </>
+      {/* Fix is open by default: it is the actionable part, and burying the
+          answer one tap deep to keep the card tidy would be a bad trade. */}
+      {c.fix && <p className="card__body card__body--fix">{c.fix}</p>}
+
+      {/* Rule and drill are collapsed. They are worth having and not worth
+          reading every single time — <details> keeps them one tap away without
+          any state of our own. */}
+      {c.rule && (
+        <details className="card__more">
+          <summary>{t(lang, "label_rule")}</summary>
+          <p className="card__body">{c.rule}</p>
+        </details>
       )}
       {c.drill && (
-        <>
-          <p className="card__label">{t(lang, "label_drill")}</p>
+        <details className="card__more">
+          <summary>{t(lang, "label_drill")}</summary>
           <p className="card__body">{c.drill}</p>
-        </>
+        </details>
       )}
 
       <button className="card__replay" onClick={onReplay}>
@@ -156,6 +193,40 @@ function Correction({
         <span className="card__teacher">{t(lang, "teacher_note")}</span>
       )}
     </article>
+  );
+}
+
+/**
+ * The last-resort headline: word and letter, no claim about either.
+ *
+ * Reached only when neither coaching registry has an entry for the code. The
+ * requirement it satisfies is "if any error was detected, the learner sees the
+ * word and the letter — always"; the requirement it must not break is that
+ * nothing invents a ruling about the Quran. Naming a location does neither.
+ */
+function Located({
+  lang,
+  word,
+  letter,
+}: {
+  lang: Lang;
+  word?: string;
+  letter: string;
+}) {
+  if (!word && !letter) return <>{t(lang, "located_unknown")}</>;
+  return (
+    <>
+      {word && (
+        <span className="card__word" dir="rtl" lang="ar">
+          {word}
+        </span>
+      )}
+      {letter && (
+        <span className="card__letter" dir="rtl" lang="ar">
+          {letter}
+        </span>
+      )}
+    </>
   );
 }
 

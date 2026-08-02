@@ -18,8 +18,8 @@
 // whole class of problem: no container negotiation, no codec, no transcode
 // dependency, and the bytes the model sees are the bytes the microphone
 // produced. It also matches the format the engine was measured on. The cost is
-// a larger upload (~64 KB/s vs ~8 KB/s); for takes of a few seconds, under the
-// 6 MB limit, that is a good trade.
+// a larger upload — 32 KB/s at 16 kHz mono, so the longest ayah in the Quran
+// lands around 8 MB, inside the server's 12 MB limit.
 const CONSTRAINTS: MediaStreamConstraints = {
   audio: {
     channelCount: 1,
@@ -46,6 +46,34 @@ export type RecorderHandle = {
   level: () => number;
   startedAt: number;
 };
+
+/**
+ * Linear-interpolation resample to TARGET_SR.
+ *
+ * Only runs when the browser refused an AudioContext at 16 kHz (older Firefox,
+ * some Android builds) and handed back 44.1 or 48 kHz instead. That used to be
+ * harmless because takes were a few seconds; now that a whole ayah can be four
+ * minutes, 48 kHz would mean a 23 MB upload for a recitation the engine is
+ * going to downsample to 16 kHz anyway. Doing it here bounds the upload at
+ * 32 KB/s whatever the device does.
+ *
+ * Linear interpolation is adequate because it is a DOWNsample to a rate the
+ * model was measured at, and the browser has already low-passed the mic feed.
+ */
+function resample(input: Float32Array, from: number, to: number): Float32Array {
+  if (from === to) return input;
+  const ratio = from / to;
+  const out = new Float32Array(Math.floor(input.length / ratio));
+  for (let i = 0; i < out.length; i++) {
+    const pos = i * ratio;
+    const j = Math.floor(pos);
+    const frac = pos - j;
+    const a = input[j];
+    const b = j + 1 < input.length ? input[j + 1] : a;
+    out[i] = a + (b - a) * frac;
+  }
+  return out;
+}
 
 /** Float32 PCM -> 16-bit mono WAV. */
 function encodeWav(samples: Float32Array, sampleRate: number): Blob {
@@ -191,7 +219,7 @@ export async function startRecording(): Promise<RecorderHandle> {
         flat.set(c, off);
         off += c.length;
       }
-      return encodeWav(flat, rate);
+      return encodeWav(resample(flat, rate, TARGET_SR), TARGET_SR);
     },
     cancel: cleanup,
   };

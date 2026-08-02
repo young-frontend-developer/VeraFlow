@@ -99,12 +99,56 @@ going red is a real regression. To re-gate: set `reviewed: false` and drop
 grep -rn "DEV-OVERRIDE" api/tilawah/content/rules.json   # find every one
 ```
 
-### Praise is gated too
+### The gate is on `TILAWAH_ENV`, and it is open in dev
 
-`clean` means *nothing was detected*. If something was detected but suppressed,
-the response sets `suppressed` and the UI says "couldn't fully assess — check
-with your teacher". Telling someone their recitation was perfect when the engine
-flagged it is a trust failure in the other direction.
+`dev` renders **every** detected error — unreviewed codes and codes with no
+authored text included, uncapped — each marked `draft` on the wire and shown
+with a DRAFT chip. `production` shows only what a qori has reviewed.
+
+It used to be an opt-in `TILAWAH_SHOW_UNREVIEWED`, defaulting off, which meant
+the default build showed only the 2 of 11 authored codes that were signed off:
+a learner making three mistakes saw one, or none. The flag is gone; the safety
+property now follows the environment rather than a variable someone has to
+remember. There is also no display cap — five errors found is five errors
+shown, ranked by severity.
+
+### Three answers, three sentences
+
+| flag | means | UI says |
+|---|---|---|
+| `clean` | nothing was detected | praise |
+| `suppressed` | detected, and the production gate withheld it | "izoh hali tayyor emas" |
+| `analysable: false` | the model returned nothing to judge | "toʻliq baholay olmadik" |
+
+They are mutually exclusive. The last two printed the *same* sentence once, so
+a content-gate decision and a model failure were indistinguishable — on screen
+and in a bug report. Telling someone their recitation was perfect when the
+engine flagged it is the trust failure in the other direction, so `clean` never
+covers for either.
+
+### The practice range is the whole ayah
+
+`GET /api/segments/{sura}/{aya}` returns `whole` plus an optional `parts` list;
+the client selects `whole` and offers `parts` as a "practise part of this ayah"
+control. Segmentation used to force the split on 4513 of 6236 ayat, which also
+broke reciter playback — everyayah serves whole-ayah files only, so a fragment
+had no audio to play.
+
+**There is a measured ceiling, and it is memory, not taste.** wav2vec2-BERT
+relative-position attention allocates a `[frames, frames, 64]` float32 tensor at
+47 frames/s, so cost is quadratic in length. On this stack (8 GB, float32 CPU):
+
+| audio | wall clock | ×realtime | outcome |
+|---|---|---|---|
+| 13 s | 18 s | 1.4× | ok |
+| 52 s | 522 s | 10.0× | ok — 3 errors on an expert recitation |
+| 129 s | — | — | **OOM**, tried to allocate 9.4 GB |
+
+`TILAWAH_MAX_AUDIO_SECONDS` defaults to **90 s**, which covers **99.0%** of the
+Quran recited whole at the slow-reciter rate. The 60 ayat above it warn *before*
+recording — at ~10× realtime, finding out afterwards costs minutes — and are
+practised through `parts`. An OOM that slips past the ceiling degrades to
+`retry_recording / too_long_for_engine`, never a 500.
 
 ## Deploy
 

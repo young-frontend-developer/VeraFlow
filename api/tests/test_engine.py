@@ -11,6 +11,7 @@ import numpy as np
 import pytest
 
 from tilawah import content
+from tilawah.content import coaching
 from tilawah.engine.audio import MIN_SNR_DB, SR, check_quality
 from tilawah.engine.runlength import tokenize
 from tilawah.engine.target import target_for
@@ -138,20 +139,37 @@ def test_collapse_allows_ayat_that_really_are_muqattaat():
 
 @pytest.mark.parametrize("code", ["SUB_AYN_HAMZA", "MADD_SHORT", "DELETION"])
 def test_every_shipped_code_has_both_languages(code):
+    """A legacy rules.json entry maps onto the coaching card as headline / fix
+    / drill. `rule` stays empty on purpose: rules.json's `rule` is a LABEL, not
+    an explanation, so it travels as `label` rather than being promoted into a
+    field it does not fill."""
     for lang in content.LANGS:
-        body = content.render(code, lang, {"expected_count": 4, "heard_count": 2,
-                                           "letter": "ع", "expected": "ع", "heard": "ء"})
-        assert body and all(body[k] for k in ("rule", "you_did", "fix", "drill"))
+        body = content.render(code, lang,
+                              {"expected_count": 4, "heard_count": 2,
+                               "letter": "ع", "expected": "ع", "heard": "ء",
+                               "word": "عَلَيْهِمْ"})
+        assert body
+        assert all(body[k] for k in ("headline", "fix", "drill", "label"))
 
 
 def test_templates_have_no_unfilled_placeholders():
+    """Every authored template, both registries, both languages.
+
+    render() now RAISES on an unfilled placeholder rather than returning the
+    raw text, so this asserts twice over: the call must not raise, and nothing
+    that comes back may contain a brace.
+    """
     fields = {"expected_count": 4, "heard_count": 2, "letter": "ع",
-              "expected": "ع", "heard": "ء", "code": "X", "at": 0}
-    for code in content.rules():
+              "expected": "ع", "heard": "ء", "code": "X", "at": 0,
+              "word": "عَلَيْهِمْ"}
+    codes = set(content.rules()) | set(coaching.registry())
+    for code in codes:
         for lang in content.LANGS:
             body = content.render(code, lang, fields)
-            for key in ("rule", "you_did", "fix", "drill"):
+            assert body, code
+            for key in ("headline", "fix", "rule", "drill"):
                 assert "{" not in body[key], f"{code}.{lang}.{key} left a placeholder"
+                assert "}" not in body[key], f"{code}.{lang}.{key} left a placeholder"
 
 
 def test_shipped_content_is_marked_reviewed():

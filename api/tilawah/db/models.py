@@ -50,6 +50,9 @@ class Attempt(SQLModel, table=True):
     status: str                                 # ok | retry_recording | error
     clean: bool = False
     suppressed: bool = False
+    # Defaults true so rows written before this column existed read as "the
+    # engine had an opinion", which is what they were.
+    analysable: bool = True
     snr_db: float = 0.0
     duration_s: float = 0.0
     mean_prob: float = 0.0

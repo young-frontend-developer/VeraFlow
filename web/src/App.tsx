@@ -5,14 +5,17 @@ import LangToggle from "./components/LangToggle";
 import Log from "./components/Log";
 import PilotBanner from "./components/PilotBanner";
 import Picker, { Selection } from "./components/Picker";
+import { ReadMode } from "./components/Reader";
 import Recite from "./components/Recite";
 import Review from "./components/Review";
 import TabBar, { Tab } from "./components/TabBar";
 import {
   Ayah,
   Meta,
+  Reciter,
   Sura,
   listAyat,
+  listReciters,
   listSuras,
   meta,
   setConsent,
@@ -23,6 +26,10 @@ const LANG_KEY = "tilawah_lang";
 const AYAH_KEY = "tilawah_ayah";
 /** Where the learner was, as "sura:aya" — reopens the picker there. */
 const PLACE_KEY = "tilawah_place";
+/** mushaf | verse — how they prefer to read. */
+const MODE_KEY = "tilawah_read_mode";
+/** everyayah folder of the chosen reciter. */
+const RECITER_KEY = "tilawah_reciter";
 const CONSENT_KEY = "tilawah_consent";
 const AUDIO_CONSENT_KEY = "tilawah_consent_audio";
 const CONSENT_SEEN_KEY = "tilawah_consent_seen";
@@ -37,6 +44,13 @@ function initialPlace(): { sura: number; aya: number } | null {
   const raw = localStorage.getItem(PLACE_KEY);
   const [s, a] = (raw ?? "").split(":").map(Number);
   return s >= 1 && s <= 114 && a >= 1 ? { sura: s, aya: a } : null;
+}
+
+function initialMode(): ReadMode {
+  const saved = localStorage.getItem(MODE_KEY);
+  // Mushaf by default: it is the shape people already know the Quran in, and
+  // the one that shows where an ayah sits among its neighbours.
+  return saved === "verse" ? "verse" : "mushaf";
 }
 
 /**
@@ -79,6 +93,14 @@ function LearnerApp() {
   // no shortlist to default into.
   const [selection, setSelection] = useState<Selection | null>(null);
   const [place, setPlace] = useState(initialPlace);
+  const [mode, setMode] = useState<ReadMode>(initialMode);
+  const [reciters, setReciters] = useState<Reciter[]>([]);
+  // Empty until /api/reciters answers. The saved id is NOT trusted until it is
+  // checked against that list — a reciter folder can be dropped by a rebuild
+  // when it stops serving files, and a stale id would 404 on every play.
+  const [reciter, setReciter] = useState(
+    () => localStorage.getItem(RECITER_KEY) ?? "",
+  );
   const [consented, setConsented] = useState(
     () => localStorage.getItem(CONSENT_KEY) === "1",
   );
@@ -107,6 +129,16 @@ function LearnerApp() {
         setCurrent(list.find((a) => a.slug === saved) ?? list[0] ?? null);
       })
       .catch(() => setAyat([]));
+    // Reciters. A failure here costs playback, not practice, so it degrades to
+    // an empty list and the select simply does not render.
+    listReciters()
+      .then((got) => {
+        setReciters(got.reciters);
+        setReciter((saved) =>
+          got.reciters.some((r) => r.id === saved) ? saved : got.default,
+        );
+      })
+      .catch(() => setReciters([]));
     // A failed /api/meta must not block the app, but it must not silently hide
     // the banner either — assume pilot until the server says otherwise.
     meta()
@@ -117,6 +149,8 @@ function LearnerApp() {
           unverified_codes: [],
           collect_audio_offered: false,
           show_unreviewed: false,
+          max_audio_seconds: 0,
+          missing_registries: [],
           version: "?",
         }),
       );
@@ -131,12 +165,26 @@ function LearnerApp() {
     if (current) localStorage.setItem(AYAH_KEY, current.slug);
   }, [current]);
 
+  useEffect(() => localStorage.setItem(MODE_KEY, mode), [mode]);
+
   useEffect(() => {
-    if (selection)
-      localStorage.setItem(
-        PLACE_KEY,
-        `${selection.sura.number}:${selection.ayah.aya}`,
-      );
+    // Only persist a validated id, so a dropped reciter cannot be written back
+    // and resurrected on the next load.
+    if (reciter) localStorage.setItem(RECITER_KEY, reciter);
+  }, [reciter]);
+
+  useEffect(() => {
+    if (!selection) return;
+    const next = {
+      sura: selection.sura.number,
+      aya: selection.ayah.aya,
+    };
+    localStorage.setItem(PLACE_KEY, `${next.sura}:${next.aya}`);
+    // Track the live choice, not just the one restored at page load, so the
+    // picker reopens on the ayah actually being recited. Safe to set on every
+    // selection: Picker's restore effect keys on the sura/aya numbers, so a
+    // fresh object with unchanged numbers does not re-trigger it.
+    setPlace(next);
   }, [selection]);
 
   // Mirror both flags to the server whenever they change, so the two cannot
@@ -203,6 +251,13 @@ function LearnerApp() {
               lang={lang}
               selection={selection}
               onChange={() => setSelection(null)}
+              onPart={(segment, whole) =>
+                setSelection((s) => (s ? { ...s, segment, whole } : s))
+              }
+              maxAudioSeconds={info?.max_audio_seconds ?? 0}
+              reciters={reciters}
+              reciter={reciter}
+              onReciter={setReciter}
             />
           ) : (
             <Picker
@@ -210,6 +265,11 @@ function LearnerApp() {
               suras={suras}
               initial={place}
               onPick={setSelection}
+              mode={mode}
+              onMode={setMode}
+              reciters={reciters}
+              reciter={reciter}
+              onReciter={setReciter}
             />
           )
         ) : tab === "library" ? (

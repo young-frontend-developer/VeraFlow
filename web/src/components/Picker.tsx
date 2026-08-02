@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AyahLine } from "./AyahText";
+import Reader, { ReadMode } from "./Reader";
 import {
   AyahBrief,
   PracticeSegment,
+  Reciter,
   Sura,
   SuraAyat,
   ayahSegments,
@@ -12,20 +13,40 @@ import {
 import { Lang, t } from "../lib/i18n";
 
 /**
- * Sura -> ayah -> segment, against the real catalogue: all 114 suras, all 6236
- * ayat, and the precomputed practice segments underneath them.
+ * Sura -> read -> practise, against the real catalogue: all 114 suras and all
+ * 6236 ayat.
  *
- * Three panes rather than one long list. The Quran is not browsable as a flat
- * list of 6236 things, and a picker that pretends otherwise is the reason the
- * app shipped with a curated shortlist instead.
+ * Two panes. The Quran is not browsable as a flat list of 6236 things, and a
+ * picker that pretends otherwise is the reason the app shipped with a curated
+ * shortlist instead. The second pane is a READER (see Reader.tsx), in mushaf or
+ * verse-by-verse form, because choosing an ayah and reading one are the same
+ * act — the old flat row list was neither.
+ *
+ * THERE IS NO SEGMENT PANE. Choosing an ayah selects the WHOLE ayah, however
+ * long it is. It used to land on a third pane asking which part you meant,
+ * because segmentation had split 72% of the Quran into 12-second chunks — a
+ * question nobody asked for, imposed on the majority of ayat. Practising part
+ * of a long ayah is still available, but from inside Recite, as a choice.
  */
 
 export type Selection = {
   sura: Sura;
   ayah: AyahBrief;
+  /** The range being recited. Defaults to the whole ayah, always. */
   segment: PracticeSegment;
-  /** True when the chosen segment is the entire ayah. */
+  /** True when `segment` is the entire ayah. */
   whole: boolean;
+  /**
+   * The whole ayah, kept even while a part is selected, so returning to it is
+   * a state change rather than another round trip.
+   */
+  wholeSegment: PracticeSegment;
+  /**
+   * The optional narrower ranges, carried along so Recite can offer "practise
+   * part of this ayah" without a second round trip. Empty when the ayah has no
+   * meaningful subdivision.
+   */
+  parts: PracticeSegment[];
 };
 
 type Props = {
@@ -34,20 +55,32 @@ type Props = {
   /** Reopens on the previous choice instead of resetting to al-Fatiha. */
   initial?: { sura: number; aya: number } | null;
   onPick: (s: Selection) => void;
+  mode: ReadMode;
+  onMode: (m: ReadMode) => void;
+  reciters: Reciter[];
+  reciter: string;
+  onReciter: (id: string) => void;
 };
 
-const secs = (lang: Lang, s: number) =>
-  `${s.toFixed(s < 10 ? 1 : 0)} ${t(lang, "seconds_short")}`;
-
-export default function Picker({ lang, suras, initial, onPick }: Props) {
+export default function Picker({
+  lang,
+  suras,
+  initial,
+  onPick,
+  mode,
+  onMode,
+  reciters,
+  reciter,
+  onReciter,
+}: Props) {
   const [query, setQuery] = useState("");
   const [sura, setSura] = useState<Sura | null>(null);
   const [ayat, setAyat] = useState<SuraAyat | null>(null);
-  const [ayah, setAyah] = useState<AyahBrief | null>(null);
-  const [segments, setSegments] = useState<PracticeSegment[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
-  const ayahScroll = useRef<HTMLDivElement>(null);
+  // Where the learner is in the sura: the marked ayah in the mushaf, and the
+  // one shown in verse-by-verse. Only ever a position — never a selection.
+  const [focusAya, setFocusAya] = useState<number | null>(null);
 
   // Reopen where the learner left off. Keyed on the place itself, not a
   // one-shot flag, so the Library shortcut can move the picker after mount —
@@ -71,18 +104,17 @@ export default function Picker({ lang, suras, initial, onPick }: Props) {
 
   async function openSura(s: Sura, jumpToAya?: number) {
     setSura(s);
-    setAyah(null);
-    setSegments(null);
     setAyat(null);
+    setFocusAya(jumpToAya ?? null);
     setBusy(true);
     setFailed(false);
     try {
-      const list = await suraAyat(s.number);
-      setAyat(list);
-      if (jumpToAya) {
-        const found = list.ayat.find((a) => a.aya === jumpToAya);
-        if (found) await openAyah(s, found);
-      }
+      // A restore stops here, at the reader. It deliberately does NOT open
+      // `jumpToAya`: openAyah selects, so restoring through it re-selected the
+      // ayah the learner had just backed out of and "Boshqa oyat tanlash"
+      // bounced straight back to Recite. jumpToAya only says where to look, and
+      // the learner still taps.
+      setAyat(await suraAyat(s.number, lang));
     } catch {
       setFailed(true);
     } finally {
@@ -90,19 +122,28 @@ export default function Picker({ lang, suras, initial, onPick }: Props) {
     }
   }
 
+  // The sura payload carries the translation, so switching language has to
+  // refetch it — otherwise the reader keeps showing Uzbek under a Russian UI.
+  useEffect(() => {
+    if (sura) openSura(sura, focusAya ?? undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lang]);
+
   async function openAyah(s: Sura, a: AyahBrief) {
-    setAyah(a);
-    setSegments(null);
     setBusy(true);
     setFailed(false);
     try {
       const got = await ayahSegments(s.number, a.aya);
-      setSegments(got.segments);
-      // One segment means the whole ayah is the only range — nothing to choose,
-      // so don't make the learner tap a list of one.
-      if (got.segments.length === 1) {
-        onPick({ sura: s, ayah: a, segment: got.segments[0], whole: true });
-      }
+      // Straight to the whole ayah. No length check and no branch on the number
+      // of parts: the ayah the learner tapped is the ayah they get.
+      onPick({
+        sura: s,
+        ayah: a,
+        segment: got.whole,
+        whole: true,
+        wholeSegment: got.whole,
+        parts: got.parts,
+      });
     } catch {
       setFailed(true);
     } finally {
@@ -153,89 +194,48 @@ export default function Picker({ lang, suras, initial, onPick }: Props) {
     );
   }
 
-  // ── ayah pane ──────────────────────────────────────────────────────────
-  if (!ayah) {
+  // ── reading pane ───────────────────────────────────────────────────────
+  // The last pane. Choosing an ayah here resolves the whole ayah and hands it
+  // to Recite — reading and choosing are the same act.
+  if (failed && !ayat) {
     return (
       <>
         <button className="crumb" onClick={() => setSura(null)}>
           ← {t(lang, "pick_sura")}
         </button>
-        <h2 className="section-head">
-          {sura.number}. {sura.translit}
-        </h2>
-        <p className="section-sub">{t(lang, "pick_ayah")}</p>
-
-        {failed && <p className="empty">{t(lang, "error_generic")}</p>}
-        {!ayat ? (
-          <p className="empty">{t(lang, "loading")}</p>
-        ) : (
-          <div className="list list--scroll" ref={ayahScroll}>
-            <ul>
-              {ayat.ayat.map((a) => (
-                <li key={a.aya}>
-                  <button className="row" onClick={() => openAyah(sura, a)}>
-                    <span className="row__num">{a.aya}</span>
-                    <span className="row__body">
-                      <AyahLine uthmani={a.uthmani} />
-                      <span className="row__meta">
-                        {a.n_segments > 1
-                          ? `${a.n_segments} ${t(lang, "parts")} · `
-                          : ""}
-                        {secs(lang, a.seconds)}
-                      </span>
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <p className="empty">{t(lang, "error_generic")}</p>
       </>
     );
   }
 
-  // ── segment pane ───────────────────────────────────────────────────────
-  return (
-    <>
-      <button className="crumb" onClick={() => setAyah(null)}>
-        ← {sura.translit}
-      </button>
-      <h2 className="section-head">
-        {sura.number}:{ayah.aya}
-      </h2>
-      <p className="section-sub">{t(lang, "pick_segment")}</p>
-
-      {failed && <p className="empty">{t(lang, "error_generic")}</p>}
-      {busy || !segments ? (
+  if (!ayat) {
+    return (
+      <>
+        <button className="crumb" onClick={() => setSura(null)}>
+          ← {t(lang, "pick_sura")}
+        </button>
         <p className="empty">{t(lang, "loading")}</p>
-      ) : (
-        <ul className="list">
-          {segments.map((seg) => (
-            <li key={seg.index}>
-              <button
-                className="row"
-                onClick={() =>
-                  onPick({
-                    sura,
-                    ayah,
-                    segment: seg,
-                    whole: segments.length === 1,
-                  })
-                }
-              >
-                <span className="row__num">{seg.index + 1}</span>
-                <span className="row__body">
-                  <AyahLine uthmani={seg.uthmani} />
-                  <span className="row__meta">
-                    {t(lang, "words")} {seg.start_word + 1}–
-                    {seg.start_word + seg.num_words} · {secs(lang, seg.seconds)}
-                  </span>
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </>
+      </>
+    );
+  }
+
+  return (
+    <Reader
+      lang={lang}
+      sura={sura}
+      suras={suras}
+      ayat={ayat}
+      mode={mode}
+      onMode={onMode}
+      focusAya={focusAya}
+      onFocusAya={setFocusAya}
+      onPractise={(a) => openAyah(sura, a)}
+      onBack={() => setSura(null)}
+      onOpenSura={(s, aya) => openSura(s, aya)}
+      busy={busy}
+      reciters={reciters}
+      reciter={reciter}
+      onReciter={onReciter}
+    />
   );
 }

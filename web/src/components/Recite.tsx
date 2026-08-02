@@ -1,8 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import AyahText from "./AyahText";
+import AyahText, { AyahLine } from "./AyahText";
 import Feedback from "./Feedback";
 import { Selection } from "./Picker";
-import { Attempt, expertAudioUrl, submitAttempt } from "../lib/api";
+import ReciterSelect from "./ReciterSelect";
+import {
+  Attempt,
+  PracticeSegment,
+  Reciter,
+  expertAudioUrl,
+  submitAttempt,
+} from "../lib/api";
 import { Lang, t } from "../lib/i18n";
 import { RecorderHandle, startRecording } from "../lib/recorder";
 
@@ -15,23 +22,45 @@ export default function Recite({
   lang,
   selection,
   onChange,
+  onPart,
+  maxAudioSeconds,
+  reciters,
+  reciter,
+  onReciter,
 }: {
   lang: Lang;
   selection: Selection;
   onChange: () => void;
+  /** Narrow the practice range to one part of this ayah, or back to the whole. */
+  onPart: (segment: PracticeSegment, whole: boolean) => void;
+  /** Engine ceiling in seconds; 0 while /api/meta is still in flight. */
+  maxAudioSeconds: number;
+  reciters: Reciter[];
+  reciter: string;
+  onReciter: (id: string) => void;
 }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [result, setResult] = useState<Attempt | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [failed, setFailed] = useState(false);
+  const [pickingPart, setPickingPart] = useState(false);
 
   const handleRef = useRef<RecorderHandle | null>(null);
   const ringRef = useRef<HTMLSpanElement>(null);
   const ringOuterRef = useRef<HTMLSpanElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const { sura, ayah, segment } = selection;
-  // Identity of the exact range, so switching segments within one ayah resets
+  // Whole ayat run to nearly four minutes, and "193.9 s" is not a duration a
+  // person can feel. Past a minute, read it as minutes.
+  const estimate = (s: number) =>
+    s >= 60 ? mmss(s) : `${s.toFixed(1)} ${t(lang, "seconds_short")}`;
+
+  const { sura, ayah, segment, parts } = selection;
+  // `seconds` is the median-reciter estimate and the gate is on real recorded
+  // duration, so warn with headroom rather than exactly at the line.
+  const tooLong =
+    maxAudioSeconds > 0 && segment.seconds > maxAudioSeconds * 0.8;
+  // Identity of the exact range, so switching parts within one ayah resets
   // too — not just switching ayah.
   const key = `${sura.number}:${ayah.aya}:${segment.start_word}:${segment.num_words}`;
 
@@ -42,6 +71,7 @@ export default function Recite({
     setResult(null);
     setElapsed(0);
     setFailed(false);
+    setPickingPart(false);
   }, [key]);
 
   useEffect(() => () => handleRef.current?.cancel(), []);
@@ -144,15 +174,80 @@ export default function Recite({
       />
 
       {/* What the learner is about to be measured against, before they commit
-          to recording: how long this should take at a normal pace. */}
+          to recording: how long this should take at a normal pace. A long ayah
+          is slow, not broken — this is the number that lets them decide. */}
       <p className="estimate">
-        {t(lang, "estimate")} ≈ {segment.seconds.toFixed(1)}{" "}
-        {t(lang, "seconds_short")}
+        {t(lang, "estimate")} ≈ {estimate(segment.seconds)}
       </p>
 
-      {/* Expert audio is per whole ayah, so it is only offered when the whole
-          ayah is selected — playing a full ayah against a one-part selection
-          would be teaching the wrong thing. */}
+      {/* Said BEFORE recording. Inference runs ~10x realtime, so learning this
+          from the result would mean waiting minutes for a rejection. The
+          ceiling is the engine's memory limit, not a judgement about the
+          learner, so the wording blames the length and offers the way out. */}
+      {tooLong && (
+        <p className="estimate estimate--warn">{t(lang, "too_long_hint")}</p>
+      )}
+
+      {/* Practising part of an ayah is a CHOICE, offered only where the ayah
+          genuinely divides. It is never taken for the learner, and the whole
+          ayah is always one tap away again. */}
+      {parts.length > 1 && (
+        <div className="parts">
+          {selection.whole ? (
+            <button
+              className="linkish"
+              disabled={phase !== "idle"}
+              onClick={() => setPickingPart((v) => !v)}
+            >
+              {t(lang, "practise_part")}
+            </button>
+          ) : (
+            <button
+              className="linkish"
+              disabled={phase !== "idle"}
+              onClick={() => {
+                setPickingPart(false);
+                onPart(selection.wholeSegment, true);
+              }}
+            >
+              {t(lang, "practise_whole")}
+            </button>
+          )}
+
+          {pickingPart && (
+            <ul className="list list--parts">
+              {parts.map((p) => (
+                <li key={p.index}>
+                  <button
+                    className="row"
+                    aria-current={
+                      p.start_word === segment.start_word &&
+                      p.num_words === segment.num_words
+                    }
+                    onClick={() => {
+                      setPickingPart(false);
+                      onPart(p, false);
+                    }}
+                  >
+                    <span className="row__num">{p.index + 1}</span>
+                    <span className="row__body">
+                      <AyahLine uthmani={p.uthmani} />
+                      <span className="row__meta">
+                        {t(lang, "words")} {p.start_word + 1}–
+                        {p.start_word + p.num_words} · {estimate(p.seconds)}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {/* everyayah serves whole-ayah files only. Offering playback against a
+          part would request a file that does not exist — which is exactly why
+          reciter audio "died on long suras" while they were force-split. */}
       {selection.whole && (
         <>
           <button
@@ -169,8 +264,18 @@ export default function Recite({
           </button>
           <audio
             ref={audioRef}
-            src={expertAudioUrl(sura.number, ayah.aya)}
+            src={expertAudioUrl(sura.number, ayah.aya, reciter)}
             preload="none"
+          />
+          {/* Offered next to the thing it changes. Switching reciter mid-drill
+              is a normal thing to want — one voice is easier to follow than
+              another, and a muallim recording repeats each phrase. */}
+          <ReciterSelect
+            lang={lang}
+            reciters={reciters}
+            value={reciter}
+            onChange={onReciter}
+            disabled={phase !== "idle"}
           />
         </>
       )}

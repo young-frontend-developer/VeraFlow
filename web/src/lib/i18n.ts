@@ -25,10 +25,18 @@ const STRINGS = {
     clear_title: "Barakalla",
     clear_body: "Bu oʻqishda xatolik topilmadi.",
 
-    // uncertain
+    // The model returned nothing analysable — no judgement was formed at all.
+    // This sentence means EXACTLY that and must never be reused for a
+    // correction that exists but is being withheld; see withheld_* below.
     unsure_title: "Toʻliq baholay olmadik",
     unsure_body:
       "Bu oʻqishni ishonch bilan baholash uchun maʼlumot yetarli boʻlmadi. Ustozingiz bilan birga tekshirib koʻring.",
+
+    // A judgement WAS formed and the review gate withheld it. Different cause,
+    // different sentence — the learner should know something was noticed.
+    withheld_title: "Izoh hali tayyor emas",
+    withheld_body:
+      "Oʻqishingizda eʼtibor beriladigan joy topildi, lekin uning izohini qori hali tasdiqlamagan. Shuning uchun koʻrsatmayapmiz. Ustozingiz bilan tekshirib koʻring.",
 
     // retry
     retry_noisy_title: "Atrof shovqinli",
@@ -41,6 +49,12 @@ const STRINGS = {
     retry_quiet_title: "Ovoz eshitilmadi",
     retry_quiet_body:
       "Yozuvda deyarli ovoz yoʻq. Mikrofonga ruxsat berilganini tekshiring.",
+    retry_toolong_title: "Bu oyat bir oʻqishda juda uzun",
+    retry_toolong_body:
+      "Bu oyatni toʻliq baholay olmaymiz — u juda uzun. Quyidagi «Oyatning bir qismini mashq qilish» orqali qismlarga boʻlib oʻqing.",
+    // Shown BEFORE recording, so nobody waits several minutes to be told this.
+    too_long_hint:
+      "Bu oyat toʻliq baholash uchun juda uzun. Uni qismlarga boʻlib mashq qiling.",
     retry_unclear_title: "Oʻqishni aniq eshita olmadik",
     retry_unclear_body:
       "Oyat toʻliq va tinch oʻqilsa, bahomiz ancha aniq boʻladi. Shoshilmasdan qaytadan oʻqing.",
@@ -54,26 +68,51 @@ const STRINGS = {
     // correction card
     label_heard: "Nimani eshitdik",
     label_fix: "Qanday tuzatish kerak",
+    label_rule: "Qoida",
     label_drill: "Mashq",
+    // Shown when no entry exists for a detected code: the location is all we
+    // can honestly state, and stating it beats saying nothing.
+    located_unknown: "Xato joyi aniqlanmadi.",
     teacher_note: "Bunga ishonchimiz toʻliq emas — ustozingiz bilan tekshiring.",
     wrong_button: "Bu baho notoʻgʻri",
     wrong_thanks: "Rahmat. Buni koʻrib chiqamiz.",
 
-    // TILAWAH_SHOW_UNREVIEWED — developer diagnostic, never a learner build
+    // Draft corrections — the normal state outside production, where the gate
+    // is open by default and every unreviewed card carries a marker.
     draft_chip: "QORALAMA",
     draft_note: "Bu izohni qori tekshirmagan. Faqat sinov uchun.",
     draft_unauthored: "Bu xato uchun matn umuman yozilmagan. Faqat kod:",
     draft_banner_title: "Tekshirilmagan izohlar koʻrsatilmoqda",
     draft_banner_body:
-      "TILAWAH_SHOW_UNREVIEWED yoqilgan: aniqlangan barcha xatolar, jumladan qori tekshirmaganlari ham koʻrsatilmoqda. Bu faqat dasturchi rejimi.",
+      "Sinov rejimi: aniqlangan barcha xatolar koʻrsatilmoqda, jumladan qori hali tekshirmaganlari ham. Har biri QORALAMA deb belgilangan.",
 
     // picker — the whole Quran, not a shortlist
     pick_sura: "Sura tanlang",
     search_sura: "Sura nomi yoki raqami",
     no_matches: "Hech narsa topilmadi.",
     pick_ayah: "Oyatni tanlang.",
-    pick_segment: "Qaysi qismini oʻqiysiz?",
+    // Narrowing to part of an ayah is offered inside Recite, as a choice —
+    // never as a question the picker forces before you can start.
+    practise_part: "Oyatning bir qismini mashq qilish",
+    practise_whole: "Butun oyatni oʻqish",
     ayat_count: "oyat",
+
+    // reading
+    read_mode: "Oʻqish koʻrinishi",
+    mode_mushaf: "Mushaf",
+    mode_verse: "Oyatma-oyat",
+    mushaf_hint: "Mashq qilish uchun oyatni bosing.",
+    prev_ayah: "Oldingi oyat",
+    next_ayah: "Keyingi oyat",
+    practise_this: "Shu oyatni mashq qilish",
+    no_translation: "Bu oyat uchun tarjima topilmadi.",
+    pause: "Toʻxtatish",
+
+    // reciters
+    reciter: "Qori",
+    style_muallim: "Muallim (takrorlab oʻrgatadi)",
+    style_murattal: "Murattal",
+    style_mujawwad: "Mujavvad",
     parts: "qism",
     words: "soʻz",
     seconds_short: "s",
@@ -91,6 +130,7 @@ const STRINGS = {
     log_empty: "Hali oʻqish yozilmagan.",
     log_clear: "Xatoliksiz",
     log_noted: "Izoh bor",
+    log_unassessed: "Baholanmadi",
     log_retry: "Qayta yozilgan",
 
     // pilot banner
@@ -147,6 +187,10 @@ const STRINGS = {
     unsure_body:
       "Данных не хватило, чтобы оценить это чтение уверенно. Проверьте вместе с вашим устозом.",
 
+    withheld_title: "Замечание пока не готово",
+    withheld_body:
+      "В вашем чтении есть на что обратить внимание, но пояснение к этому ещё не подтверждено чтецом, поэтому мы его не показываем. Проверьте с вашим устозом.",
+
     retry_noisy_title: "Вокруг шумно",
     retry_noisy_body:
       "В записи много постороннего шума, и мы не расслышали чтение отчётливо.",
@@ -157,6 +201,11 @@ const STRINGS = {
     retry_quiet_title: "Звук не слышен",
     retry_quiet_body:
       "В записи почти нет звука. Проверьте, разрешён ли доступ к микрофону.",
+    retry_toolong_title: "Этот аят слишком длинный для одного чтения",
+    retry_toolong_body:
+      "Мы не можем оценить этот аят целиком — он слишком длинный. Прочитайте его по частям через «Потренировать часть аята» ниже.",
+    too_long_hint:
+      "Этот аят слишком длинный, чтобы оценить его целиком. Потренируйте его по частям.",
     retry_unclear_title: "Не расслышали чтение отчётливо",
     retry_unclear_body:
       "Если прочитать аят полностью и спокойно, оценка будет намного точнее. Не торопитесь и прочитайте ещё раз.",
@@ -169,7 +218,9 @@ const STRINGS = {
 
     label_heard: "Что мы услышали",
     label_fix: "Как исправить",
+    label_rule: "Правило",
     label_drill: "Упражнение",
+    located_unknown: "Место ошибки не определено.",
     teacher_note: "Мы не вполне уверены — проверьте с вашим устозом.",
     wrong_button: "Оценка неверна",
     wrong_thanks: "Спасибо. Мы это разберём.",
@@ -179,14 +230,30 @@ const STRINGS = {
     draft_unauthored: "Для этой ошибки текст вообще не написан. Только код:",
     draft_banner_title: "Показываются непроверенные замечания",
     draft_banner_body:
-      "Включён TILAWAH_SHOW_UNREVIEWED: показываются все найденные ошибки, включая непроверенные чтецом. Это режим разработчика.",
+      "Тестовый режим: показываются все найденные ошибки, включая ещё не проверенные чтецом. Каждая помечена как ЧЕРНОВИК.",
 
     pick_sura: "Выберите суру",
     search_sura: "Название или номер суры",
     no_matches: "Ничего не найдено.",
     pick_ayah: "Выберите аят.",
-    pick_segment: "Какую часть будете читать?",
+    practise_part: "Потренировать часть аята",
+    practise_whole: "Читать аят целиком",
     ayat_count: "аятов",
+
+    read_mode: "Режим чтения",
+    mode_mushaf: "Мусхаф",
+    mode_verse: "По аятам",
+    mushaf_hint: "Нажмите на аят, чтобы потренировать его.",
+    prev_ayah: "Предыдущий аят",
+    next_ayah: "Следующий аят",
+    practise_this: "Потренировать этот аят",
+    no_translation: "Перевод для этого аята не найден.",
+    pause: "Пауза",
+
+    reciter: "Чтец",
+    style_muallim: "Муаллим (обучающее чтение)",
+    style_murattal: "Мураттал",
+    style_mujawwad: "Муджаввад",
     parts: "частей",
     words: "слова",
     seconds_short: "с",
@@ -202,6 +269,7 @@ const STRINGS = {
     log_empty: "Пока нет записанных чтений.",
     log_clear: "Без ошибок",
     log_noted: "Есть замечание",
+    log_unassessed: "Не оценено",
     log_retry: "Перезаписано",
 
     pilot_title: "Пробная версия",
@@ -253,6 +321,14 @@ export function retryCopy(lang: Lang, reason: string) {
     return {
       title: t(lang, "retry_long_title"),
       body: t(lang, "retry_long_body"),
+      tips: [] as string[],
+    };
+  // Not the learner's doing: the ayah itself exceeds what the engine can hold
+  // in memory. Says so, and points at the control that solves it.
+  if (reason === "too_long_for_engine")
+    return {
+      title: t(lang, "retry_toolong_title"),
+      body: t(lang, "retry_toolong_body"),
       tips: [] as string[],
     };
   if (reason === "too_quiet")

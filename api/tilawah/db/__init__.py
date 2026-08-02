@@ -42,6 +42,9 @@ def _add_missing_columns() -> None:
             "start_word": "INTEGER NOT NULL DEFAULT 0",
             "num_words": "INTEGER NOT NULL DEFAULT 0",
             "include_bismillah": "BOOLEAN NOT NULL DEFAULT 0",
+            # 1, not 0: every row written before this column existed came from
+            # a run where the engine did produce a transcription.
+            "analysable": "BOOLEAN NOT NULL DEFAULT 1",
         },
     }
     insp = inspect(engine)
