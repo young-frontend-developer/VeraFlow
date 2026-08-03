@@ -14,6 +14,7 @@ from ..config import settings
 from ..content import coaching
 from ..db import delete_stored_audio, get_session
 from ..db.models import Attempt, User
+from ..engine import cards
 from ..engine.pipeline import analyze
 from ..engine.ranges import (Range, estimate_seconds, legal_cuts, n_words,
                              uthmani_of)
@@ -387,6 +388,8 @@ def meta() -> MetaOut:
         show_unreviewed=settings.show_unreviewed,
         max_audio_seconds=settings.max_audio_seconds,
         missing_registries=coaching.missing_sources(),
+        missing_audio=coaching.missing_audio(),
+        error_fields=list(cards.WIRE_KEYS),
     )
 
 
@@ -425,8 +428,13 @@ def history(device_id: str, limit: int = 20,
         select(Attempt).where(Attempt.user_id == device_id)
         .order_by(Attempt.created_at.desc()).limit(limit)
     ).all()
+    # Rows written before card merging existed have no `words`, `occurrences`,
+    # `count` or `kind`. The client indexes those directly, so replaying a
+    # legacy row verbatim hands it a shape that throws. ensure_shape rebuilds
+    # the missing fields from what the row does carry - see cards.ensure_shape.
     return [AttemptOut(id=r.id, sura=r.sura, aya=r.aya,
                        status=r.status, reason="", clean=r.clean,
                        suppressed=r.suppressed, analysable=r.analysable,
-                       errors=r.errors, snr_db=r.snr_db, duration_s=r.duration_s)
+                       errors=[cards.ensure_shape(e) for e in (r.errors or [])],
+                       snr_db=r.snr_db, duration_s=r.duration_s)
             for r in rows]

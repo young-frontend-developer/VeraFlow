@@ -205,3 +205,27 @@ def unit_words(uthmani: str, segments: list[dict]) -> dict[int, str]:
                     out.setdefault(u, word)
                 break
     return out
+
+
+def unit_word_indices(uthmani: str, segments: list[dict]) -> dict[int, int]:
+    """unit index -> the ORDINAL of the word containing it, counting from 0.
+
+    The same walk as unit_words, reporting the position rather than the text,
+    because "re-record just this word" needs a number to feed `start_word` and
+    two identical words in one ayah must not collapse to the same range.
+
+    Indices count within whatever text is passed in. When that text is a
+    practice sub-range, the caller must add the range's own `start_word` to get
+    an ayah-relative index - which is what the practice API expects.
+    """
+    spans = word_spans(uthmani)
+    out: dict[int, int] = {}
+    for seg in segments:
+        if not seg["units"]:
+            continue
+        for w, (start, end) in enumerate(spans):
+            if seg["start"] < end and seg["end"] > start:
+                for u in seg["units"]:
+                    out.setdefault(u, w)
+                break
+    return out

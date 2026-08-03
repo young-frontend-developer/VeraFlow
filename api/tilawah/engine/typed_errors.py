@@ -39,6 +39,19 @@ def haraka_of(marks: str) -> str:
     return ""
 
 
+# ALIF IS NOT A CONSONANT. It has no makhraj of its own - it is a madd letter,
+# a lengthening of the vowel before it - so "you read ء as ا" is not a
+# statement about articulation, it is a category error. The aligner can still
+# pair them: typed_diff matches on base letters, and when a hamza and an alif
+# land in the same slot with no other anchor it reports a substitution, which
+# rendered as «ء» ni «ا» kabi o'qidingiz - nonsense a learner cannot act on.
+#
+# و and ي are deliberately NOT here. They are dual-nature: madd letters when
+# sakin after a matching haraka, ordinary consonants with real makharij
+# otherwise. MAKHARIJ_WAW_TO_FA and MAKHARIJ_JEEM_TO_YA are about the
+# consonantal use and must keep firing.
+BARE_ALIF = "ا"
+
 # Uzbek/Russian L1 interference pairs. Decision 6: these priors are the cheap
 # differentiator - nobody has built this for these languages.
 L1_PAIRS = {
@@ -56,6 +69,28 @@ L1_PAIRS = {
 }
 
 
+# EVERY code this module can put on a TypedError, stated rather than inferred.
+# test_code_mapping.py walks it and fails on any entry that reaches neither a
+# registry entry nor an alias, which is the check that was missing while the
+# engine emitted MADD_SHORT at a registry holding only MADD_TOO_SHORT.
+#
+# The substitution codes read out of the registry at runtime are NOT listed:
+# they are registry keys by construction, so they cannot fail to resolve. What
+# is listed is everything this module names itself.
+EMITTED_CODES = frozenset({
+    # duration, from _duration_code
+    "MADD_SHORT", "MADD_LONG",
+    "GHUNNA_SHORT", "GHUNNA_LONG",
+    "SHADDA_SHORT", "SHADDA_LONG",
+    # structure
+    "QALQALA_DROP", "LETTER_DROPPED", "LETTER_ADDED",
+    # vowels
+    "HARAKA_SUBSTITUTED", "HARAKA_TO_SUKUN", "SUKUN_TO_HARAKA",
+    # fallback
+    "GENERIC_LETTER_SUBSTITUTED",
+} | set(L1_PAIRS.values()))
+
+
 @dataclass
 class TypedError:
     code: str           # joins to the coaching registries, then rules.json
@@ -65,11 +100,24 @@ class TypedError:
     heard: str = ""
     expected_count: int = 0
     heard_count: int = 0
+    # Which ṣifa disagreed, for errors that came from the ṣifa comparison
+    # rather than from the phoneme diff - "tafkheem_or_taqeeq", "qalqla".
+    # Empty for every phoneme-level error. Carried so the card can group and
+    # explain by ṣifa, and so a routing bug is visible in the debug capture
+    # instead of being flattened into a bare code.
+    sifa: str = ""
     # The Uthmani word the error falls in. Filled in by the pipeline, which is
     # the only layer that knows the text - typed_diff sees phoneme strings and
     # has no idea where a word begins. Every coaching headline opens with it,
     # because "you said X instead of Y" is useless without "in which word".
     word: str = ""
+    # That word's index WITHIN THE AYAH, so the client can re-record just this
+    # word through the existing range machinery instead of the whole ayah.
+    # Ayah-relative, not range-relative: `start_word` in the practice API counts
+    # from the start of the ayah, so a range-relative index would re-record the
+    # wrong word whenever the learner was practising part of an ayah. -1 when
+    # the unit could not be placed in a word.
+    word_index: int = -1
 
     def dict(self):
         return asdict(self)
@@ -92,8 +140,8 @@ def _missing(unit, at) -> TypedError:
                       expected=unit[0])
 
 
-def _substitution_code(expected: str, heard: str) -> str:
-    """The most specific code for one letter confusion.
+def _substitution_code(expected: str, heard: str) -> str | None:
+    """The most specific code for one letter confusion, or None to say nothing.
 
     Three tiers, narrowest first:
       1. L1_PAIRS      - the Uzbek/Russian interference pairs, which carry
@@ -106,11 +154,28 @@ def _substitution_code(expected: str, heard: str) -> str:
     every unlisted confusion fell through to a code with no content and the
     learner was told "we couldn't fully assess" about an error the engine had
     located precisely.
+
+    Tier 1 only wins if it RESOLVES. SUB_HA_HEH (ح -> ه) is a real L1 prior with
+    no entry in any registry generation, and returning it unconditionally put a
+    code with no content ahead of the generic that would have described the
+    confusion perfectly well. A prior that nobody has written content for is not
+    more specific than the generic - it is less useful than it.
+
+    TIER 0 IS A REFUSAL. A pairing involving a bare alif is not a substitution
+    at all - see BARE_ALIF - so no code describes it and none is invented. The
+    caller drops the error entirely rather than reporting a confusion that
+    cannot happen. This trades a little recall for correctness: an attempt whose
+    only finding was such a pairing now reports nothing about that letter, which
+    is the right side of "a wrong correction is worse than a missing one".
     """
-    pair = L1_PAIRS.get((expected, heard))
-    if pair:
-        return pair
     from ..content import coaching
+
+    if expected == BARE_ALIF or heard == BARE_ALIF:
+        return None
+
+    pair = L1_PAIRS.get((expected, heard))
+    if pair and coaching.has(pair):
+        return pair
 
     return coaching.substitution_pairs().get((expected, heard),
                                              "GENERIC_LETTER_SUBSTITUTED")
@@ -164,7 +229,10 @@ def typed_diff(expected: str, predicted: str) -> list[TypedError]:
             n = min(i2 - i1, j2 - j1)
             for k in range(n):
                 e, g = exp_u[i1 + k], got_u[j1 + k]
-                out.append(TypedError(code=_substitution_code(e[0], g[0]),
+                code = _substitution_code(e[0], g[0])
+                if code is None:
+                    continue        # bare alif on one side - not a substitution
+                out.append(TypedError(code=code,
                                       at=i1 + k, letter=e[0],
                                       expected=e[0], heard=g[0]))
             for k in range(n, i2 - i1):

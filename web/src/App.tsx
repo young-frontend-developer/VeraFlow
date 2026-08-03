@@ -14,11 +14,13 @@ import {
   Meta,
   Reciter,
   Sura,
+  apiPredatesContract,
   listAyat,
   listReciters,
   listSuras,
   meta,
   setConsent,
+  staleApiFields,
 } from "./lib/api";
 import { Lang, t } from "./lib/i18n";
 
@@ -151,6 +153,7 @@ function LearnerApp() {
           show_unreviewed: false,
           max_audio_seconds: 0,
           missing_registries: [],
+          missing_audio: [],
           version: "?",
         }),
       );
@@ -230,6 +233,26 @@ function LearnerApp() {
         <h1 className="wordmark">Tilawah</h1>
         <LangToggle lang={lang} onChange={setLang} />
       </header>
+
+      {/* VERSION SKEW, NAMED.
+          A server process started before a field was added keeps answering
+          200s, and from the browser that is indistinguishable from a client
+          bug — every card throws and the error boundary quietly replaces all
+          of them. This says which fields are missing and what to do, so the
+          failure diagnoses itself instead of looking like broken cards. */}
+      {(staleApiFields(info).length > 0 || apiPredatesContract(info)) && (
+        <div className="notice notice--stale" role="alert">
+          <p className="notice__title">{t(lang, "api_stale_title")}</p>
+          <p className="notice__body">{t(lang, "api_stale_body")}</p>
+          <p className="notice__body">
+            <code>
+              {apiPredatesContract(info)
+                ? "error_fields: —"
+                : staleApiFields(info).join(", ")}
+            </code>
+          </p>
+        </div>
+      )}
 
       {info?.pilot && (
         <PilotBanner

@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import AyahText, { AyahLine } from "./AyahText";
-import Feedback from "./Feedback";
+import AyahText, { AyahLine, Mark } from "./AyahText";
+import ErrorBoundary from "./ErrorBoundary";
+import Feedback, { RetryState, SelfPlayback, cardId } from "./Feedback";
 import { Selection } from "./Picker";
 import ReciterSelect from "./ReciterSelect";
 import {
   Attempt,
   PracticeSegment,
   Reciter,
+  TajweedError,
   expertAudioUrl,
   submitAttempt,
 } from "../lib/api";
@@ -45,10 +47,25 @@ export default function Recite({
   const [failed, setFailed] = useState(false);
   const [pickingPart, setPickingPart] = useState(false);
 
+  // The learner's own recording, kept only for as long as this result is on
+  // screen. Never uploaded beyond the attempt itself and never persisted —
+  // hearing yourself back must not require consenting to retention.
+  const [ownRecording, setOwnRecording] = useState<Blob | null>(null);
+
+  // Which card the learner is reading, so the ayah can strengthen its letters.
+  const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const [retry, setRetry] = useState<RetryState>({
+    cardId: null,
+    phase: null,
+    fixed: [],
+    stillWrong: null,
+  });
+
   const handleRef = useRef<RecorderHandle | null>(null);
   const ringRef = useRef<HTMLSpanElement>(null);
   const ringOuterRef = useRef<HTMLSpanElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const cardRefs = useRef<Record<string, HTMLElement | null>>({});
 
   // Whole ayat run to nearly four minutes, and "193.9 s" is not a duration a
   // person can feel. Past a minute, read it as minutes.
@@ -72,6 +89,9 @@ export default function Recite({
     setElapsed(0);
     setFailed(false);
     setPickingPart(false);
+    setOwnRecording(null);
+    setActiveCardId(null);
+    setRetry({ cardId: null, phase: null, fixed: [], stillWrong: null });
   }, [key]);
 
   useEffect(() => () => handleRef.current?.cancel(), []);
@@ -101,6 +121,8 @@ export default function Recite({
   async function start() {
     setResult(null);
     setFailed(false);
+    setActiveCardId(null);
+    setRetry({ cardId: null, phase: null, fixed: [], stillWrong: null });
     audioRef.current?.pause();
     try {
       handleRef.current = await startRecording();
@@ -117,6 +139,7 @@ export default function Recite({
     setPhase("waiting");
     try {
       const blob = await h.stop();
+      setOwnRecording(blob);
       setResult(
         await submitAttempt(blob, sura.number, ayah.aya, lang, {
           start_word: segment.start_word,
@@ -131,15 +154,79 @@ export default function Recite({
     }
   }
 
-  const firstError = result?.status === "ok" ? result.errors[0] : undefined;
-  const highlightUnit = firstError ? firstError.at : null;
-  // text_segments are relative to the SELECTED RANGE, which is what the engine
-  // diffed, so `at` indexes them directly.
-  const letter =
-    highlightUnit === null
-      ? ""
-      : (segment.text_segments.find((s) => s.units.includes(highlightUnit))
-          ?.text ?? "");
+  /* ── the recovery loop ──────────────────────────────────────────────────
+     Re-record ONE word and re-check only the error that card is about. The
+     range machinery is the same one the practice segments use; `word_index` is
+     ayah-relative precisely so it can be handed straight to `start_word`. */
+
+  async function retryWord(e: TajweedError) {
+    const at = e.word_index ?? -1;
+    if (at < 0) return;
+    try {
+      handleRef.current = await startRecording();
+      setRetry((r) => ({ ...r, cardId: cardId(e), phase: "recording",
+                         stillWrong: null }));
+    } catch {
+      setFailed(true);
+    }
+  }
+
+  async function stopRetryWord(e: TajweedError) {
+    const h = handleRef.current;
+    if (!h) return;
+    const id = cardId(e);
+    setRetry((r) => ({ ...r, phase: "checking" }));
+    try {
+      const blob = await h.stop();
+      const out = await submitAttempt(blob, sura.number, ayah.aya, lang, {
+        start_word: e.word_index ?? 0,
+        num_words: 1,
+      });
+      // SCOPED to this error. The re-read covers one word, so anything else it
+      // turns up belongs to a different card and must not silently close this
+      // one — or, worse, open new cards for a word the learner was drilling.
+      const stillThere =
+        out.status === "ok" &&
+        out.errors.some((x) => x.code === e.code && x.letter === e.letter);
+      // A re-read we could not judge is NOT a fix. Only a clean, analysable
+      // result closes the card; anything else leaves it exactly as it was.
+      const judged = out.status === "ok" && out.analysable;
+      setRetry((r) => ({
+        cardId: null,
+        phase: null,
+        fixed: judged && !stillThere ? [...r.fixed, id] : r.fixed,
+        stillWrong: judged && stillThere ? id : null,
+      }));
+    } catch {
+      setRetry((r) => ({ ...r, cardId: null, phase: null }));
+      setFailed(true);
+    } finally {
+      handleRef.current = null;
+    }
+  }
+
+  const errors = result?.status === "ok" ? result.errors : [];
+
+  // EVERY errored letter, not just the first — one mark per occurrence, each
+  // tagged with the card that explains it. Cards the learner has already fixed
+  // drop out, so the ayah clears as they work through it.
+  const marks: Mark[] = errors
+    .filter((e) => !retry.fixed.includes(cardId(e)))
+    .flatMap((e) =>
+      (e.occurrences ?? []).map((o) => ({
+        at: o.at,
+        cardId: cardId(e),
+        letter: e.letter,
+      })),
+    );
+
+  function scrollToCard(id: string) {
+    setActiveCardId(id);
+    cardRefs.current[id]?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }
 
   return (
     <>
@@ -163,7 +250,9 @@ export default function Recite({
       <AyahText
         uthmani={segment.uthmani}
         segments={segment.text_segments}
-        highlightUnit={highlightUnit}
+        marks={marks}
+        activeCardId={activeCardId}
+        onPick={scrollToCard}
         mode={
           phase === "recording"
             ? "listening"
@@ -319,13 +408,44 @@ export default function Recite({
       )}
 
       {result && phase === "idle" && (
-        <Feedback
-          lang={lang}
-          attempt={result}
-          letter={letter}
-          onRetry={start}
-          onReplay={() => audioRef.current?.play()}
-        />
+        // The outer net. Per-card boundaries inside Feedback catch the common
+        // case; this catches anything in the results view ITSELF — the merge
+        // logic, the playback control, an unexpected attempt shape — so a
+        // learner who has just waited minutes for inference always gets
+        // something back rather than a white page.
+        <ErrorBoundary
+          label="results"
+          resetKey={result.id}
+          fallback={
+            <div className="notice">
+              <p className="notice__body">{t(lang, "results_broken")}</p>
+              <div className="actions">
+                <button className="btn-quiet" onClick={start}>
+                  {t(lang, "retry_again")}
+                </button>
+              </div>
+            </div>
+          }
+        >
+          {/* Hearing yourself back is how a learner judges whether a flagged
+              error is real. Session-only: the blob lives in memory until the
+              next take replaces it. */}
+          <SelfPlayback lang={lang} blob={ownRecording} />
+          <Feedback
+            lang={lang}
+            attempt={result}
+            activeCardId={activeCardId}
+            retry={retry}
+            onRetryWord={retryWord}
+            onStopRetry={() => {
+              const e = errors.find((x) => cardId(x) === retry.cardId);
+              if (e) stopRetryWord(e);
+            }}
+            onFocusLetter={setActiveCardId}
+            onRetry={start}
+            cardRefs={cardRefs}
+          />
+        </ErrorBoundary>
       )}
     </>
   );

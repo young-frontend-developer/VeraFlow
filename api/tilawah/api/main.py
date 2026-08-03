@@ -9,9 +9,11 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from .. import content
 from ..config import settings
+from ..content import coaching
 from ..db import init_db
 from .routes import router
 
@@ -88,6 +90,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(router)
+
+# The isolated letter recordings a coaching card's practice section plays.
+# Mounted unconditionally: the directory is checked in (with a README) so the
+# mount cannot fail, and coaching.audio_url() gates each individual button on
+# the file actually existing. Nothing here is learner data - it ships with the
+# app - so it is served statically rather than through a route.
+app.mount("/audio", StaticFiles(directory=coaching.AUDIO_DIR), name="audio")
 
 
 @app.get("/health")

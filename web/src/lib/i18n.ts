@@ -65,11 +65,48 @@ const STRINGS = {
     retry_tip_wait: "Deraza yoki fen ovozi tinganini kuting",
     retry_again: "Qayta oʻqish",
 
+    // ── card titles. The learner-facing name of each error category.
+    // These replace the internal codes (LETTER_ADDED, GENERIC_SIFAT_MISMATCH)
+    // which must never appear on screen. Keyed by TajweedError.kind.
+    kind_extra_letter: "Ortiqcha harf",
+    kind_missing_letter: "Tushib qolgan harf",
+    kind_wrong_letter: "Notoʻgʻri harf",
+    kind_pronunciation: "Talaffuz",
+    kind_tajweed: "Tajvid",
+    kind_madd: "Mad",
+    kind_ghunna: "Gʻunna",
+    kind_haraka: "Harakat",
+
     // correction card
     label_heard: "Nimani eshitdik",
     label_fix: "Qanday tuzatish kerak",
     label_rule: "Qoida",
     label_drill: "Mashq",
+    // The six card slots, in reading order.
+    card_where: "Qayerda",
+    card_correct: "Toʻgʻrisi",
+    card_why: "Nega",
+    card_fix: "Tuzatish",
+    card_practice: "Mashq",
+    // Repeats are merged into one card; this says how many and where.
+    card_times: "marta uchradi",
+    // Practice audio is the LETTER, not the ayah.
+    listen_letter: "Harf tovushini eshitish",
+    listen_ayah: "Oyatni qori oʻqishida eshitish",
+
+    // ── the recovery loop
+    retry_word: "Qayta urinish",
+    retry_word_hint: "Faqat shu soʻzni oʻqing.",
+    retry_word_stop: "Toʻxtatish",
+    retry_checking: "Tekshirilmoqda",
+    fixed_title: "Barakalla! Toʻgʻirladingiz.",
+    // Shown when the re-read still has the same mistake. No scolding: the same
+    // card comes back unchanged and this is the whole message.
+    not_yet: "Hali ham shu joyda. Yana bir bor urinib koʻring.",
+    // Playback of the learner's own recording, so they can judge for themselves
+    // whether a flagged error is real.
+    hear_yourself: "Oʻz oʻqishingizni eshitish",
+    hear_yourself_stop: "Toʻxtatish",
     // Shown when no entry exists for a detected code: the location is all we
     // can honestly state, and stating it beats saying nothing.
     located_unknown: "Xato joyi aniqlanmadi.",
@@ -163,6 +200,19 @@ const STRINGS = {
     consent_gate_footer:
       "Fikringizni istagan vaqtda «Yozuvlar» boʻlimida oʻzgartirishingiz mumkin. Oʻchirsangiz, saqlangan hamma narsa haqiqatan oʻchiriladi.",
 
+    // The connected API is older than this build and does not send fields the
+    // cards require. Developer-facing on purpose: a learner never sees this
+    // unless a deploy went wrong, and vagueness here costs hours.
+    api_stale_title: "Server eskirgan",
+    api_stale_body:
+      "Ulangan API bu versiya talab qiladigan maydonlarni yubormayapti. Serverni qayta ishga tushiring. Yetishmayotgan maydonlar:",
+
+    // Rendering failed for one card / for the results view. Not a tajweed
+    // statement and not an assessment - it says the app broke, not the
+    // recitation. Deliberately plain: a learner cannot act on a stack trace.
+    card_broken: "Bu izohni koʻrsatib boʻlmadi.",
+    results_broken: "Natijalarni koʻrsatishda xatolik yuz berdi. Oʻqishingiz saqlandi.",
+
     // generic
     error_generic: "Xatolik yuz berdi. Qayta urinib koʻring.",
     loading: "Yuklanmoqda",
@@ -216,10 +266,36 @@ const STRINGS = {
     retry_tip_wait: "Дождитесь, пока стихнет шум за окном",
     retry_again: "Прочитать снова",
 
+    kind_extra_letter: "Лишняя буква",
+    kind_missing_letter: "Пропущенная буква",
+    kind_wrong_letter: "Неверная буква",
+    kind_pronunciation: "Произношение",
+    kind_tajweed: "Таджвид",
+    kind_madd: "Мадд",
+    kind_ghunna: "Гунна",
+    kind_haraka: "Огласовка",
+
     label_heard: "Что мы услышали",
     label_fix: "Как исправить",
     label_rule: "Правило",
     label_drill: "Упражнение",
+    card_where: "Где",
+    card_correct: "Правильно",
+    card_why: "Почему",
+    card_fix: "Исправление",
+    card_practice: "Упражнение",
+    card_times: "раза встретилось",
+    listen_letter: "Послушать звук буквы",
+    listen_ayah: "Послушать аят у чтеца",
+
+    retry_word: "Попробовать снова",
+    retry_word_hint: "Прочитайте только это слово.",
+    retry_word_stop: "Остановить",
+    retry_checking: "Проверяем",
+    fixed_title: "Прекрасно! Вы исправили.",
+    not_yet: "Пока то же место. Попробуйте ещё раз.",
+    hear_yourself: "Послушать своё чтение",
+    hear_yourself_stop: "Остановить",
     located_unknown: "Место ошибки не определено.",
     teacher_note: "Мы не вполне уверены — проверьте с вашим устозом.",
     wrong_button: "Оценка неверна",
@@ -298,6 +374,13 @@ const STRINGS = {
     consent_gate_skip: "Продолжить, ничего не сохраняя",
     consent_gate_footer:
       "Решение можно изменить в разделе «Записи» в любой момент. При отзыве всё сохранённое действительно удаляется.",
+
+    api_stale_title: "Сервер устарел",
+    api_stale_body:
+      "Подключённый API не отправляет поля, которые нужны карточкам. Перезапустите сервер. Отсутствующие поля:",
+
+    card_broken: "Не удалось показать это замечание.",
+    results_broken: "Не удалось показать результаты. Ваше чтение сохранено.",
 
     error_generic: "Произошла ошибка. Попробуйте ещё раз.",
     loading: "Загрузка",

@@ -183,7 +183,22 @@
       "Bash(curl -s -o /dev/null -w \"api8000:%{http_code}\\\\n\" --max-time 5 http://localhost:8000/api/meta)",
       "Bash(PYTHONIOENCODING=utf-8 py -3.13 -m pytest tests/test_engine.py -q -m \"not slow\")",
       "Bash(PYTHONIOENCODING=utf-8 py -3.13 -m pytest tests/test_coaching.py -q)",
-      "Bash(node verify6.mjs)"
+      "Bash(node verify6.mjs)",
+      "Read(//c/Users/Rahmatulloh/Desktop//**)",
+      "Read(//c/Users/Rahmatulloh/Downloads/**)",
+      "Bash(py *)",
+      "Bash(mv api/api/tilawah/content/audio/README.md /tmp/audio_readme.md)",
+      "Bash(rm -rf api/api)",
+      "Bash(mkdir -p api/tilawah/content/audio)",
+      "Bash(mv /tmp/audio_readme.md api/tilawah/content/audio/README.md)",
+      "Bash(awk '{printf \"%d\\\\t%s\\\\n\", $1+239, substr\\($0, index\\($0,$2\\)\\)}')",
+      "Bash(curl -s \"http://localhost:8000/api/meta\")",
+      "Bash(curl -s \"http://localhost:8071/api/meta\")",
+      "Bash(node e2e-recite.mjs)",
+      "Bash(PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright)",
+      "Bash(curl -s -i -H \"Origin: http://localhost:5199\" http://localhost:8071/api/meta)",
+      "Bash(powershell -Command \"Stop-Process -Id 8412 -Force\")",
+      "Bash(curl -s --max-time 5 http://localhost:8000/api/meta)"
     ]
   }
 }

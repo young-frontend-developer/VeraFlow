@@ -36,3 +36,6 @@ spike/.cache_mp3/
 spike/results.json
 spike/scored.csv
 spike/typed.csv
+
+# Playwright screenshots from web/e2e-recite.mjs — artifacts, not source.
+web/e2e-shots/

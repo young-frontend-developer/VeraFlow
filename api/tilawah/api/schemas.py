@@ -212,4 +212,19 @@ class MetaOut(BaseModel):
     # is surfaced rather than logged once at boot so the gap cannot quietly
     # become permanent.
     missing_registries: list[str] = []
+    # Registry entries naming an isolated letter recording that is not on disk.
+    # Every one of these is a practice button the client is hiding. Surfaced for
+    # the same reason as missing_registries: the alternative to a dead control
+    # is a missing one, and a missing one has to stay countable.
+    missing_audio: list[str] = []
+    # Every field this server puts on an error object. The client compares it
+    # against what its card component dereferences and says so plainly when
+    # they disagree.
+    #
+    # This exists because a stale API process is invisible from the browser: a
+    # server started before a field was added keeps answering happily, the
+    # client throws on every card, and the only symptom is a broken results
+    # screen with no cause attached. Declaring the shape turns that into a
+    # named, actionable message.
+    error_fields: list[str] = []
     version: str = "0.1.0"

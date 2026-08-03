@@ -35,6 +35,18 @@
   --rule: rgba(21, 36, 29, 0.13);
   --rule-soft: rgba(21, 36, 29, 0.07);
 
+  /* The one red in the app, and it is used in exactly one place: the letter
+   * that was misread, in the ayah. Not a strike-through, not a fill behind the
+   * text — the glyph itself, recoloured, so the eye lands on the letter and
+   * not on a marker over it. Deliberately a deep madder rather than a warning
+   * red: it has to read as "this one" in a room lit by brass, not as an alert.
+   *
+   * This is a deliberate softening of the original "no red anywhere" rule, on
+   * the grounds that a learner has to be able to FIND the letter before any of
+   * the tone work matters. */
+  --wrong: #a8331f;
+  --wrong-lift: #c4472f;
+
   --serif: "Literata", Georgia, serif;
   --sans: "Golos Text", system-ui, -apple-system, sans-serif;
   --arabic: "Amiri Quran", "Traditional Arabic", serif;
@@ -184,33 +196,84 @@ button {
   z-index: 1;
 }
 
-/* The correction. A lamp set under one letter-group — never a strike-through,
- * never red. Positioned from a measured DOM Range so the Arabic itself is
- * never split into separate elements, which would break cursive joining. */
-.ayah__lamp {
+/* THE ERRORED LETTER, IN RED, ON THE GLYPH.
+ *
+ * A second copy of the whole ayah, painted over the first in red and clipped
+ * to the rectangle one letter-group occupies. Identical text at an identical
+ * position, so the cursive joining forms are the original's — the ayah is
+ * never split into elements, which is what would break them.
+ *
+ * There is no background fill. The letter changes colour; nothing is drawn
+ * behind or through it. One of these exists per occurrence, so every errored
+ * letter is marked, not just the first. */
+/* Position and width come from the measured text box, inline — `inset: 0`
+   would anchor this to the container's padding box instead, which put the copy
+   2.4rem above the real text and painted a second, offset ayah over the page. */
+.ayah__mark {
   position: absolute;
-  z-index: 0;
-  border-radius: 0.4rem;
-  background: linear-gradient(
-    to top,
-    var(--brass-wash) 0%,
-    var(--brass-wash) 42%,
-    transparent 100%
-  );
-  box-shadow: inset 0 -2px 0 -1px var(--brass);
-  animation: lamp-settle 0.9s var(--ease) both;
+  z-index: 2;
   pointer-events: none;
+  color: var(--wrong);
+  opacity: 0.82;
+  animation: mark-settle 0.7s var(--ease) both;
 }
 
-@keyframes lamp-settle {
+.ayah__mark .ayah__text {
+  color: inherit;
+}
+
+/* The card being read. Its letters come forward; the rest stay quiet, so a
+ * learner working through six corrections can always see which one is theirs. */
+.ayah__mark--active {
+  opacity: 1;
+  color: var(--wrong-lift);
+}
+
+/* Tap target over a red letter. Padded well past the glyph — a clipped shape
+ * is a poor thing to aim a finger at. Invisible by design: the red letter is
+ * the affordance, this is only the hit area. */
+.ayah__hit {
+  position: absolute;
+  z-index: 3;
+  padding: 0;
+  border: 0;
+  border-radius: 0.35rem;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ayah__hit:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+
+@keyframes mark-settle {
   from {
     opacity: 0;
-    transform: translateY(6px);
   }
   to {
-    opacity: 1;
-    transform: none;
+    opacity: 0.82;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ayah__mark {
+    animation: none;
+  }
+}
+
+/* Visually hidden, still read aloud. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* Dawn light crossing the page, right to left, the way the line is read.
@@ -609,6 +672,162 @@ button {
   font-family: var(--arabic);
   margin-inline-start: 0.5rem;
   color: var(--brass);
+}
+
+/* ── card slots: where / correct / retry ────────────────────────────────── */
+
+/* SLOT 2 — where it happened. On a merged card this carries the count and
+   every word the letter appeared in, which is what replaces five identical
+   cards saying the same thing five times. */
+.card__where {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.4rem;
+  margin: 0 0 0.6rem;
+}
+
+.card__count {
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+}
+
+/* SLOT 3 — the letter it should have been. A quiet green chip, deliberately
+   unlike the red in the ayah: this is the target, not the mistake. */
+.card__correct {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 0 0.75rem;
+}
+
+.card__correct-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.card__letter--good {
+  margin-inline-start: 0;
+  font-size: 1.6rem;
+  line-height: 1.4;
+  color: var(--green);
+}
+
+/* The card the learner is reading, tied to the strengthened letters above. */
+.card--active {
+  border-color: var(--brass);
+}
+
+/* ── the recovery loop ──────────────────────────────────────────────────── */
+
+.card__retry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1.1rem;
+}
+
+.card__retry-btn {
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.7rem;
+  font-size: 0.87rem;
+  color: var(--green);
+  background: var(--paper-lift);
+}
+
+.card__retry-btn:disabled {
+  opacity: 0.45;
+}
+
+/* Recording just this word. Breathes, like the main record button, so the
+   state is unmistakable without a second timer on the card. */
+.card__retry-btn--live {
+  border-color: var(--brass);
+  color: var(--brass);
+  animation: retry-breathe 1.9s var(--ease) infinite;
+}
+
+@keyframes retry-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(161, 120, 54, 0.22);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(161, 120, 54, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card__retry-btn--live {
+    animation: none;
+  }
+}
+
+.card__retry-hint {
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+}
+
+/* The end of the loop. Warm, brief, and then it stops taking up space —
+   a corrected mistake should not keep occupying the screen. */
+.card--fixed {
+  border-color: rgba(161, 120, 54, 0.4);
+  background: linear-gradient(
+    to bottom,
+    rgba(161, 120, 54, 0.07),
+    transparent 70%
+  );
+  animation: fixed-settle 0.5s var(--ease) both;
+}
+
+.card__fixed-title {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 1rem;
+  color: var(--green);
+}
+
+@keyframes fixed-settle {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* A card whose rendering threw. Quiet and out of the way: it is our failure,
+   not the learner's, and it must not look like a finding about their
+   recitation. */
+.card--broken {
+  border-style: dashed;
+  border-color: var(--rule);
+  color: var(--ink-faint);
+}
+
+/* ── hearing yourself back ──────────────────────────────────────────────── */
+
+.selfplay {
+  margin: 0 0 1.1rem;
+}
+
+.selfplay__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.95rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.7rem;
+  font-size: 0.87rem;
+  color: var(--green);
+  background: var(--paper-lift);
 }
 
 .card__replay {

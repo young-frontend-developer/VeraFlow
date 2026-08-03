@@ -3,19 +3,39 @@
 
 WHERE IT COMES FROM
 -------------------
-Two hand-authored registries at the repo root, merged in order:
+Three hand-authored registries at the repo root, merged in order:
 
+    tajweed_error_registry_v3.json      39 entries - the makharij, madd, ghunna
+                                        and ṣifāt corrections. Authored in an
+                                        EARLIER SHAPE (name/short/nima_xato/
+                                        qoida/nega_muhim/tuzatish/mashq), which
+                                        _adapt_v3 maps onto the four fields
+                                        below. No sentence is rewritten; the
+                                        keys are renamed and two pairs joined.
     tajweed_registry_v4_coaching.json   rewrites the uz/ru text of EXISTING
                                         entries (structure, source_ref,
                                         detection signals and status unchanged)
     tajweed_registry_v5_gaps.json       22 NEW entries, including the generic
                                         fallbacks and the harakat category
 
-⚠️ v4 IS NOT IN THE REPO. Only v5 is present. Everything here is written to
-merge v4 the moment it lands - it is loaded if the file exists and skipped
-silently if it does not - but until then, codes that only v4 covers keep their
-old rules.json text and render through the legacy path below. See
-`missing_sources()`, which the API surfaces so this cannot be forgotten.
+v3 WAS NEVER LOADED. This module read v4 and v5 only, and v4 does not exist, so
+39 authored entries - every specific makharij and ṣifa correction in the
+project - sat on disk unreachable while the pipeline showed generic fallbacks in
+their place. That is half the reason "almost everything falls through to
+generic"; the other half is ALIAS below.
+
+⚠️ v4 IS STILL NOT IN THE REPO. It is loaded if the file exists and skipped if
+it does not. Because v3 now supplies the base text, its absence no longer leaves
+those codes unauthored - it only means they render v3's wording rather than v4's
+rewrite. See `missing_sources()`, which the API surfaces so this stays visible.
+
+ENGINE CODES vs REGISTRY CODES
+------------------------------
+The two vocabularies were never the same. The engine emits MADD_SHORT; the
+registry entry is MADD_TOO_SHORT. Nothing translated between them, so the lookup
+missed and the learner got a fallback card. ALIAS is that translation, stated
+once, in one direction, and covered by a test that fails on any engine code with
+neither an entry nor an alias.
 
 TEMPLATES
 ---------
@@ -37,6 +57,7 @@ from functools import lru_cache
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[3]
+V3 = _ROOT / "tajweed_error_registry_v3.json"
 V4 = _ROOT / "tajweed_registry_v4_coaching.json"
 V5 = _ROOT / "tajweed_registry_v5_gaps.json"
 
@@ -50,38 +71,150 @@ class UnfilledTemplate(RuntimeError):
     """A coaching string still had a placeholder after substitution."""
 
 
-def _load(path: Path) -> dict:
+# ── engine code -> registry code ──────────────────────────────────────────
+# The engine names an error for what the DETECTOR measured (a run came out
+# short); the registry names it for what the TEACHER corrects (the madd was
+# shortened). Both vocabularies are legitimate and neither is going away, so
+# they are joined here rather than by renaming one side and breaking either the
+# detector's tests or the authored content's identity.
+#
+# Only genuine synonyms belong here. If an engine code has no registry entry,
+# the answer is to AUTHOR one - not to point it at the nearest-looking entry,
+# which hands the learner a correction for an error they did not make.
+# test_code_mapping.py fails on anything unmapped, by design.
+ALIAS = {
+    # duration - _duration_code() in typed_errors.py
+    "MADD_SHORT":     "MADD_TOO_SHORT",
+    "MADD_LONG":      "MADD_TOO_LONG",
+    "GHUNNA_SHORT":   "GHUNNA_TOO_SHORT",
+    # qalqalah - _missing() emits the mark, the registry names the rule
+    "QALQALA_DROP":   "QALQALAH_MISSING",
+    # L1 interference pairs - L1_PAIRS in typed_errors.py. Each is the same
+    # confusion the makharij entry is written about, named for the language
+    # prior that predicts it.
+    "SUB_AYN_HAMZA":  "MAKHARIJ_AIN_TO_HAMZA",     # ع -> ء
+    "SUB_HA_KHA":     "MAKHARIJ_HHA_TO_KHA",       # ح -> خ
+    "SUB_SAD_SEEN":   "MAKHARIJ_SAD_TO_SEEN",      # ص -> س
+    "SUB_TA_PLAIN":   "MAKHARIJ_TAA_TO_TA",        # ط -> ت
+    "SUB_DAD_DAL":    "MAKHARIJ_DAD_TO_DAL",       # ض -> د
+    "SUB_DHA_ZAY":    "MAKHARIJ_INTERDENTAL_TO_ZAY",   # ظ -> ز, named in-signal
+    "SUB_DHAL_ZAY":   "MAKHARIJ_INTERDENTAL_TO_ZAY",   # ذ -> ز, same entry
+    "SUB_QAF_KAF":    "MAKHARIJ_QAF_TO_KAF",       # ق -> ك
+    "SUB_THA_SEEN":   "MAKHARIJ_THA_TO_SEEN",      # ث -> س
+    "SUB_WAW_V":      "MAKHARIJ_WAW_TO_FA",        # و -> ف
+}
+
+
+def resolve(code: str) -> str:
+    """Engine code -> the code the registry files are keyed by."""
+    return ALIAS.get(code, code)
+
+
+# ── v3's field names -> the four this module renders ──────────────────────
+# v3 was authored before the headline/fix/rule/drill shape existed. Its uz and
+# ru blocks carry the same material under different keys, so the adapter is a
+# rename plus two joins - it writes nothing.
+_V3_KEYS = {
+    "uz": {"short": "short", "what": "nima_xato", "rule": "qoida",
+           "why": "nega_muhim", "fix": "tuzatish", "drill": "mashq"},
+    "ru": {"short": "short", "what": "chto_ne_tak", "rule": "pravilo",
+           "why": "pochemu_vazhno", "fix": "kak_ispravit",
+           "drill": "uprazhnenie"},
+}
+
+
+def _join(*parts: str) -> str:
+    return "\n\n".join(p.strip() for p in parts if p and p.strip())
+
+
+def _adapt_v3(spec: dict) -> dict:
+    """One v3 entry in the four-field shape. Selection only - no text is written.
+
+    THE CARD HAS A WORD BUDGET, so the mapping is a selection and not a
+    concatenation of everything available:
+
+        headline <- short      one sentence: what happened
+        fix      <- tuzatish   ONE actionable instruction
+        rule     <- qoida + nega_muhim    the ruling, then why it matters
+        drill    <- mashq      the exercise
+
+    `nima_xato` ("what went wrong") is deliberately NOT carried. It is a longer
+    restatement of `short`, which already occupies the what-happened slot, and
+    joining the two put two versions of the same sentence at the top of every
+    card. Nothing is lost that the learner needs; the reviewer still sees the
+    full entry in the review tool, which reads the registry directly.
+
+    Only `rule` joins two fields, and it is collapsed behind a tap - the ruling
+    and its reason are exactly the part worth having and not worth re-reading.
+    """
+    out = {k: v for k, v in spec.items() if k not in ("uz", "ru")}
+    for lang, keys in _V3_KEYS.items():
+        block = spec.get(lang)
+        if not block:
+            continue
+        out[lang] = {
+            "headline": block.get(keys["short"], ""),
+            "fix": block.get(keys["fix"], ""),
+            "rule": _join(block.get(keys["rule"], ""), block.get(keys["why"], "")),
+            "drill": block.get(keys["drill"], ""),
+            "name": block.get("name", ""),
+        }
+    return out
+
+
+def _load(path: Path, *, adapt=None) -> dict:
     if not path.exists():
         return {}
     data = json.loads(path.read_text(encoding="utf-8-sig"))
-    # v5 calls the map `entries`; allow `errors` too so a differently-shaped v4
-    # does not need a second loader.
-    return data.get("entries") or data.get("errors") or {}
+    # v5 calls the map `entries`; v3 calls it `errors`. One loader serves both,
+    # and a differently-shaped v4 needs no third.
+    entries = data.get("entries") or data.get("errors") or {}
+    # An entry the registry itself marks NEEDS_AUTHORING is a placeholder: the
+    # code exists, the words do not. MADD_ADDED_LEEN carries empty uz and ru
+    # blocks, so loading it would render four empty strings - a card that looks
+    # authored and says nothing, which is worse than the honest "no content"
+    # path. Decision 4: the split created the code, a qori must create the
+    # words. Dropping it here is what keeps render() returning None.
+    entries = {code: spec for code, spec in entries.items()
+               if spec.get("content_status") != "NEEDS_AUTHORING"}
+    if adapt:
+        return {code: adapt(spec) for code, spec in entries.items()}
+    return entries
 
 
 @lru_cache(maxsize=1)
 def registry() -> dict:
-    """code -> entry, v5 layered over v4.
+    """code -> entry, v5 over v4 over v3.
 
-    v5 wins on a collision: it is the newer authoring pass, and its whole
-    purpose is to add what v4 lacked.
+    Later generations win on a collision: each was authored to improve on the
+    one before it. v3 supplies breadth (39 specific corrections), v4 rewrites
+    their wording, v5 adds the categories all of them missed.
     """
-    merged = dict(_load(V4))
+    merged = _load(V3, adapt=_adapt_v3)
+    merged.update(_load(V4))
     merged.update(_load(V5))
     return merged
 
 
 def missing_sources() -> list[str]:
     """Registry files this module expects but cannot find."""
-    return [p.name for p in (V4, V5) if not p.exists()]
+    return [p.name for p in (V3, V4, V5) if not p.exists()]
 
 
 def has(code: str) -> bool:
-    return code in registry()
+    return resolve(code) in registry()
 
 
 def entry(code: str) -> dict | None:
-    return registry().get(code)
+    return registry().get(resolve(code))
+
+
+# One Arabic letter either side of -> (one direction) or <-> (both). Anchored
+# on the letters themselves rather than on \S+, which is what previously
+# swallowed the trailing comma in "ص -> س, odatda ..." and produced a two-
+# character "letter" that no lookup could ever match.
+_ARABIC = r"[ء-ي]"
+_PAIR = re.compile(rf"({_ARABIC})\s*(<->|->)\s*({_ARABIC})")
 
 
 @lru_cache(maxsize=1)
@@ -95,17 +228,80 @@ def substitution_pairs() -> dict[tuple[str, str], str]:
 
         "phoneme substitution: ع -> غ"
 
-    so that is what is trusted. Anything that does not match this exact shape
-    is left out and falls through to GENERIC_LETTER_SUBSTITUTED, which is the
-    entire point of having a generic.
+    so that is what is trusted.
+
+    THREE SHAPES THE OLD PARSER MISSED, each of which silently cost every entry
+    written in it:
+
+      "ص -> س, odatda tafkheem_or_taqeeq: ..."   trailing punctuation
+      "ب <-> م"                                  bidirectional, no plain ->
+      "ذ -> ز yoki ظ -> ز"                       two pairs in one signal
+
+    Between them that is most of the makharij registry - MAKHARIJ_BA_TO_MEEM,
+    _JEEM_TO_YA, _LAM_TO_RAA, _NUN_TO_LAM, _SEEN_TO_SHEEN, _TA_TO_DAL,
+    _ZAY_TO_SEEN and _WAW_TO_FA registered no pair at all, so every one of those
+    confusions was reported as GENERIC_LETTER_SUBSTITUTED with an entry sitting
+    right there. All matches in a signal are taken now, and <-> registers both
+    directions.
+
+    An entry whose signal contains no letter pair is still left out and still
+    falls through to GENERIC_LETTER_SUBSTITUTED - that is the point of having a
+    generic. First writer wins, so a later generation cannot quietly steal a
+    pair an earlier, more specific entry already claimed.
     """
-    pat = re.compile(r"phoneme substitution:\s*(\S+)\s*->\s*(\S+)")
     out: dict[tuple[str, str], str] = {}
     for code, spec in registry().items():
-        m = pat.search(str(spec.get("detection_signal", "")))
-        if m and len(m.group(1)) == 1 and len(m.group(2)) == 1:
-            out[(m.group(1), m.group(2))] = code
+        signal = str(spec.get("detection_signal", ""))
+        if "substitution" not in signal:
+            continue
+        for src, arrow, dst in _PAIR.findall(signal):
+            out.setdefault((src, dst), code)
+            if arrow == "<->":
+                out.setdefault((dst, src), code)
     return out
+
+
+# Where the isolated letter recordings live. Served at /audio by the app, so a
+# registry value of "audio/sad_zay.mp3" becomes the URL "/audio/sad_zay.mp3".
+AUDIO_DIR = Path(__file__).parent / "audio"
+
+
+def audio_url(rel: str) -> str:
+    """A playable URL for a registry `audio_pair`, or "" if there is no file.
+
+    THE EXISTENCE CHECK IS THE POINT. 13 entries name a recording; none of the
+    files exist yet. Sending the path regardless would put a play button on
+    every one of those cards that fails silently when tapped - a dead control,
+    which is worse than no control because it teaches the learner that the app
+    lies. So presence on disk, not presence in the registry, decides.
+
+    Files land in content/audio/ and light their buttons up with no code change.
+    """
+    if not rel:
+        return ""
+    name = rel.split("/")[-1]
+    # Registry values are authored, but they end up in a filesystem path and
+    # then in a URL, so a stray "../" must not be able to reach outside the
+    # audio directory or point the client somewhere else.
+    if not name or name != Path(name).name:
+        return ""
+    if not (AUDIO_DIR / name).is_file():
+        return ""
+    return f"/audio/{name}"
+
+
+def missing_audio() -> list[str]:
+    """Registry entries naming a recording that is not on disk.
+
+    Surfaced rather than logged once, for the same reason as missing_sources():
+    a gap nobody can see becomes permanent.
+    """
+    out = []
+    for code, spec in registry().items():
+        rel = spec.get("audio_pair", "")
+        if rel and not audio_url(rel):
+            out.append(f"{code}: {rel}")
+    return sorted(out)
 
 
 def _fill(text: str, fields: dict, *, code: str, key: str) -> str:
@@ -159,6 +355,16 @@ def render(code: str, lang: str, fields: dict) -> dict | None:
            for key in FIELDS}
     out["severity"] = spec.get("severity", "medium")
     out["group"] = spec.get("group", "")
+    # v3 entries carry a short title; v4/v5 fold it into the headline. Passed
+    # through as a label so the UI has one, and empty rather than invented when
+    # the entry has none.
+    out["label"] = block.get("name", "")
+    # The isolated letter-pair recording for this confusion, e.g.
+    # "audio/sad_zay.mp3" - the sound of «ص» against «ز», which is what a
+    # learner needs to hear. Sent ONLY when the file is actually on disk, so
+    # the client can render the control on presence alone and never offers a
+    # button that plays nothing. See audio_url().
+    out["audio_pair"] = audio_url(spec.get("audio_pair", ""))
     # Every entry in both registries is status='draft' by design - the same
     # review gate applies, and nothing here has been signed off by a qori.
     out["reviewed"] = spec.get("status", "draft") == "reviewed"

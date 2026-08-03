@@ -20,11 +20,12 @@ from .. import content
 from ..config import settings
 from ..content import coaching
 from .audio import DecodeInfo, check_quality, decode
+from . import cards
 from .collapse import looks_collapsed
 from .debug_capture import capture
 from .model import transcribe
 from .ranges import Range, is_legal_range, n_words, reference
-from .segments import segments_for_range, unit_words
+from .segments import segments_for_range, unit_word_indices, unit_words
 from .target import Target
 from .tolerances import apply as apply_tolerances
 from .typed_errors import TypedError, typed_diff
@@ -81,7 +82,14 @@ def _is_allocation_failure(exc: BaseException) -> bool:
 
 
 def _sifat_errors(phonetized, pred) -> list[TypedError]:
-    """Ṣifa disagreements, as GENERIC_SIFAT_MISMATCH.
+    """Ṣifa disagreements, routed to the entry written about each one.
+
+    The model reports WHICH ṣifa disagreed and in which direction. This used to
+    discard both and stamp everything GENERIC_SIFAT_MISMATCH, so a learner whose
+    ط came out thin was shown "the ṣifa did not come out right" while
+    TAFKHEEM_LOST - with the ruling, the correction and the drill - sat unread
+    in the registry. sifat_codes.code_for is that routing, and the generic now
+    fires only for ṣifāt nobody has authored an entry for.
 
     ⚠️ THE FALSE-POSITIVE FLOOR FOR THIS IS UNMEASURED. sifa_compare.py was
     written to quantify it - how often the predicted ṣifa disagrees with the
@@ -97,6 +105,7 @@ def _sifat_errors(phonetized, pred) -> list[TypedError]:
     the headline, on the wrong letter exactly where the text is unusual.
     """
     from .sifa_compare import compare, reference_groups
+    from .sifat_codes import code_for
 
     ref = reference_groups(phonetized.sifat)
     got = pred.sifat or []
@@ -105,9 +114,15 @@ def _sifat_errors(phonetized, pred) -> list[TypedError]:
     to_unit = _group_to_unit(phonetized.phonemes, ref)
     out = []
     for d in compare(ref, got):
-        out.append(TypedError(code="GENERIC_SIFAT_MISMATCH",
-                              at=to_unit.get(d.at, d.at), letter=d.letter,
-                              expected=d.expected, heard=d.heard))
+        code = code_for(d.field, d.letter, d.expected, d.heard)
+        if code is None:
+            # Not an error - a difference in degree between two values that are
+            # both correct enough that no entry exists to correct it. Dropped
+            # here rather than shown as a generic.
+            continue
+        out.append(TypedError(code=code, at=to_unit.get(d.at, d.at),
+                              letter=d.letter, expected=d.expected,
+                              heard=d.heard, sifa=d.field))
     return out
 
 
@@ -145,8 +160,14 @@ def _unauthored_body(code: str) -> dict:
 
     It deliberately does NOT invent a rule, a correction or a reason - decision
     4 forbids exactly that, and showing drafts by default is not an exemption.
-    It carries the raw code so it is clear WHICH check fired, and empty strings
-    everywhere a sentence about tajweed would otherwise go.
+    Empty strings everywhere a sentence about tajweed would otherwise go.
+
+    IT NO LONGER CARRIES THE CODE AS A LABEL. `label` is printed as the card's
+    kicker, so putting GHUNNA_LONG there showed a learner an internal
+    identifier - the thing Part B forbids outright. The card is not left
+    anonymous: `kind` still gives it a real title, and `word`/`letter` still
+    locate it. The code travels on the record for logging and for the draft
+    marker's audit trail, where no learner reads it.
 
     Reaching this is now rare and getting rarer: GENERIC_LETTER_SUBSTITUTED
     catches every unlisted letter confusion and GENERIC_SIFAT_MISMATCH every
@@ -155,7 +176,8 @@ def _unauthored_body(code: str) -> dict:
     those travel on the error itself, not in this body - which is the whole
     requirement: located, always, even when we have nothing to say about it.
     """
-    return {"headline": "", "fix": "", "rule": "", "drill": "", "label": code,
+    return {"headline": "", "fix": "", "rule": "", "drill": "", "label": "",
+            "audio_pair": "", "group": "",
             "severity": content.rules().get(code, {}).get("severity", "medium"),
             "reviewed": False, "unauthored": True}
 
@@ -176,7 +198,12 @@ def present(raw: list[TypedError], lang: str) -> tuple[list[dict], list[dict]]:
     the trust failure this project is arranged to avoid.
     """
     shown, silent = [], []
-    for e in sorted(raw, key=_rank):
+    # Rank FIRST, then merge. Merging preserves the order buckets first appear
+    # in, so ranking here puts the most serious card first and the merge keeps
+    # it there; merging first would rank buckets by whichever member happened
+    # to land in front.
+    for group in cards.merge(sorted(raw, key=_rank)):
+        e = group[0]
         status = content.status_of(e.code)
         try:
             body = content.render(e.code, lang, e.dict())
@@ -200,8 +227,20 @@ def present(raw: list[TypedError], lang: str) -> tuple[list[dict], list[dict]]:
         if coaching.has(e.code):
             status = "draft"
         reviewed = status != "collect" and bool(body) and body.get("reviewed", False)
-        record = {**e.dict(), "status": status, "content": body,
-                  "draft": False, "needs_teacher": status == "teacher"}
+        record = {
+            **e.dict(), "status": status, "content": body,
+            "draft": False, "needs_teacher": status == "teacher",
+            # The learner-facing category. The client renders THIS, never
+            # `code` - see cards.py. `group` comes from the registry entry so a
+            # code filed under makharij reads as "wrong letter" without the
+            # engine needing a row for every entry.
+            "kind": cards.kind_of(e.code, (body or {}).get("group", "")),
+            # Every occurrence of this (code, letter), so the ayah can mark all
+            # of them red while the learner reads a single card.
+            "occurrences": cards.occurrences(group),
+            "count": len(group),
+            "words": cards.distinct_words(group),
+        }
 
         if reviewed:
             shown.append(record)
@@ -333,10 +372,18 @@ def analyze(audio: bytes, sura: int, aya: int, lang: str = "uz", *,
     # with it and `content.render` refuses to emit an unfilled {word}, so this
     # has to happen here - the pipeline is the only layer holding both the
     # error's unit index and the Uthmani text it indexes into.
-    words = unit_words(uthmani, segments_for_range(
-        sura, aya, rng.start_word, rng.num_words))
+    segs = segments_for_range(sura, aya, rng.start_word, rng.num_words)
+    words = unit_words(uthmani, segs)
+    # Ayah-relative, so "re-record just this word" can be handed straight to the
+    # practice range API. unit_word_indices counts within the text it is given,
+    # which here is the SELECTED RANGE - so the range's own offset has to be
+    # added back or every re-record inside a partial selection would target the
+    # wrong word.
+    windex = unit_word_indices(uthmani, segs)
     for e in detected:
         e.word = words.get(e.at, "")
+        w = windex.get(e.at)
+        e.word_index = -1 if w is None else w + rng.start_word
 
     # Two correct takes of the same ayah by the same reciter do not produce the
     # same phoneme string - a madd held 4 counts in one reads as 5 in the other -

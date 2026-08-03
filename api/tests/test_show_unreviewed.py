@@ -19,6 +19,7 @@ import pytest
 
 from tilawah import content
 from tilawah.config import Settings, settings
+from tilawah.content import coaching
 from tilawah.engine import pipeline
 from tilawah.engine.typed_errors import TypedError
 
@@ -38,11 +39,48 @@ def env(monkeypatch):
     return _set
 
 
-def sample() -> list[TypedError]:
-    """One reviewed code, one unreviewed, one with no content at all.
+@pytest.fixture
+def reviewed(monkeypatch):
+    """Mark ONE registry entry status='reviewed', for the duration of a test.
 
-    SUB_AYN_HAMZA is ship+reviewed (via the dev override), GHUNNA_SHORT is
-    status=collect, and GHUNNA_LONG has no rules.json entry whatsoever.
+    Nothing in this project is genuinely reviewed - every entry in every
+    registry is status='draft' by design, and the only two codes rules.json
+    calls reviewed carry a DEV-OVERRIDE that test_no_dev_overrides_remain fails
+    on. So the "reviewed content behaves differently" property has no real data
+    to exercise it, and asserting it against the dev override tested an
+    accident of the fixtures rather than the gate.
+
+    Patching one entry tests the MECHANISM, which is the thing that has to keep
+    working when a qori does start signing text off.
+    """
+    reg = coaching.registry()
+    monkeypatch.setitem(reg, "MAKHARIJ_AIN_TO_HAMZA",
+                        dict(reg["MAKHARIJ_AIN_TO_HAMZA"], status="reviewed"))
+
+
+@pytest.fixture
+def reviewed_all(monkeypatch):
+    """The same, for every entry — used where a test needs SEVERAL distinct
+    codes to survive the production gate at once."""
+    reg = coaching.registry()
+    for code, spec in list(reg.items()):
+        monkeypatch.setitem(reg, code, dict(spec, status="reviewed"))
+
+
+def sample() -> list[TypedError]:
+    """Three codes, none of them reviewed.
+
+    SUB_AYN_HAMZA aliases to MAKHARIJ_AIN_TO_HAMZA (v3, status=draft),
+    GHUNNA_SHORT to GHUNNA_TOO_SHORT (v3, status=draft), and GHUNNA_LONG has no
+    entry in any registry.
+
+    SUB_AYN_HAMZA USED TO BE THE REVIEWED ONE, on the strength of rules.json's
+    DEV-OVERRIDE. It is not any more, and that is a fix rather than a
+    regression: the words a learner now sees for this code come from v3, which
+    no qori has read. Production showing them because a stale override sat on
+    the OLDER rules.json wording is precisely the hole the gate exists to close.
+    The override is still reported by content.dev_overrides() and still fails
+    test_no_dev_overrides_remain, so nothing about it has gone quiet.
     """
     return [
         TypedError(code="SUB_AYN_HAMZA", at=0, letter="ع",
@@ -76,7 +114,7 @@ def test_dev_is_the_default():
     assert Settings().show_unreviewed is True
 
 
-def test_dev_marks_only_the_unreviewed(env):
+def test_dev_marks_only_the_unreviewed(env, reviewed):
     """A reviewed correction must NOT be labelled draft, or the marker means
     nothing and gets ignored."""
     env("dev")
@@ -87,24 +125,58 @@ def test_dev_marks_only_the_unreviewed(env):
     assert by_code["GHUNNA_LONG"]["draft"] is True
 
 
-def test_unauthored_code_gets_a_body_without_invented_rulings(env):
-    """GHUNNA_LONG has no entry in rules.json or either coaching registry. It
-    still has to render, so it gets a stand-in — but decision 4 holds even
-    here: the stand-in states the CODE and nothing else. No headline, no rule,
-    no correction, no drill.
+def test_dev_marks_everything_draft_as_things_actually_stand(env):
+    """Without the fixture above, nothing is reviewed - so everything is draft.
 
-    The learner is not left with nothing: `word` and `letter` travel on the
-    error itself, so the UI can still say where the mistake was. That is a
-    location, not a ruling.
+    This is the honest state of the content today, asserted so that the day a
+    qori signs something off, the change shows up here as a failing test rather
+    than as an unnoticed shift in what production emits.
     """
     env("dev")
     shown, _ = pipeline.present(sample(), "uz")
-    body = next(s for s in shown if s["code"] == "GHUNNA_LONG")["content"]
+    assert all(s["draft"] is True for s in shown)
+
+
+def test_unauthored_code_gets_a_body_without_invented_rulings(env):
+    """GHUNNA_LONG has no entry in rules.json or either coaching registry. It
+    still has to render, so it gets a stand-in — and decision 4 holds even
+    here: no headline, no rule, no correction, no drill.
+
+    The learner is not left with nothing: `kind` gives the card a real title,
+    and `word`/`letter` travel on the error itself, so the UI still says where
+    the mistake was. That is a location, not a ruling.
+
+    THE STAND-IN NO LONGER CARRIES THE CODE. `label` is rendered as the card's
+    kicker, so putting GHUNNA_LONG there printed an internal identifier on a
+    learner's screen.
+    """
+    env("dev")
+    shown, _ = pipeline.present(sample(), "uz")
+    card = next(s for s in shown if s["code"] == "GHUNNA_LONG")
+    body = card["content"]
     assert body["unauthored"] is True
-    assert body["label"] == "GHUNNA_LONG"
+    assert body["label"] == ""
     assert body["headline"] == "" and body["fix"] == ""
     assert body["rule"] == "" and body["drill"] == ""
     assert body["reviewed"] is False
+    # It still has a learner-facing title to render under.
+    assert card["kind"] == "ghunna"
+
+
+def test_no_card_carries_the_code_into_rendered_text(env):
+    """Part B: internal codes never reach a learner.
+
+    The code stays on the record — logging, the draft marker's audit trail, the
+    "this assessment is wrong" report all need it — but no field the UI prints
+    as prose may contain it.
+    """
+    env("dev")
+    shown, _ = pipeline.present(sample(), "uz")
+    for card in shown:
+        body = card["content"]
+        for key in ("headline", "fix", "rule", "drill", "label"):
+            assert card["code"] not in (body.get(key) or ""), (
+                f'{card["code"]} leaked into content.{key}')
 
 
 def test_authored_content_is_untouched(env):
@@ -117,11 +189,25 @@ def test_authored_content_is_untouched(env):
 
 # ─────────────────────────────────────────────── production: gate closed
 
-def test_production_hides_unreviewed(env):
+def test_production_hides_unreviewed(env, reviewed):
     env("production")
     shown, silent = pipeline.present(sample(), "uz")
     assert [s["code"] for s in shown] == ["SUB_AYN_HAMZA"]
     assert {s["code"] for s in silent} == {"GHUNNA_SHORT", "GHUNNA_LONG"}
+
+
+def test_production_currently_shows_nothing_at_all(env):
+    """With no entry reviewed anywhere, production withholds every correction.
+
+    Stated as a test because it is easy to mistake for a bug and because it is
+    the real launch blocker: the gate is working, and there is simply no
+    reviewed content behind it yet. Nothing here is worth "fixing" in code -
+    it clears when a qori signs entries off.
+    """
+    env("production")
+    shown, silent = pipeline.present(sample(), "uz")
+    assert shown == []
+    assert len(silent) == 3
 
 
 def test_production_marks_nothing_draft(env):
@@ -135,16 +221,104 @@ def test_production_marks_nothing_draft(env):
 # ─────────────────────────────────────────────────────── no display cap
 
 @pytest.mark.parametrize("name", ["dev", "production"])
-def test_no_display_cap_in_either_environment(env, name):
-    """MAX_SHOWN = 2 is gone. Five real errors are five corrections — telling a
-    learner about two of them and silently dropping the rest taught them that
-    the other three were fine."""
+def test_no_display_cap_in_either_environment(env, reviewed_all, name):
+    """MAX_SHOWN = 2 is gone. Five DISTINCT errors are five corrections —
+    telling a learner about two of them and silently dropping the rest taught
+    them that the other three were fine.
+
+    Distinct on purpose. Five occurrences of the same error on the same letter
+    are now ONE card by design (see the merging tests below), so repeating one
+    code five times would prove the opposite of what this test is for.
+
+    Needs `reviewed_all` for the production leg: with nothing signed off, the
+    gate would hide all five and the absence of a cap would prove nothing.
+    """
     env(name)
-    many = [TypedError(code="SUB_AYN_HAMZA", at=i, letter="ع",
-                       expected="ع", heard="ء") for i in range(5)]
+    many = [
+        TypedError(code="SUB_AYN_HAMZA", at=0, letter="ع", expected="ع", heard="ء"),
+        TypedError(code="SUB_SAD_SEEN", at=1, letter="ص", expected="ص", heard="س"),
+        TypedError(code="SUB_QAF_KAF", at=2, letter="ق", expected="ق", heard="ك"),
+        TypedError(code="MADD_SHORT", at=3, letter="ا",
+                   expected_count=4, heard_count=2),
+        TypedError(code="QALQALA_DROP", at=4, letter="ڇ"),
+    ]
     shown, silent = pipeline.present(many, "uz")
     assert len(shown) == 5 and silent == []
     assert not hasattr(pipeline, "MAX_SHOWN")
+
+
+# ───────────────────────────────────────────────────── one card per mistake
+
+def test_repeats_merge_into_one_card(env):
+    """Five occurrences of one letter error is ONE card, not five.
+
+    This was the single loudest defect in the results screen: «لِإِيلَٰفِ» with
+    a mispronounced ل produced five identical cards, and a learner reading the
+    second one has already stopped reading.
+    """
+    env("dev")
+    many = [TypedError(code="SUB_SAD_SEEN", at=i, letter="ص", expected="ص",
+                       heard="س", word="ٱلصَّمَدُ", word_index=1)
+            for i in (2, 5, 8, 11, 14)]
+    shown, _ = pipeline.present(many, "uz")
+    assert len(shown) == 1
+    card = shown[0]
+    assert card["count"] == 5
+    assert card["words"] == ["ٱلصَّمَدُ"]
+
+
+def test_merging_keeps_every_occurrence_for_the_ayah(env):
+    """Merging the CARD must not lose the positions.
+
+    The ayah marks every errored letter red, so all five `at` values have to
+    survive the fold even though one card is rendered.
+    """
+    env("dev")
+    ats = [2, 5, 8, 11, 14]
+    many = [TypedError(code="SUB_SAD_SEEN", at=i, letter="ص", expected="ص",
+                       heard="س", word="ٱلصَّمَدُ", word_index=1) for i in ats]
+    shown, _ = pipeline.present(many, "uz")
+    assert [o["at"] for o in shown[0]["occurrences"]] == ats
+
+
+def test_same_letter_in_different_words_is_still_one_card(env):
+    """Grouping is (code, letter), so one drill covers all of them — but the
+    card has to name every word it happened in."""
+    env("dev")
+    many = [
+        TypedError(code="SUB_SAD_SEEN", at=1, letter="ص", expected="ص",
+                   heard="س", word="ٱلصَّمَدُ", word_index=0),
+        TypedError(code="SUB_SAD_SEEN", at=7, letter="ص", expected="ص",
+                   heard="س", word="صِرَٰطَ", word_index=2),
+    ]
+    shown, _ = pipeline.present(many, "uz")
+    assert len(shown) == 1
+    assert shown[0]["words"] == ["ٱلصَّمَدُ", "صِرَٰطَ"]
+
+
+def test_different_letters_do_not_merge(env):
+    """Same code, different letter, is a different mistake and a different
+    drill — merging those would put two corrections behind one card."""
+    env("dev")
+    many = [
+        TypedError(code="LETTER_DROPPED", at=1, letter="ص", expected="ص"),
+        TypedError(code="LETTER_DROPPED", at=4, letter="ط", expected="ط"),
+    ]
+    shown, _ = pipeline.present(many, "uz")
+    assert len(shown) == 2
+
+
+def test_merge_preserves_severity_ranking(env):
+    """Ranking happens before the fold, and the fold must not undo it."""
+    env("dev")
+    many = [
+        TypedError(code="MADD_SHORT", at=0, letter="ا",
+                   expected_count=4, heard_count=2),        # medium
+        TypedError(code="SUB_AYN_HAMZA", at=9, letter="ع",
+                   expected="ع", heard="ء"),                # high
+    ]
+    shown, _ = pipeline.present(many, "uz")
+    assert [s["code"] for s in shown] == ["SUB_AYN_HAMZA", "MADD_SHORT"]
 
 
 def test_ordering_is_by_severity_then_position(env):

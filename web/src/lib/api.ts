@@ -40,22 +40,72 @@ export type ErrorContent = {
   rule: string;
   drill: string;
   severity: string;
-  /** rules.json's short label ("Ayn (ع) harfi"), for legacy entries only. */
+  /** The registry entry's own short title. Never the error code. */
   label?: string;
+  /**
+   * URL of the isolated LETTER recording for this confusion — the sound of
+   * «ص» against «س», not the ayah. Empty when no file exists, and empty is the
+   * signal to render no button at all rather than a dead one.
+   */
+  audio_pair?: string;
   /** Nothing is authored for this code; only the location is known. */
   unauthored?: boolean;
 };
 
+/**
+ * The learner-facing category. The client turns this into a title; the raw
+ * `code` is never printed. Closed set — see engine/cards.py.
+ */
+export type ErrorKind =
+  | "extra_letter"
+  | "missing_letter"
+  | "wrong_letter"
+  | "pronunciation"
+  | "tajweed"
+  | "madd"
+  | "ghunna"
+  | "haraka";
+
+/** One place this error happened. A merged card has several. */
+export type Occurrence = {
+  at: number;
+  word: string;
+  /** Index of that word WITHIN THE AYAH — feeds `start_word` on re-record. */
+  word_index: number;
+};
+
 export type TajweedError = {
+  /**
+   * Internal. Kept for the "this assessment is wrong" report and for logs.
+   * MUST NOT be rendered — use `kind` for the title. See Part B.
+   */
   code: string;
-  /** Run-length unit index — join to Segment.units to find the letter. */
+  kind: ErrorKind;
+  /** Run-length unit index of the FIRST occurrence. */
   at: number;
   letter: string;
+  /**
+   * What should have been said. A LETTER for a substitution, a haraka NAME
+   * ("fatha") for a vowel error, and empty for duration and ṣifa errors — so
+   * a caller showing it in an Arabic-script chip must check it is one
+   * character first.
+   */
+  expected?: string;
+  /** What we heard, on the same terms as `expected`. */
+  heard?: string;
   /**
    * The Uthmani word the error falls in. Present even when nothing is authored
    * for the code — locating the mistake never depends on having text for it.
    */
   word?: string;
+  /** Ayah-relative index of that word, for re-recording just it. -1 if unknown. */
+  word_index?: number;
+  /** How many times this (code, letter) occurred. 1 for most cards. */
+  count: number;
+  /** Every occurrence, so the ayah can mark all of them — not just the first. */
+  occurrences: Occurrence[];
+  /** The distinct words it touched, in reading order. */
+  words: string[];
   needs_teacher?: boolean;
   /**
    * No qori has signed this off. Outside production that is the normal case,
@@ -357,8 +407,53 @@ export type Meta = {
   max_audio_seconds: number;
   /** Coaching registries the server could not find. Non-empty = a known gap. */
   missing_registries: string[];
+  /**
+   * Entries naming an isolated letter recording that is not on disk. Each is a
+   * practice button being hidden — the gap stays countable rather than just
+   * invisible.
+   */
+  missing_audio: string[];
+  /** Every field this server puts on an error object. See staleApiFields(). */
+  error_fields?: string[];
   version: string;
 };
+
+/**
+ * Fields <Correction> dereferences without a fallback. If the API does not send
+ * one of these, every card throws.
+ *
+ * Kept as data so the mismatch can be DETECTED rather than discovered from a
+ * broken screen: a server process started before a field was added keeps
+ * answering 200s, and from the browser that is indistinguishable from a bug in
+ * the client. api/tests/test_client_contract.py enforces the same list on the
+ * server side by reading it out of the component.
+ */
+export const REQUIRED_ERROR_FIELDS = [
+  "kind",
+  "letter",
+  "count",
+  "words",
+  "occurrences",
+  "content",
+] as const;
+
+/**
+ * Which required fields the connected API does not send — empty when in sync.
+ *
+ * Returns [] for a server too old to declare `error_fields` at all; that case
+ * is reported separately, because "declares nothing" and "declares an
+ * incomplete set" want different sentences.
+ */
+export function staleApiFields(info: Meta | null): string[] {
+  if (!info?.error_fields?.length) return [];
+  const sent = new Set(info.error_fields);
+  return REQUIRED_ERROR_FIELDS.filter((f) => !sent.has(f));
+}
+
+/** True when the API is old enough that it does not describe its own payload. */
+export function apiPredatesContract(info: Meta | null): boolean {
+  return !!info && !info.error_fields?.length;
+}
 
 export const meta = () => fetch(`${BASE}/api/meta`).then(json<Meta>);
 
@@ -385,6 +480,17 @@ export async function setConsent(
  * `reciter` is an everyayah folder name from /api/reciters, each probed at
  * build time against 1:1, 2:282, 36:1 and 114:6.
  */
+/**
+ * The isolated letter-pair recording a card's practice section plays.
+ *
+ * `content.audio_pair` is a server path ("/audio/sad_zay.mp3") that the API
+ * only sends when the file really exists, so an empty string here means "no
+ * recording" and the caller must render no control at all.
+ */
+export function letterAudioUrl(audioPair: string): string {
+  return audioPair ? `${BASE}${audioPair}` : "";
+}
+
 export function expertAudioUrl(
   sura: number,
   aya: number,
