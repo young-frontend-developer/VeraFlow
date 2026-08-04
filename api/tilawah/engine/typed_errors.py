@@ -140,6 +140,34 @@ def _missing(unit, at) -> TypedError:
                       expected=unit[0])
 
 
+def _added(unit, at) -> TypedError:
+    """An extra unit in the prediction. The mirror of _missing().
+
+    THE QALQALAH BRANCH IS THE POINT. _missing() has always special-cased ڇ -
+    a dropped qalqalah is QALQALA_DROP, not a dropped letter - but the
+    symmetric case had no such branch, so an ADDED qalqalah came out as
+    LETTER_ADDED carrying ڇ in both `letter` and `heard`. That produced a card
+    reading "you added an extra ڇ", naming a notation symbol as though it were
+    a letter the learner had inserted.
+
+    It cannot be fixed by resolving the symbol the way the reference side is:
+    `heard` describes the PREDICTION, so there is no mushaf character to look
+    up, and a qalqalah is an echo on a letter rather than a letter of its own -
+    there is no "extra X" to name. The honest description is that the qalqalah
+    was overdone, which is a error the registry already has words for.
+
+    So this routes to QALQALA_EXCESSIVE. That is a classification change rather
+    than a detection change: the same audio produces the same finding at the
+    same position, and only the name it is filed under moves - from a code
+    whose card could not be written truthfully to one whose card already is.
+    `letter` still carries the mark here and is resolved against the mushaf by
+    the pipeline, like every other error.
+    """
+    if unit[0] == QALQALA_MARK:
+        return TypedError(code="QALQALA_EXCESSIVE", at=at, letter=QALQALA_MARK)
+    return TypedError(code="LETTER_ADDED", at=at, letter=unit[0], heard=unit[0])
+
+
 def _substitution_code(expected: str, heard: str) -> str | None:
     """The most specific code for one letter confusion, or None to say nothing.
 
@@ -238,9 +266,7 @@ def typed_diff(expected: str, predicted: str) -> list[TypedError]:
             for k in range(n, i2 - i1):
                 out.append(_missing(exp_u[i1 + k], i1 + k))
             for k in range(n, j2 - j1):
-                out.append(TypedError(code="LETTER_ADDED", at=i1,
-                                      letter=got_u[j1 + k][0],
-                                      heard=got_u[j1 + k][0]))
+                out.append(_added(got_u[j1 + k], i1))
 
         elif op == "delete":
             for k in range(i1, i2):
@@ -248,7 +274,6 @@ def typed_diff(expected: str, predicted: str) -> list[TypedError]:
 
         elif op == "insert":
             for k in range(j1, j2):
-                out.append(TypedError(code="LETTER_ADDED", at=i1,
-                                      letter=got_u[k][0], heard=got_u[k][0]))
+                out.append(_added(got_u[k], i1))
 
     return out

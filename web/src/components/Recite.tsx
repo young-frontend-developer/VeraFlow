@@ -6,6 +6,7 @@ import { Selection } from "./Picker";
 import ReciterSelect from "./ReciterSelect";
 import {
   Attempt,
+  PracticeRung,
   PracticeSegment,
   Reciter,
   TajweedError,
@@ -56,12 +57,21 @@ export default function Recite({
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [retry, setRetry] = useState<RetryState>({
     cardId: null,
+    level: null,
     phase: null,
     fixed: [],
     stillWrong: null,
   });
 
   const handleRef = useRef<RecorderHandle | null>(null);
+  /**
+   * The range the in-flight rung recording will be submitted against, captured
+   * when recording STARTS. A ref rather than state because the stop handler
+   * reads it synchronously, and because it must be the range of the rung that
+   * was tapped — not whatever the ladder happens to look like by the time the
+   * learner stops.
+   */
+  const rangeRef = useRef<{ start_word: number; num_words: number } | null>(null);
   const ringRef = useRef<HTMLSpanElement>(null);
   const ringOuterRef = useRef<HTMLSpanElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -91,7 +101,8 @@ export default function Recite({
     setPickingPart(false);
     setOwnRecording(null);
     setActiveCardId(null);
-    setRetry({ cardId: null, phase: null, fixed: [], stillWrong: null });
+    setRetry({ cardId: null, level: null, phase: null, fixed: [],
+               stillWrong: null });
   }, [key]);
 
   useEffect(() => () => handleRef.current?.cancel(), []);
@@ -122,7 +133,8 @@ export default function Recite({
     setResult(null);
     setFailed(false);
     setActiveCardId(null);
-    setRetry({ cardId: null, phase: null, fixed: [], stillWrong: null });
+    setRetry({ cardId: null, level: null, phase: null, fixed: [],
+               stillWrong: null });
     audioRef.current?.pause();
     try {
       handleRef.current = await startRecording();
@@ -155,33 +167,53 @@ export default function Recite({
   }
 
   /* ── the recovery loop ──────────────────────────────────────────────────
-     Re-record ONE word and re-check only the error that card is about. The
-     range machinery is the same one the practice segments use; `word_index` is
-     ayah-relative precisely so it can be handed straight to `start_word`. */
+     Re-record ONE RUNG of a card's practice ladder and re-check only the error
+     that card is about. Two rungs are recordable and they submit different
+     ranges:
 
-  async function retryWord(e: TajweedError) {
-    const at = e.word_index ?? -1;
-    if (at < 0) return;
+       word  just that word          start_word = word_index, num_words = 1
+       ayah  the range on screen     whatever the learner selected
+
+     The range machinery is the same one the practice segments use, and
+     `word_index` is ayah-relative precisely so it can be handed straight to
+     `start_word`. The letter and syllable rungs are not recordable at all —
+     the engine has no target for a bare letter — and the server says so on the
+     rung itself, so this never has to guess. */
+
+  /** The range one rung submits, or null if it cannot be recorded. */
+  function rungRange(rung: PracticeRung) {
+    if (!rung.recordable) return null;
+    if (rung.focus === "word") {
+      if (rung.word_index < 0) return null;
+      return { start_word: rung.word_index, num_words: 1 };
+    }
+    // The ayah rung re-reads exactly what is on screen, which may itself be a
+    // part of the ayah if the learner narrowed the selection.
+    return { start_word: segment.start_word, num_words: segment.num_words };
+  }
+
+  async function recordRung(e: TajweedError, rung: PracticeRung) {
+    const range = rungRange(rung);
+    if (!range) return;
     try {
       handleRef.current = await startRecording();
-      setRetry((r) => ({ ...r, cardId: cardId(e), phase: "recording",
-                         stillWrong: null }));
+      rangeRef.current = range;
+      setRetry((r) => ({ ...r, cardId: cardId(e), level: rung.level,
+                         phase: "recording", stillWrong: null }));
     } catch {
       setFailed(true);
     }
   }
 
-  async function stopRetryWord(e: TajweedError) {
+  async function stopRecordRung(e: TajweedError) {
     const h = handleRef.current;
-    if (!h) return;
+    const range = rangeRef.current;
+    if (!h || !range) return;
     const id = cardId(e);
     setRetry((r) => ({ ...r, phase: "checking" }));
     try {
       const blob = await h.stop();
-      const out = await submitAttempt(blob, sura.number, ayah.aya, lang, {
-        start_word: e.word_index ?? 0,
-        num_words: 1,
-      });
+      const out = await submitAttempt(blob, sura.number, ayah.aya, lang, range);
       // SCOPED to this error. The re-read covers one word, so anything else it
       // turns up belongs to a different card and must not silently close this
       // one — or, worse, open new cards for a word the learner was drilling.
@@ -193,15 +225,17 @@ export default function Recite({
       const judged = out.status === "ok" && out.analysable;
       setRetry((r) => ({
         cardId: null,
+        level: null,
         phase: null,
         fixed: judged && !stillThere ? [...r.fixed, id] : r.fixed,
         stillWrong: judged && stillThere ? id : null,
       }));
     } catch {
-      setRetry((r) => ({ ...r, cardId: null, phase: null }));
+      setRetry((r) => ({ ...r, cardId: null, level: null, phase: null }));
       setFailed(true);
     } finally {
       handleRef.current = null;
+      rangeRef.current = null;
     }
   }
 
@@ -436,10 +470,10 @@ export default function Recite({
             attempt={result}
             activeCardId={activeCardId}
             retry={retry}
-            onRetryWord={retryWord}
+            onRecordRung={recordRung}
             onStopRetry={() => {
               const e = errors.find((x) => cardId(x) === retry.cardId);
-              if (e) stopRetryWord(e);
+              if (e) stopRecordRung(e);
             }}
             onFocusLetter={setActiveCardId}
             onRetry={start}

@@ -61,7 +61,26 @@ V3 = _ROOT / "tajweed_error_registry_v3.json"
 V4 = _ROOT / "tajweed_registry_v4_coaching.json"
 V5 = _ROOT / "tajweed_registry_v5_gaps.json"
 
+# What the REGISTRIES author. All four are still parsed, still validated, and
+# still available to the review tool, which reads the registry directly.
 FIELDS = ("headline", "fix", "rule", "drill")
+
+# What a LEARNER is shown. The card answers four questions - what happened,
+# where, how do I fix it, what do I practise - and `rule` and `drill` answer
+# none of them.
+#
+# `rule` is the ruling and why it matters: 13-44 words of tajweed theory
+# carrying the terms a beginner does not have (lahn jaliy, iqlab, sofiyr, mad
+# muttasil). It was rendered behind a "Why" disclosure, which is exactly the
+# encyclopedia this app is not.
+#
+# `drill` is prose describing an exercise - "say ذَ ten times in front of a
+# mirror, then 'ذَلِكَ', 'الَّذِي', 'إِذَا'". That is a written homework assignment,
+# not practice. It is replaced by engine/practice.py, which builds the same
+# progression as something the learner can tap through and record against.
+#
+# Neither is deleted from the registries. They are simply not part of the card.
+CARD_FIELDS = ("headline", "fix")
 
 # Any {placeholder} left after substitution.
 _BRACE = re.compile(r"\{[^}]*\}")
@@ -337,6 +356,101 @@ def _fill(text: str, fields: dict, *, code: str, key: str) -> str:
     return out
 
 
+def instruction(text: str) -> str:
+    """The ONE actionable instruction out of an authored `fix`, by selection.
+
+    THE AUTHORS ALREADY SEPARATED IT. Every multi-part `fix` in the registries
+    is written as paragraphs split by a blank line, and the first paragraph is
+    the correction while everything after it is commentary about the
+    correction. 22 of the 60 entries are shaped that way, and what sits in the
+    second paragraph is consistently one of three things:
+
+        the meta-apology   "Bu xato uchun to'liq izoh hali tayyorlanmagan.
+                            Ustozingiz bilan tekshiring."
+        the aetiology      "Ko'pincha bu ohang uchun yuz beradi."
+        the restatement    a longer version of the headline
+
+    The first of those is the worst: GENERIC_LETTER_SUBSTITUTED and
+    GENERIC_SIFAT_MISMATCH are the two codes that fire most often, and both put
+    "we haven't written this yet, ask your teacher" INSIDE the slot the learner
+    reads for the answer. That is a fallback message on the single most-seen
+    card in the app, and taking the first paragraph is what removes it - not a
+    keyword filter, which would go stale the moment someone rephrased it.
+
+    MEASURED, NOT ASSUMED. Across all 60 entries in both languages, headline +
+    first paragraph runs 45 words at worst (MAKHARIJ_AIN_TO_HAMZA) and under 35
+    for 56 of them, against a 60-word card budget. Three entries carry a
+    genuinely long single instruction; those are an authoring question for a
+    qori, not something to truncate mechanically mid-sentence.
+
+    Sentence-level selection was tried first and rejected. It looked tighter
+    until you check it against the text: about a dozen entries open on a
+    diagnosis and put the instruction second ("Maxraj bir xil — til uchi
+    tishlar ildizida. Farq ovozda."), so "take sentence one" would have shown a
+    description where the correction belongs, and "take sentence two" would
+    have broken the other forty. The paragraph break is the split the authors
+    actually made; the sentence break is one we would be inventing.
+
+    NOTHING IS REWRITTEN HERE. This selects among sentences a qori wrote, which
+    is the same thing _adapt_v3 does one layer up. Authoring stays with the
+    authors.
+    """
+    return text.split("\n\n")[0].strip()
+
+
+# ── entries whose instruction is built around ONE worked letter ───────────
+# A code that names a specific confusion is entitled to talk about specific
+# letters - MAKHARIJ_SAD_TO_SEEN discussing ص and س IS the error. These are the
+# opposite case: one code covering a whole FAMILY of letters, with an
+# instruction written around a single example.
+#
+#     QALQALAH_MISSING  covers ق ط ب ج د, and says
+#                       "say the «د» at the end of «أَحَدْ»"
+#     HAMS_LOST         covers ف ح ث ه ش خ ص س ك ت, and says
+#                       "say «سَ» and «زَ» one after the other"
+#
+# So a learner who softened the ق in «وَٱقْتَرِب» is told to practise د. That is
+# not a smaller version of the right advice, it is advice about a different
+# letter, and it now sits directly above a practice ladder correctly showing ق.
+#
+# THE LIST IS EXPLICIT AND SHORT ON PURPOSE. The obvious general rule - "blank
+# any instruction naming a letter other than the detected one" - was tried
+# against all 60 entries and over-fires: MADD_WAJIB_SHORTENED names ء because
+# a following hamza is the CONDITION of the ruling, not an example, and
+# IQLAB_MISSING names م because م is the target sound. Both would have lost a
+# correct instruction. Curating which entries have this shape is a judgement
+# about authored text, so it is written down rather than inferred, and
+# tools/audit_fixed_examples.py is what surfaces candidates for it.
+#
+# THE FIX IS AUTHORING, NOT THIS. Rewriting "«أَحَدْ» oxiridagi «د»" to work for
+# five letters means rewriting the worked example, which is a qori's job -
+# templating {letter} into it would produce "the ق at the end of أَحَدْ", a word
+# with no ق in it. Until then, suppression is the honest option: the card keeps
+# what happened, where, and what to practise, and simply says nothing about how
+# rather than saying something false.
+LETTER_SPECIFIC_EXAMPLE = frozenset({"QALQALAH_MISSING", "HAMS_LOST"})
+
+_ARABIC_RUN = re.compile(r"[ء-ي]+")
+
+
+def contradicts_letter(code: str, text: str, letter: str) -> bool:
+    """True when this instruction's worked example is about a different letter.
+
+    Only consulted for the curated set above. `letter` is the letter actually
+    detected; if the text names it anywhere, the example fits and is kept - so
+    a genuine د qalqalah still gets its full instruction.
+
+    KEYED ON THE RESOLVED CODE. The engine emits QALQALA_DROP and the registry
+    entry is QALQALAH_MISSING; testing the raw code silently matched nothing
+    and suppressed nothing, which is the failure mode this whole file exists to
+    prevent - see ALIAS.
+    """
+    if resolve(code) not in LETTER_SPECIFIC_EXAMPLE or not text or not letter:
+        return False
+    named = set("".join(_ARABIC_RUN.findall(text)))
+    return bool(named) and letter not in named
+
+
 def render(code: str, lang: str, fields: dict) -> dict | None:
     """Coaching card for one detected error, or None if this code has none.
 
@@ -351,8 +465,24 @@ def render(code: str, lang: str, fields: dict) -> dict | None:
     block = spec.get(lang) or spec.get("uz") or {}
     safe = {k: ("" if v is None else v) for k, v in fields.items()}
 
-    out = {key: _fill(block.get(key, ""), safe, code=code, key=key)
-           for key in FIELDS}
+    # CARD_FIELDS, not FIELDS: `rule` and `drill` are authored but not shown.
+    # `fix` is narrowed to its first paragraph - see instruction().
+    #
+    # Substitution runs on the SELECTED text rather than the whole field, so a
+    # placeholder that only ever appeared in the discarded commentary cannot
+    # fail the brace check and drop a card the learner would otherwise have got.
+    out = {key: _fill(instruction(block.get(key, "")) if key == "fix"
+                      else block.get(key, ""),
+                      safe, code=code, key=key)
+           for key in CARD_FIELDS}
+
+    # Silence an instruction whose worked example is about a different letter
+    # than the one the learner actually got wrong. See LETTER_SPECIFIC_EXAMPLE:
+    # a ق qalqalah must not be answered with a drill on د, and the practice
+    # ladder below it is already showing ق.
+    if contradicts_letter(code, out["fix"], str(safe.get("letter", ""))):
+        out["fix"] = ""
+
     out["severity"] = spec.get("severity", "medium")
     out["group"] = spec.get("group", "")
     # v3 entries carry a short title; v4/v5 fold it into the headline. Passed

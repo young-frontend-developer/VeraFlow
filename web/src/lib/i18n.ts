@@ -80,19 +80,30 @@ const STRINGS = {
     // correction card
     label_heard: "Nimani eshitdik",
     label_fix: "Qanday tuzatish kerak",
-    label_rule: "Qoida",
-    label_drill: "Mashq",
-    // The six card slots, in reading order.
+    // The FOUR card slots, in reading order: what happened (the kind title),
+    // where, how to fix it, what to practise. `card_why` and the prose drill
+    // are gone — a correction is not a tajweed lesson.
     card_where: "Qayerda",
+    card_you_said: "Siz aytdingiz",
     card_correct: "Toʻgʻrisi",
-    card_why: "Nega",
     card_fix: "Tuzatish",
-    card_practice: "Mashq",
+    card_practice: "Endi mashq qilamiz",
     // Repeats are merged into one card; this says how many and where.
     card_times: "marta uchradi",
     // Practice audio is the LETTER, not the ayah.
     listen_letter: "Harf tovushini eshitish",
     listen_ayah: "Oyatni qori oʻqishida eshitish",
+
+    // ── the practice ladder. Narrow to wide: the letter alone, the letter
+    // with each haraka, the word they misread, then back to the ayah.
+    rung_letter: "Faqat shu harf",
+    rung_syllables: "Harakatlar bilan",
+    rung_word: "Shu soʻz",
+    rung_ayah: "Endi oyatni oʻqing",
+    rung_record: "Oʻqib koʻrish",
+    // Rungs the engine cannot score. Says what to do instead of leaving the
+    // rung looking as though its button failed to load.
+    rung_say: "Ovoz chiqarib ayting",
 
     // ── the recovery loop
     retry_word: "Qayta urinish",
@@ -118,7 +129,12 @@ const STRINGS = {
     // is open by default and every unreviewed card carries a marker.
     draft_chip: "QORALAMA",
     draft_note: "Bu izohni qori tekshirmagan. Faqat sinov uchun.",
-    draft_unauthored: "Bu xato uchun matn umuman yozilmagan. Faqat kod:",
+    // Ends where it ends. It used to finish "Faqat kod:" — "only the code:" —
+    // and then print no code, because printing one is forbidden. A sentence
+    // promising an identifier the UI must never show was a leftover from when
+    // it did.
+    draft_unauthored:
+      "Bu xato uchun izoh hali yozilmagan. Joyini koʻrsatamiz, xolos.",
     draft_banner_title: "Tekshirilmagan izohlar koʻrsatilmoqda",
     draft_banner_body:
       "Sinov rejimi: aniqlangan barcha xatolar koʻrsatilmoqda, jumladan qori hali tekshirmaganlari ham. Har biri QORALAMA deb belgilangan.",
@@ -277,16 +293,21 @@ const STRINGS = {
 
     label_heard: "Что мы услышали",
     label_fix: "Как исправить",
-    label_rule: "Правило",
-    label_drill: "Упражнение",
     card_where: "Где",
+    card_you_said: "Вы сказали",
     card_correct: "Правильно",
-    card_why: "Почему",
     card_fix: "Исправление",
-    card_practice: "Упражнение",
+    card_practice: "Теперь потренируемся",
     card_times: "раза встретилось",
     listen_letter: "Послушать звук буквы",
     listen_ayah: "Послушать аят у чтеца",
+
+    rung_letter: "Только эта буква",
+    rung_syllables: "С огласовками",
+    rung_word: "Это слово",
+    rung_ayah: "Теперь весь аят",
+    rung_record: "Прочитать",
+    rung_say: "Скажите вслух",
 
     retry_word: "Попробовать снова",
     retry_word_hint: "Прочитайте только это слово.",
@@ -303,7 +324,8 @@ const STRINGS = {
 
     draft_chip: "ЧЕРНОВИК",
     draft_note: "Это замечание не проверено чтецом. Только для тестирования.",
-    draft_unauthored: "Для этой ошибки текст вообще не написан. Только код:",
+    draft_unauthored:
+      "Для этой ошибки пояснение ещё не написано. Показываем только место.",
     draft_banner_title: "Показываются непроверенные замечания",
     draft_banner_body:
       "Тестовый режим: показываются все найденные ошибки, включая ещё не проверенные чтецом. Каждая помечена как ЧЕРНОВИК.",

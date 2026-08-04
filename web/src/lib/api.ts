@@ -24,12 +24,17 @@ export type Ayah = {
 };
 
 /**
- * A coaching card. Four fields, in the order they are read:
+ * The authored half of a card. TWO sentences of text, and no more:
  *
- *   headline  what went wrong, in this word, with this letter — always visible
- *   fix       what to do about it — open by default
- *   rule      why, in tajweed terms — collapsed
- *   drill     the exercise — collapsed
+ *   headline  what went wrong, in this word, with this letter
+ *   fix       the ONE thing to do about it
+ *
+ * `rule` and `drill` USED TO BE HERE and are deliberately gone. `rule` was the
+ * ruling and why it matters — tajweed theory behind a "Why" disclosure, which
+ * a beginner cannot use and did not ask for. `drill` was a paragraph
+ * describing an exercise, which the practice ladder now replaces with
+ * something tappable. Both are still authored and still in the registries; the
+ * review tool reads them there. They are simply not part of a learner's card.
  *
  * Templates are substituted server-side and validated there: a string that
  * still contains a brace never leaves the API.
@@ -37,8 +42,6 @@ export type Ayah = {
 export type ErrorContent = {
   headline: string;
   fix: string;
-  rule: string;
-  drill: string;
   severity: string;
   /** The registry entry's own short title. Never the error code. */
   label?: string;
@@ -65,6 +68,30 @@ export type ErrorKind =
   | "madd"
   | "ghunna"
   | "haraka";
+
+/**
+ * One rung of the practice ladder — see engine/practice.py, which builds them.
+ *
+ * The ladder goes narrow to wide: the letter alone, the letter under each
+ * haraka, the word the learner actually misread, then the ayah. Every rung is
+ * derived from the error, so one exists even for codes with no coaching text.
+ */
+export type PracticeRung = {
+  /** Position on the ladder, 1-based and gapless. */
+  level: number;
+  /** What this rung is. `ayah` carries no items — it is already on screen. */
+  focus: "letter" | "syllables" | "word" | "ayah";
+  items: string[];
+  /**
+   * Whether this rung can be RECORDED AND SCORED. False for the letter and
+   * syllable rungs: the engine scores against a word range of an ayah and has
+   * no target for a bare letter, so offering a record button there would be a
+   * control that cannot do what it says. Those two rungs are listen-and-say.
+   */
+  recordable: boolean;
+  /** Ayah-relative word to re-record, for the `word` rung. -1 otherwise. */
+  word_index: number;
+};
 
 /** One place this error happened. A merged card has several. */
 export type Occurrence = {
@@ -115,6 +142,12 @@ export type TajweedError = {
    */
   draft?: boolean;
   content: ErrorContent;
+  /**
+   * The practice ladder for this card, narrowest rung first. Always at least
+   * one rung — derived, not authored, so it never depends on a qori having
+   * written anything for this code.
+   */
+  practice: PracticeRung[];
 };
 
 export type Attempt = {

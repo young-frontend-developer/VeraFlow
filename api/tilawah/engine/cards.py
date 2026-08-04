@@ -21,6 +21,7 @@ client is expected never to print it.
 `kind` is a WIRE CONTRACT, not a display string. The titles live in the
 client's i18n table, so adding a language does not touch the engine.
 """
+from . import practice
 from .typed_errors import TypedError
 
 # ── code -> kind ──────────────────────────────────────────────────────────
@@ -99,7 +100,7 @@ WIRE_KEYS = (
     "code", "kind", "at", "letter", "expected", "heard",
     "expected_count", "heard_count", "sifa",
     "word", "word_index", "words", "count", "occurrences",
-    "status", "draft", "needs_teacher", "content",
+    "status", "draft", "needs_teacher", "content", "practice",
 )
 
 
@@ -145,11 +146,19 @@ def ensure_shape(err: dict) -> dict:
         out["words"] = [out["word"]] if out["word"] else []
     if not out.get("count"):
         out["count"] = len(out["occurrences"])
+
+    # Rebuilt, not blanked, for the same reason as `occurrences`. The ladder is
+    # DERIVED from the letter and the word, both of which a legacy row already
+    # carries, so a replayed attempt gets a working practice section rather than
+    # an empty one - and no migration is needed to give it one.
+    if not out.get("practice"):
+        out["practice"] = practice.ladder(
+            out["letter"], out["word"], out["word_index"])
     return out
 
 
 def merge(errors: list[TypedError]) -> list[list[TypedError]]:
-    """Group into one bucket per (code, letter), first occurrence first.
+    """Group into one bucket per (registry code, letter), first occurrence first.
 
     Order is the order the buckets first appear, so the ranking `present()`
     applied - severity, then position - survives the merge. Sorting again here
@@ -158,10 +167,31 @@ def merge(errors: list[TypedError]) -> list[list[TypedError]]:
     Grouping is by (code, letter) rather than (code, word, letter): the same
     letter mispronounced in four different words is ONE thing to learn and one
     drill to do, and four cards saying it is four chances to stop reading.
+
+    THE KEY IS THE RESOLVED CODE, NOT THE ENGINE CODE, and that is the whole
+    reason this comment exists. Two detectors can find the SAME event: the
+    phoneme diff reports a dropped qalqalah as QALQALA_DROP, and the ṣifa
+    comparison reports it as QALQALAH_MISSING. Both are about one letter in one
+    word, both alias to one registry entry, and so both render an identical
+    headline, an identical instruction and an identical practice ladder. Keyed
+    on the raw code they are two buckets, and a learner who softened one د was
+    shown the same card twice.
+
+    Found by driving a real recitation of 112:3 through the API - not by any
+    unit test, because both halves are correct in isolation and only the
+    combination is wrong.
+
+    coaching.ALIAS is the authority for what counts as the same error, and it
+    is the right one: it already exists, it is documented as holding only
+    genuine synonyms, and a test fails on any engine code missing from it. The
+    letter stays in the key, so ذ->ز and ظ->ز - which share a registry entry -
+    remain two cards, as they should.
     """
+    from ..content.coaching import resolve
+
     buckets: dict[tuple[str, str], list[TypedError]] = {}
     for e in errors:
-        buckets.setdefault((e.code, e.letter), []).append(e)
+        buckets.setdefault((resolve(e.code), e.letter), []).append(e)
     return list(buckets.values())
 
 

@@ -158,9 +158,15 @@ try {
       brokenCards: document.querySelectorAll(".card--broken").length,
       redLetters: document.querySelectorAll(".ayah__mark").length,
       hitTargets: document.querySelectorAll(".ayah__hit").length,
-      retryButtons: document.querySelectorAll(".card__retry-btn").length,
       selfPlayback: document.querySelectorAll(".selfplay__btn").length,
-      letterAudioButtons: document.querySelectorAll(".card__replay").length,
+      // The four-slot card: the practice ladder replaced both the prose drill
+      // and the single "re-record this word" button.
+      ladders: document.querySelectorAll(".ladder").length,
+      rungs: document.querySelectorAll(".rung").length,
+      recordableRungs: document.querySelectorAll(".rung__btn").length,
+      letterAudioButtons: document.querySelectorAll(".rung__btn--quiet").length,
+      // Must be ZERO: the collapsed "Why" and "Practice" disclosures are gone.
+      disclosures: document.querySelectorAll(".card__more").length,
       kickers: [...document.querySelectorAll(".card__kicker")].map((e) =>
         e.textContent.trim(),
       ),
@@ -180,13 +186,14 @@ try {
     [...document.querySelectorAll(".card")].slice(0, 6).map((c) => ({
       kicker: c.querySelector(".card__kicker")?.innerText.trim() ?? "",
       headline: c.querySelector(".card__headline")?.innerText.trim() ?? "",
-      where: c.querySelector(".card__where")?.innerText.trim() ?? "",
-      correct: c.querySelector(".card__correct")?.innerText.trim() ?? "",
+      where: c.querySelector(".where__words")?.innerText.trim() ?? "",
+      correct: c.querySelector(".where__pair")?.innerText.replace(/
+/g, " ").trim() ?? "",
       fix: c.querySelector(".card__body--fix")?.innerText.trim() ?? "",
-      disclosures: [...c.querySelectorAll(".card__more summary")].map((s) =>
-        s.innerText.trim(),
+      ladder: [...c.querySelectorAll(".rung")].map((r) =>
+        r.innerText.replace(/
+/g, " ").trim(),
       ),
-      retry: c.querySelector(".card__retry-btn")?.innerText.trim() ?? "",
       broken: c.classList.contains("card--broken"),
     })),
   );
@@ -197,9 +204,9 @@ try {
     console.log(`  headline : ${c.headline}`);
     console.log(`  where    : ${c.where}`);
     if (c.correct) console.log(`  correct  : ${c.correct}`);
-    console.log(`  fix      : ${c.fix}`);
-    console.log(`  more     : ${c.disclosures.join(" | ")}`);
-    console.log(`  retry    : ${c.retry}`);
+    console.log(`  fix      : ${c.fix || "(none shown)"}`);
+    for (const [j, r] of c.ladder.entries())
+      console.log(`  rung ${j + 1}   : ${r}`);
   }
   if (cardText.some((c) => c.broken)) {
     problems.push("at least one card rendered the broken-card fallback");
@@ -225,9 +232,15 @@ try {
       "LETTER_ADDED", "LETTER_DROPPED", "GENERIC_SIFAT_MISMATCH",
       "GENERIC_LETTER_SUBSTITUTED", "SUB_SAD_SEEN", "MADD_SHORT",
       "QALQALA_DROP", "GHUNNA_LONG", "SHADDA_LONG", "TAFKHEEM_LOST",
+      "QALQALAH_MISSING", "MAKHARIJ_TA_TO_DAL",
+      // QPS notation symbols. Not codes, but the same rule: a learner must
+      // never be shown a character that is not in the text in front of them.
+      // ۥ and ۦ are excluded — the mushaf writes both as real superscripts.
+      "ڇ", "ں", "۾",
     ].filter((c) => text.includes(c));
   });
-  if (leaked.length) problems.push(`internal codes on screen: ${leaked.join(", ")}`);
+  if (leaked.length)
+    problems.push(`internal codes or QPS marks on screen: ${leaked.join(", ")}`);
 
   // Tap a red letter -> should focus its card.
   if (state.hitTargets > 0) {

@@ -139,17 +139,21 @@ def test_collapse_allows_ayat_that_really_are_muqattaat():
 
 @pytest.mark.parametrize("code", ["SUB_AYN_HAMZA", "MADD_SHORT", "DELETION"])
 def test_every_shipped_code_has_both_languages(code):
-    """A legacy rules.json entry maps onto the coaching card as headline / fix
-    / drill. `rule` stays empty on purpose: rules.json's `rule` is a LABEL, not
-    an explanation, so it travels as `label` rather than being promoted into a
-    field it does not fill."""
+    """A legacy rules.json entry maps onto the card as headline / fix / label.
+
+    `drill` is no longer among them: rules.json's drill is prose describing an
+    exercise, and the card's practice section is the derived ladder in
+    engine/practice.py rather than a paragraph about practising. rules.json's
+    `rule` was never carried either - it is a LABEL, not an explanation, so it
+    travels as `label` rather than being promoted into a field it does not fill.
+    """
     for lang in content.LANGS:
         body = content.render(code, lang,
                               {"expected_count": 4, "heard_count": 2,
                                "letter": "ع", "expected": "ع", "heard": "ء",
                                "word": "عَلَيْهِمْ"})
         assert body
-        assert all(body[k] for k in ("headline", "fix", "drill", "label"))
+        assert all(body[k] for k in ("headline", "fix", "label"))
 
 
 def test_templates_have_no_unfilled_placeholders():
@@ -167,9 +171,32 @@ def test_templates_have_no_unfilled_placeholders():
         for lang in content.LANGS:
             body = content.render(code, lang, fields)
             assert body, code
-            for key in ("headline", "fix", "rule", "drill"):
+            for key in coaching.CARD_FIELDS:
                 assert "{" not in body[key], f"{code}.{lang}.{key} left a placeholder"
                 assert "}" not in body[key], f"{code}.{lang}.{key} left a placeholder"
+
+
+def test_unshown_templates_are_still_fillable():
+    """`rule` and `drill` no longer reach a learner, so render() never
+    substitutes them and a broken placeholder in one could not surface through
+    the card.
+
+    They are still authored, still in the registries and still read by the
+    review tool, so a typo like "{wrod}" would sit there indefinitely with
+    nothing to catch it. This is the net that used to be a side effect of
+    rendering them. It asserts the templates are FILLABLE, not that they are
+    shown.
+    """
+    fields = content.substitution_context(
+        {"expected_count": 4, "heard_count": 2, "letter": "ع",
+         "expected": "ع", "heard": "ء", "word": "عَلَيْهِمْ"})
+    for code, spec in coaching.registry().items():
+        for lang in content.LANGS:
+            block = spec.get(lang) or {}
+            for key in ("rule", "drill"):
+                # Raises UnfilledTemplate on an unknown or surviving brace,
+                # which is the assertion.
+                coaching._fill(block.get(key, ""), fields, code=code, key=key)
 
 
 def test_shipped_content_is_marked_reviewed():

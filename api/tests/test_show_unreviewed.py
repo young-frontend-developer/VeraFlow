@@ -140,11 +140,14 @@ def test_dev_marks_everything_draft_as_things_actually_stand(env):
 def test_unauthored_code_gets_a_body_without_invented_rulings(env):
     """GHUNNA_LONG has no entry in rules.json or either coaching registry. It
     still has to render, so it gets a stand-in — and decision 4 holds even
-    here: no headline, no rule, no correction, no drill.
+    here: no headline, no correction, nothing invented.
 
-    The learner is not left with nothing: `kind` gives the card a real title,
-    and `word`/`letter` travel on the error itself, so the UI still says where
-    the mistake was. That is a location, not a ruling.
+    The learner is not left with nothing, and now gets rather more than a
+    location. `kind` gives the card a real title, `word`/`letter` travel on the
+    error itself, and the PRACTICE LADDER is derived rather than authored — so
+    an error nobody has written a word about still comes with the letter to
+    drill, the syllables to drill it under, and the word to put it back into.
+    That is a location and an exercise, neither of which is a ruling.
 
     THE STAND-IN NO LONGER CARRIES THE CODE. `label` is rendered as the card's
     kicker, so putting GHUNNA_LONG there printed an internal identifier on a
@@ -157,10 +160,15 @@ def test_unauthored_code_gets_a_body_without_invented_rulings(env):
     assert body["unauthored"] is True
     assert body["label"] == ""
     assert body["headline"] == "" and body["fix"] == ""
-    assert body["rule"] == "" and body["drill"] == ""
     assert body["reviewed"] is False
     # It still has a learner-facing title to render under.
     assert card["kind"] == "ghunna"
+    # ...and a ladder, because none of it needed authoring. This fixture's
+    # error was never located in a word, so there is no word rung to build —
+    # which is the point: the ladder gives what it can and omits what it
+    # cannot, rather than showing an empty row.
+    assert [r["focus"] for r in card["practice"]] == [
+        "letter", "syllables", "ayah"]
 
 
 def test_no_card_carries_the_code_into_rendered_text(env):
@@ -174,9 +182,15 @@ def test_no_card_carries_the_code_into_rendered_text(env):
     shown, _ = pipeline.present(sample(), "uz")
     for card in shown:
         body = card["content"]
-        for key in ("headline", "fix", "rule", "drill", "label"):
+        for key in ("headline", "fix", "label"):
             assert card["code"] not in (body.get(key) or ""), (
                 f'{card["code"]} leaked into content.{key}')
+        # The ladder is Arabic text the UI prints at display size. A code
+        # reaching it would be the same leak by another route.
+        for rung in card["practice"]:
+            for item in rung["items"]:
+                assert card["code"] not in item, (
+                    f'{card["code"]} leaked into a practice rung')
 
 
 def test_authored_content_is_untouched(env):
@@ -379,11 +393,20 @@ def boot(monkeypatch, **overrides):
 
     A test that re-implements the guard passes just as happily after someone
     deletes the guard, which is the one failure mode that matters here.
+
+    ⚠️ `debug_audio` IS PINNED OFF unless a caller asks otherwise. `settings` is
+    built from the developer's api/.env, so every override here inherited
+    whatever that file happened to say - and main.py has a SECOND production
+    guard, on debug audio. Setting TILAWAH_DEBUG_AUDIO=1 locally to diagnose one
+    bug therefore turned these tests red for a reason with nothing to do with
+    the review gate they are about. Each guard gets its own test; neither may
+    depend on an untracked file.
     """
     import anyio
 
     from tilawah.api import main
 
+    overrides.setdefault("debug_audio", False)
     monkeypatch.setattr(main, "settings",
                         dataclasses.replace(settings, **overrides))
 
@@ -420,6 +443,10 @@ def test_boot_refuses_if_the_gate_is_ever_open_in_production(monkeypatch):
 
         is_production = True
         show_unreviewed = True
+        # Off, so the gate is the only thing that can refuse the boot. See
+        # boot() - the debug-audio guard is real, fires first, and belongs to
+        # its own test.
+        debug_audio = False
 
     monkeypatch.setattr(main, "settings", Forced(settings))
 
@@ -428,6 +455,30 @@ def test_boot_refuses_if_the_gate_is_ever_open_in_production(monkeypatch):
             pass
 
     with pytest.raises(RuntimeError, match="content review gate is open"):
+        anyio.run(run)
+
+
+def test_boot_refuses_if_debug_audio_is_on_in_production(monkeypatch):
+    """The OTHER production guard, which had no test at all.
+
+    TILAWAH_DEBUG_AUDIO=1 writes every upload to disk with no consent of any
+    kind. It is the right tool on a laptop chasing a "3 mistakes, 1 card"
+    report and catastrophic on a box real people can reach, which is exactly
+    the combination that gets left switched on. main.py refuses to start; that
+    refusal is now asserted rather than assumed.
+    """
+    import anyio
+
+    from tilawah.api import main
+
+    monkeypatch.setattr(main, "settings", dataclasses.replace(
+        settings, env="production", debug_audio=True))
+
+    async def run():
+        async with main.lifespan(main.app):
+            pass
+
+    with pytest.raises(RuntimeError, match="TILAWAH_DEBUG_AUDIO"):
         anyio.run(run)
 
 

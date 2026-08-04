@@ -510,12 +510,9 @@ button {
   color: var(--brass);
 }
 
-.card__code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.72rem;
-  color: var(--ink-soft);
-  word-break: break-all;
-}
+/* `.card__code` is gone. It set an internal error code in a monospace face on
+   a learner's screen — the one thing the card contract forbids outright. The
+   rule was already unused; leaving the style behind was an invitation. */
 
 .card__rule {
   font-family: var(--serif);
@@ -566,44 +563,10 @@ button {
 
 /* Rule and drill, collapsed. <details> rather than component state — one tap,
    no JS, and it stays open while the learner works through the drill. */
-.card__more {
-  margin-top: 0.7rem;
-  border-top: 1px solid var(--rule-soft);
-  padding-top: 0.55rem;
-}
-
-.card__more > summary {
-  cursor: pointer;
-  list-style: none;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
-
-.card__more > summary::-webkit-details-marker {
-  display: none;
-}
-
-.card__more > summary::after {
-  content: " +";
-  font-weight: 400;
-}
-
-.card__more[open] > summary::after {
-  content: " –";
-}
-
-.card__more > summary:hover,
-.card__more > summary:focus-visible {
-  color: var(--green);
-}
-
-.card__more .card__body {
-  margin-top: 0.5rem;
-  white-space: pre-line;
-}
+/* `.card__more` — the collapsed "Why" and "Practice" disclosures — is gone
+   with the two slots it wrapped. A correction card has four sections and all
+   four are open; there is nothing left to fold away, and material nobody
+   expected to read every time was material that did not belong on the card. */
 
 .card__label {
   margin: 1.25rem 0 0.25rem;
@@ -674,17 +637,21 @@ button {
   color: var(--brass);
 }
 
-/* ── card slots: where / correct / retry ────────────────────────────────── */
+/* ── SLOT 2: where ──────────────────────────────────────────────────────── */
 
-/* SLOT 2 — where it happened. On a merged card this carries the count and
-   every word the letter appeared in, which is what replaces five identical
-   cards saying the same thing five times. */
-.card__where {
+/* On a merged card this carries the count and every word the letter appeared
+   in, which is what replaces five identical cards saying the same thing five
+   times. */
+.where {
+  margin: 0 0 0.85rem;
+}
+
+.where__words {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: 0.15rem 0.4rem;
-  margin: 0 0 0.6rem;
+  margin: 0;
 }
 
 .card__count {
@@ -692,23 +659,41 @@ button {
   color: var(--ink-faint);
 }
 
-/* SLOT 3 — the letter it should have been. A quiet green chip, deliberately
-   unlike the red in the ayah: this is the target, not the mistake. */
-.card__correct {
+/* What we heard, then what to say — side by side, because the comparison IS
+   the explanation. A lone "correct: ذ" chip with nothing beside it asked the
+   learner to remember what they had just been told they said. */
+.where__pair {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  margin: 0 0 0.75rem;
+  gap: 0.75rem;
+  margin: 0.7rem 0 0;
 }
 
-.card__correct-label {
-  font-size: 0.68rem;
+.where__side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.where__label {
+  font-size: 0.64rem;
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--ink-faint);
 }
 
+.where__arrow {
+  color: var(--ink-faint);
+  font-size: 1.1rem;
+  /* The pair is laid out left-to-right even in an RTL-heavy card: the arrow
+     means "becomes", and mirroring it would read as the correction going
+     backwards. */
+  transform: translateY(0.35rem);
+}
+
+/* The target, in green. Deliberately unlike the red in the ayah — this is what
+   to aim at, not another mark against them. */
 .card__letter--good {
   margin-inline-start: 0;
   font-size: 1.6rem;
@@ -716,37 +701,141 @@ button {
   color: var(--green);
 }
 
+/* What we heard. Muted rather than red: it is a report, not an accusation, and
+   the red in the ayah is already carrying the "here" signal. */
+.card__letter--said {
+  margin-inline-start: 0;
+  font-size: 1.6rem;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
 /* The card the learner is reading, tied to the strengthened letters above. */
 .card--active {
   border-color: var(--brass);
 }
 
-/* ── the recovery loop ──────────────────────────────────────────────────── */
+/* ── SLOT 4: the practice ladder ────────────────────────────────────────── */
 
-.card__retry {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.6rem;
-  margin-top: 1.1rem;
+/* Four rungs, narrow to wide: the letter alone, the letter under each haraka,
+   the word they misread, then the ayah. Drawn as a climb — a rail down the
+   left with each rung hanging off it — so the progression is visible before a
+   word of it is read. */
+.ladder {
+  margin-top: 1.3rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--rule-soft);
 }
 
-.card__retry-btn {
-  padding: 0.6rem 1rem;
+.ladder__title {
+  margin: 0 0 0.9rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.ladder__list {
+  margin: 0;
+  padding: 0 0 0 1.6rem;
+  list-style: none;
+  /* The rail. */
+  border-left: 1px solid var(--rule-soft);
+}
+
+.rung {
+  position: relative;
+  padding-bottom: 1.15rem;
+}
+
+.rung:last-child {
+  padding-bottom: 0;
+}
+
+/* The number, sitting ON the rail. `counter` is not used: the server sends a
+   1-based gapless `level`, and a madd error that skips the syllable rung must
+   still read 1, 2, 3 — which an automatic counter would also do, but only by
+   coincidence rather than because the server said so. */
+.rung::before {
+  content: attr(value);
+  position: absolute;
+  left: -1.6rem;
+  top: 0;
+  transform: translateX(-50%);
+  width: 1.35rem;
+  height: 1.35rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--ink-faint);
+}
+
+.rung--live::before {
+  border-color: var(--brass);
+  color: var(--brass);
+}
+
+.rung__name {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+/* The thing to say, at a size you can copy. A letter set at body size teaches
+   nothing about where the tongue goes. */
+.rung__items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1.1rem;
+  margin: 0.3rem 0 0.55rem;
+}
+
+.rung__item {
+  font-family: var(--arabic);
+  font-size: 1.85rem;
+  line-height: 1.75;
+  color: var(--ink);
+}
+
+.rung__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.9rem;
   border: 1px solid var(--rule);
   border-radius: 0.7rem;
-  font-size: 0.87rem;
+  font-size: 0.84rem;
   color: var(--green);
   background: var(--paper-lift);
 }
 
-.card__retry-btn:disabled {
+.rung__btn:disabled {
   opacity: 0.45;
 }
 
-/* Recording just this word. Breathes, like the main record button, so the
-   state is unmistakable without a second timer on the card. */
-.card__retry-btn--live {
+/* Listening, not recording — a quieter weight, because hearing the letter is
+   the step before saying it, not an assessment. */
+.rung__btn--quiet {
+  color: var(--ink-soft);
+  background: transparent;
+}
+
+/* A rung the engine cannot score. Reads as an instruction rather than as a
+   button that failed to load. */
+.rung__say {
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+}
+
+/* ── the recovery loop ──────────────────────────────────────────────────── */
+
+/* Recording one rung. Breathes, like the main record button, so the state is
+   unmistakable without a second timer on the card. */
+.rung__btn--live {
   border-color: var(--brass);
   color: var(--brass);
   animation: retry-breathe 1.9s var(--ease) infinite;
@@ -763,12 +852,13 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card__retry-btn--live {
+  .rung__btn--live {
     animation: none;
   }
 }
 
 .card__retry-hint {
+  margin: 0.7rem 0 0;
   font-size: 0.82rem;
   color: var(--ink-faint);
 }
@@ -828,18 +918,6 @@ button {
   font-size: 0.87rem;
   color: var(--green);
   background: var(--paper-lift);
-}
-
-.card__replay {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 1.35rem;
-  padding: 0.6rem 0.95rem;
-  border: 1px solid var(--rule);
-  border-radius: 0.7rem;
-  font-size: 0.87rem;
-  color: var(--green);
 }
 
 .waiting__hint {

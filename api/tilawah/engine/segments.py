@@ -207,6 +207,73 @@ def unit_words(uthmani: str, segments: list[dict]) -> dict[int, str]:
     return out
 
 
+# Alef wasla carries no sound of its own and is never the letter a mistake is
+# "on", so it is skipped when reading a letter out of a segment.
+_SKIP = "ٱ"
+
+
+def _base_letters(text: str) -> str:
+    """The real Arabic letters in a segment's text, marks and diacritics gone."""
+    from .runlength import MARKS
+
+    return "".join(c for c in text
+                   if not unicodedata.combining(c)
+                   and not c.isspace()
+                   and c not in MARKS
+                   and c not in _SKIP)
+
+
+def unit_letters(uthmani: str, segments: list[dict]) -> dict[int, str]:
+    """unit index -> the real Arabic letter that unit belongs to.
+
+    WHY THIS EXISTS. A TypedError's `letter` came straight off the QPS phoneme
+    string, so five of the engine's error families named a NOTATION SYMBOL as
+    the letter the learner got wrong: qalqalah errors all said ڇ, madd errors
+    said ۥ or ۦ, ikhfa said ں and iqlab said ۾. A learner cannot look those up,
+    write them, or say them - and the card asked them to practise one.
+
+    IT WAS ALSO A MERGE BUG, which is the part that was invisible. Cards merge
+    on (code, letter), so every qalqalah mistake in an ayah carried the SAME
+    letter and collapsed into a single card no matter which of ق ط ب ج د it
+    happened on. Two real mistakes, one card, no way to tell from the outside.
+    Resolving the letter fixes the display and the merge in one move, because
+    they were never two problems.
+
+    DERIVED FROM THE MUSHAF, NOT FROM A TABLE. The segment that owns a unit
+    already carries the Uthmani characters that generated it, so the real letter
+    is read out of the text rather than decided here. That matters most for
+    iqlab: whether ۾ "is" ن or م is a tajweed question, and the mushaf answers
+    it without anyone having to rule on it - the text says ن, so the card says
+    ن.
+
+    THE WALK BACKWARDS is a script fact, not a ruling. All five marks are
+    SUFFIXED notation: qalqalah is appended to the letter it echoes, a madd
+    lengthens the vowel before it, the ghunna marks sit on their noon. So when a
+    segment yields no base letter of its own - which happens where the mushaf
+    itself writes ۥ or ۦ as a superscript, as in «تَأْخُذُهُۥ» - the letter being
+    marked is the nearest one before it. Measured at 25/25 marker units
+    resolved across 12 ayat including 2:255.
+
+    Units with no resolvable letter map to "" and NEVER to the mark. An empty
+    letter degrades honestly: the card omits its letter chip and the practice
+    ladder starts at the word. A mark would be a lie with a glyph on it.
+    """
+    ordered = [s for s in segments if s["units"]]
+    out: dict[int, str] = {}
+    for i, seg in enumerate(ordered):
+        letters = ""
+        for back in range(i, -1, -1):
+            letters = _base_letters(ordered[back]["text"])
+            if letters:
+                break
+        # The LAST base letter in the group: a segment like «دْ» has one, but a
+        # run that swept up a preceding cluster ends on the letter the mark is
+        # actually attached to.
+        for u in seg["units"]:
+            out.setdefault(u, letters[-1] if letters else "")
+    return out
+
+
 def unit_word_indices(uthmani: str, segments: list[dict]) -> dict[int, int]:
     """unit index -> the ORDINAL of the word containing it, counting from 0.
 

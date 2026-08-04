@@ -320,22 +320,140 @@ def test_headline_and_fix_are_not_the_same_sentence():
 
 # ── rendering ─────────────────────────────────────────────────────────────
 
-def test_v3_entries_render_all_four_fields():
+def test_v3_entries_are_adapted_into_all_four_fields():
     """The adapter must fill the shape, not just load the file.
 
     v3 was authored under different key names. Loading it without mapping them
-    would put entries in the registry that render four empty strings - a card
+    would put entries in the registry that carry four empty strings - an entry
     that looks authored and says nothing.
+
+    Asserted on the REGISTRY, not on the rendered card. render() emits only
+    CARD_FIELDS now, because `rule` and `drill` are authored but not shown to a
+    learner; checking the adapter through the card would therefore stop
+    checking two of the four fields it exists to map, and a broken v3 adapter
+    would go unnoticed in exactly the fields nobody is looking at.
+    """
+    for code in ("MAKHARIJ_SAD_TO_SEEN", "MADD_TOO_SHORT", "TAFKHEEM_LOST",
+                 "QALQALAH_MISSING"):
+        block = coaching.entry(code)["uz"]
+        for key in coaching.FIELDS:
+            assert block.get(key, "").strip(), f"{code}.{key} adapted empty"
+
+
+def test_the_card_carries_only_the_card_fields():
+    """`rule` and `drill` must not travel to the client at all.
+
+    Not merely unrendered - absent. A field that arrives and is ignored is a
+    field the next person to touch the card will render "because it is there",
+    and the whole point of dropping them is that a correction card is not a
+    tajweed lesson.
+    """
+    fields = {"word": "ٱلصَّمَدُ", "expected": "ص", "heard": "س",
+              "actual": "س", "expected_count": 2, "heard_count": 1,
+              "n_expected": 2, "n_actual": 1}
+    # `letter` is per-code on purpose. QALQALAH_MISSING's instruction is built
+    # around د, and rendering it for a ص would correctly suppress the fix -
+    # see test_a_worked_example_about_another_letter_is_not_shown. Asking it
+    # about the letter it was written for keeps this test about the SHAPE of
+    # the card rather than about the suppression rule.
+    for code, letter in [("MAKHARIJ_SAD_TO_SEEN", "ص"),
+                         ("MADD_TOO_SHORT", "ا"),
+                         ("TAFKHEEM_LOST", "ط"),
+                         ("QALQALAH_MISSING", "د")]:
+        card = coaching.render(code, "uz", {**fields, "letter": letter})
+        assert card, f"{code} rendered nothing"
+        for key in coaching.CARD_FIELDS:
+            assert card[key].strip(), f"{code}.{key} rendered empty"
+        assert "rule" not in card, f"{code} still ships the ruling"
+        assert "drill" not in card, f"{code} still ships the prose drill"
+
+
+def test_the_fix_is_one_instruction_not_a_paragraph_of_commentary():
+    """The learner's `fix` slot holds the correction and nothing after it.
+
+    Every multi-part `fix` in the registries is written as paragraphs split by
+    a blank line: the correction first, then commentary. Two codes put a
+    fallback apology in that second paragraph - "we have not written this yet,
+    ask your teacher" - and those two are the codes that fire most often, so
+    the app's most-seen card carried a fallback message inside the slot the
+    learner reads for the answer.
     """
     fields = {"word": "ٱلصَّمَدُ", "letter": "ص", "expected": "ص",
               "heard": "س", "actual": "س", "expected_count": 2,
               "heard_count": 1, "n_expected": 2, "n_actual": 1}
-    for code in ("MAKHARIJ_SAD_TO_SEEN", "MADD_TOO_SHORT", "TAFKHEEM_LOST",
-                 "QALQALAH_MISSING"):
-        card = coaching.render(code, "uz", fields)
-        assert card, f"{code} rendered nothing"
-        for key in coaching.FIELDS:
-            assert card[key].strip(), f"{code}.{key} rendered empty"
+    for code, spec in coaching.registry().items():
+        for lang in ("uz", "ru"):
+            authored = (spec.get(lang) or {}).get("fix", "")
+            if "\n\n" not in authored:
+                continue
+            card = coaching.render(code, lang, fields)
+            assert "\n\n" not in card["fix"], (
+                f"{code}.{lang}: the fix slot still carries commentary after "
+                f"the instruction")
+
+
+def test_a_worked_example_about_another_letter_is_not_shown():
+    """QALQALAH_MISSING covers ق ط ب ج د but its instruction is written around
+    «أَحَدْ» and «د». A learner who softened the ق in «وَٱقْتَرِب» must not be told
+    to practise د - especially now, with a practice ladder correctly showing ق
+    directly beneath it.
+
+    The د case is the control: when the worked example IS the detected letter,
+    the instruction is exactly right and must survive.
+    """
+    base = {"word": "وَٱقْتَرِب", "expected": "", "heard": "", "actual": "",
+            "expected_count": 0, "heard_count": 0, "n_expected": "",
+            "n_actual": ""}
+    # Engine code, not registry code - the alias is part of what is tested.
+    kept = coaching.render("QALQALA_DROP", "uz", {**base, "letter": "د"})
+    assert kept["fix"].strip(), "the د example must survive for a د mistake"
+
+    for letter in ("ق", "ط", "ب", "ج"):
+        card = coaching.render("QALQALA_DROP", "uz", {**base, "letter": letter})
+        assert card["fix"] == "", (
+            f"a {letter} qalqalah is still answered with the د drill: "
+            f"{card['fix'][:70]!r}")
+        # Suppressing the instruction must not gut the card: what happened and
+        # where still stand, and the ladder is built from the real letter.
+        assert card["headline"].strip()
+
+
+def test_letter_specific_suppression_does_not_touch_other_entries():
+    """The curated list is narrow BECAUSE the obvious general rule over-fires.
+
+    MADD_WAJIB_SHORTENED names ء as the CONDITION of the ruling and
+    IQLAB_MISSING names م as the target sound; neither is a worked example
+    about the wrong letter, and blanking either would lose a correct
+    instruction.
+    """
+    base = {"word": "جَآءَ", "expected": "", "heard": "", "actual": "",
+            "expected_count": 4, "heard_count": 2, "n_expected": 4,
+            "n_actual": 2}
+    for code, letter in [("MADD_WAJIB_SHORTENED", "ا"), ("IQLAB_MISSING", "ن"),
+                         ("IKHFA_MISSING", "ن"), ("IDGHAM_MISSING", "ن"),
+                         ("MADD_ADDED", "و")]:
+        card = coaching.render(code, "uz", {**base, "letter": letter})
+        assert card and card["fix"].strip(), f"{code} lost its instruction"
+
+
+def test_no_fallback_apology_reaches_a_learner():
+    """The two generics are the most-fired codes in the app. Neither may tell
+    the learner we have not written their correction yet: the card exists to
+    answer four questions, and "ask someone else" answers none of them."""
+    fields = {"word": "ٱلصَّمَدُ", "letter": "ص", "expected": "ص",
+              "heard": "س", "actual": "س", "expected_count": 2,
+              "heard_count": 1, "n_expected": 2, "n_actual": 1}
+    # Phrases the registries use for "this is not authored yet", in both
+    # languages. Matched on the AUTHORED text, so this test fails loudly if
+    # someone rephrases the apology rather than silently passing.
+    apologies = ("tayyorlanmagan", "не подготовлено", "не готово")
+    for code in ("GENERIC_LETTER_SUBSTITUTED", "GENERIC_SIFAT_MISMATCH"):
+        for lang in ("uz", "ru"):
+            card = coaching.render(code, lang, fields)
+            shown = f'{card["headline"]} {card["fix"]}'.lower()
+            for phrase in apologies:
+                assert phrase not in shown, (
+                    f"{code}.{lang} shows a fallback apology: {shown!r}")
 
 
 def test_engine_codes_render_through_their_alias():

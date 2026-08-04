@@ -175,16 +175,18 @@ def substitution_context(fields: dict) -> dict:
 def render(code: str, lang: str, fields: dict) -> dict | None:
     """Error code -> the coaching card, or None if nothing is authored for it.
 
-    Prefers the v4/v5 coaching registries (headline / fix / rule / drill) and
-    falls back to the older rules.json shape, which is mapped onto the same
-    four fields so the client only ever handles one card:
+    Prefers the v4/v5 coaching registries and falls back to the older
+    rules.json shape, which is mapped onto the same two card fields so the
+    client only ever handles one card:
 
         headline <- you_did   "what we heard", the closest thing rules.json has
-        fix      <- fix
-        rule     <- ""        rules.json's `rule` is a LABEL, not an
-                              explanation, so it travels as `label` instead of
-                              being promoted into a field it does not fill
-        drill    <- drill
+        fix      <- fix       narrowed to its first paragraph, as everywhere
+
+    rules.json's `drill` is NOT carried. It is prose describing an exercise,
+    and the card's practice section is now the derived ladder in
+    engine/practice.py rather than a paragraph about practising. rules.json's
+    `rule` is a LABEL, not an explanation, so it travels as `label` and is not
+    promoted into a field it does not fill.
 
     Nothing is invented in that mapping; a field with no source stays empty and
     the UI omits its section.
@@ -202,14 +204,13 @@ def render(code: str, lang: str, fields: dict) -> dict | None:
         return None
     block = rule.get(lang) or rule.get("uz")
 
-    from .coaching import _fill
+    from .coaching import _fill, instruction
 
     out = {
         "headline": _fill(block.get("you_did", ""), safe, code=code,
                           key="you_did"),
-        "fix": _fill(block.get("fix", ""), safe, code=code, key="fix"),
-        "rule": "",
-        "drill": _fill(block.get("drill", ""), safe, code=code, key="drill"),
+        "fix": _fill(instruction(block.get("fix", "")), safe, code=code,
+                     key="fix"),
         "label": block.get("rule", ""),
         "severity": rule.get("severity", "medium"),
         "reviewed": bool(rule.get("reviewed", False)),

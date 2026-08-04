@@ -24,8 +24,11 @@ from . import cards
 from .collapse import looks_collapsed
 from .debug_capture import capture
 from .model import transcribe
+from . import practice
 from .ranges import Range, is_legal_range, n_words, reference
-from .segments import segments_for_range, unit_word_indices, unit_words
+from .runlength import MARKS, MARK_SOUND
+from .segments import (segments_for_range, unit_letters, unit_word_indices,
+                       unit_words)
 from .target import Target
 from .tolerances import apply as apply_tolerances
 from .typed_errors import TypedError, typed_diff
@@ -150,6 +153,75 @@ def _group_to_unit(phonemes: str, ref_groups: list[dict]) -> dict[int, int]:
     return out
 
 
+def _resolve_marks(e: TypedError, letters: dict[int, str]) -> None:
+    """Replace every QPS notation symbol on one error with a real letter.
+
+    THE ONE PLACE THIS CAN HAPPEN. typed_diff sees phoneme strings and has no
+    mushaf to consult; the client must not be trusted to translate symbols it
+    should never receive. The pipeline is the only layer holding both the unit
+    index and the Uthmani text, which is why it already fills in `word` here.
+
+    THE TWO SIDES ARE RESOLVED DIFFERENTLY, because they mean different things.
+
+    `letter` and `expected` describe the REFERENCE - what the text says - so
+    they resolve against the mushaf and get the real letter, whatever it is.
+
+    `heard` describes the PREDICTION. There is no reference character to look
+    up: the learner said something that is not in the text. So it falls back to
+    what the symbol notates as a sound (MARK_SOUND), which is a transcription
+    fact rather than a ruling. ڇ has no such answer and blanks instead - a
+    qalqalah is an echo on a letter, not a letter - and the insertion case that
+    used to produce it is now filed as QALQALA_EXCESSIVE; see _added().
+
+    ORDER MATTERS. _duration_code() classifies MADD vs GHUNNA vs SHADDA by
+    testing the QPS letter against MADD_LETTERS and GHUNNA_LETTERS, and it has
+    already run by the time this is called. Resolving earlier would send every
+    ۥ-madd and ں-ghunna down the SHADDA fallback and out as a code with no
+    content - silently, and only for the errors this function exists to fix.
+    """
+    real = letters.get(e.at, "")
+    if e.letter in MARKS:
+        e.letter = real
+    if e.expected in MARKS:
+        e.expected = real
+    if e.heard in MARKS:
+        e.heard = MARK_SOUND.get(e.heard, "")
+
+
+def locate(detected: list[TypedError], uthmani: str, sura: int, aya: int,
+           start_word: int, num_words: int) -> list[TypedError]:
+    """Attach word, word index and real letter to every detected error.
+
+    Split out of analyze() so it can be exercised WITHOUT the 2.42 GB model.
+    That is not a convenience: the merge depends on `letter`, `letter` depends
+    on this function, and the bug it fixes - every qalqalah error in an ayah
+    collapsing into one card - is invisible unless a test can drive real ayah
+    text through the real resolution. A test that reimplemented this loop would
+    have gone on passing while the pipeline broke.
+
+    Mutates in place and returns the same list, because the caller wants both.
+    """
+    segs = segments_for_range(sura, aya, start_word, num_words)
+    words = unit_words(uthmani, segs)
+    # Ayah-relative, so "re-record just this word" can be handed straight to the
+    # practice range API. unit_word_indices counts within the text it is given,
+    # which here is the SELECTED RANGE - so the range's own offset has to be
+    # added back or every re-record inside a partial selection would target the
+    # wrong word.
+    windex = unit_word_indices(uthmani, segs)
+    # unit -> the real Arabic letter, read out of the mushaf. See
+    # segments.unit_letters(): five QPS notation symbols were reaching cards as
+    # though they were letters, which broke the card AND the merge, since cards
+    # group on (code, letter) and every qalqalah error carried the same ڇ.
+    letters = unit_letters(uthmani, segs)
+    for e in detected:
+        e.word = words.get(e.at, "")
+        w = windex.get(e.at)
+        e.word_index = -1 if w is None else w + start_word
+        _resolve_marks(e, letters)
+    return detected
+
+
 def _rank(e: TypedError) -> tuple:
     rule = content.rules().get(e.code, {})
     return (SEVERITY_RANK.get(rule.get("severity", "medium"), 1), e.at)
@@ -176,7 +248,7 @@ def _unauthored_body(code: str) -> dict:
     those travel on the error itself, not in this body - which is the whole
     requirement: located, always, even when we have nothing to say about it.
     """
-    return {"headline": "", "fix": "", "rule": "", "drill": "", "label": "",
+    return {"headline": "", "fix": "", "label": "",
             "audio_pair": "", "group": "",
             "severity": content.rules().get(code, {}).get("severity", "medium"),
             "reviewed": False, "unauthored": True}
@@ -240,6 +312,11 @@ def present(raw: list[TypedError], lang: str) -> tuple[list[dict], list[dict]]:
             "occurrences": cards.occurrences(group),
             "count": len(group),
             "words": cards.distinct_words(group),
+            # The practice ladder - letter, syllables, the word they misread,
+            # the ayah. DERIVED, not authored, so it is present on every card
+            # including the ones with no coaching text at all: a learner whose
+            # error we cannot explain can still be shown what to drill.
+            "practice": practice.ladder(e.letter, e.word, e.word_index),
         }
 
         if reviewed:
@@ -368,22 +445,7 @@ def analyze(audio: bytes, sura: int, aya: int, lang: str = "uz", *,
     detected = typed_diff(target.phonemes, pred.phonemes)
     detected += _sifat_errors(phonetized, pred)
 
-    # Locate every error in a word before anything renders. The headlines open
-    # with it and `content.render` refuses to emit an unfilled {word}, so this
-    # has to happen here - the pipeline is the only layer holding both the
-    # error's unit index and the Uthmani text it indexes into.
-    segs = segments_for_range(sura, aya, rng.start_word, rng.num_words)
-    words = unit_words(uthmani, segs)
-    # Ayah-relative, so "re-record just this word" can be handed straight to the
-    # practice range API. unit_word_indices counts within the text it is given,
-    # which here is the SELECTED RANGE - so the range's own offset has to be
-    # added back or every re-record inside a partial selection would target the
-    # wrong word.
-    windex = unit_word_indices(uthmani, segs)
-    for e in detected:
-        e.word = words.get(e.at, "")
-        w = windex.get(e.at)
-        e.word_index = -1 if w is None else w + rng.start_word
+    locate(detected, uthmani, sura, aya, rng.start_word, rng.num_words)
 
     # Two correct takes of the same ayah by the same reciter do not produce the
     # same phoneme string - a madd held 4 counts in one reads as 5 in the other -

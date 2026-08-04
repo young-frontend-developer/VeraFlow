@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Attempt,
+  PracticeRung,
   TajweedError,
   flagWrong,
   letterAudioUrl,
 } from "../lib/api";
 import { Key, Lang, retryCopy, t } from "../lib/i18n";
 import ErrorBoundary from "./ErrorBoundary";
+import PracticeLadder from "./PracticeLadder";
 
 /** Stable identity for one merged card, shared with the ayah's red marks. */
 export const cardId = (e: TajweedError) => `${e.code}:${e.letter}`;
@@ -26,6 +28,12 @@ const KIND_KEY: Record<string, Key> = {
 export type RetryState = {
   /** Card currently being re-recorded, or null. */
   cardId: string | null;
+  /**
+   * Which rung of that card's ladder is recording. A card can be re-read at
+   * the word rung or at the ayah rung, and the button that shows "stop" has to
+   * be the one that was tapped.
+   */
+  level: number | null;
   phase: "recording" | "checking" | null;
   /** Cards the learner has since fixed — these close. */
   fixed: string[];
@@ -43,7 +51,7 @@ export default function Feedback({
   attempt,
   activeCardId,
   retry,
-  onRetryWord,
+  onRecordRung,
   onStopRetry,
   onFocusLetter,
   onRetry,
@@ -53,8 +61,8 @@ export default function Feedback({
   attempt: Attempt;
   activeCardId: string | null;
   retry: RetryState;
-  /** Re-record ONE word — the word this error is in. */
-  onRetryWord: (e: TajweedError) => void;
+  /** Record one rung of a card's practice ladder — the word, or the ayah. */
+  onRecordRung: (e: TajweedError, rung: PracticeRung) => void;
   onStopRetry: () => void;
   /** Card tapped: light its letters in the ayah. */
   onFocusLetter: (id: string | null) => void;
@@ -156,7 +164,7 @@ export default function Feedback({
               error={e}
               active={activeCardId === id}
               retry={retry}
-              onRetryWord={onRetryWord}
+              onRecordRung={onRecordRung}
               onStopRetry={onStopRetry}
               onFocusLetter={onFocusLetter}
               cardRefs={cardRefs}
@@ -170,18 +178,25 @@ export default function Feedback({
 }
 
 /**
- * ONE card, in the six slots Part B specifies:
+ * ONE card, in EXACTLY FOUR SLOTS. A correction answers four questions and
+ * stops:
  *
- *   1 what happened   the headline
- *   2 where           the word(s), and the letter marked red in the ayah
- *   3 correct         the expected letter, shown
- *   4 why             the rule
- *   5 fix it          one instruction
- *   6 practice        the LETTER's sound, not the ayah
+ *   1  what happened    the category, the letter, one sentence
+ *   2  where            the word(s), and what we heard against what to say
+ *   3  how to fix it    ONE instruction
+ *   4  what to practise the ladder — letter, syllables, word, ayah
  *
- * Slots 4-6 are collapsed by default. The card has to stay short enough to
- * read: what happened, where, and what the right letter is, is the part a
- * learner acts on.
+ * IT USED TO HAVE SIX, and the two that are gone are the reason the card read
+ * like a textbook. A "Why" disclosure carried 13-44 words of tajweed theory in
+ * vocabulary a beginner does not have; a "Practice" disclosure carried a
+ * paragraph describing an exercise. Both were collapsed, which is the tell —
+ * material nobody expects to be read every time is material that does not
+ * belong on a correction card. Neither is deleted; the server simply stops
+ * sending them, and the review tool still shows a qori the full entry.
+ *
+ * NOTHING IS COLLAPSED NOW. Four short slots, all open, read top to bottom in
+ * about five seconds. If a slot has nothing in it, it is omitted rather than
+ * shown empty.
  */
 function Correction({
   id,
@@ -189,7 +204,7 @@ function Correction({
   error,
   active,
   retry,
-  onRetryWord,
+  onRecordRung,
   onStopRetry,
   onFocusLetter,
   cardRefs,
@@ -199,19 +214,16 @@ function Correction({
   error: TajweedError;
   active: boolean;
   retry: RetryState;
-  onRetryWord: (e: TajweedError) => void;
+  /** Record one rung of THIS card's ladder. */
+  onRecordRung: (e: TajweedError, rung: PracticeRung) => void;
   onStopRetry: () => void;
   onFocusLetter: (id: string | null) => void;
   cardRefs: React.MutableRefObject<Record<string, HTMLElement | null>>;
 }) {
   const c = error.content;
   const audio = letterAudioUrl(c.audio_pair ?? "");
-  const audioRef = useRef<HTMLAudioElement>(null);
   const busy = retry.cardId === id;
   const stillWrong = retry.stillWrong === id;
-  // A word we can actually isolate. -1 means the unit could not be placed in a
-  // word, and re-recording "word -1" would silently re-record the whole ayah.
-  const canRetryWord = (error.word_index ?? -1) >= 0;
 
   return (
     <article
@@ -255,102 +267,78 @@ function Correction({
 
       {c.headline && <h3 className="card__headline">{c.headline}</h3>}
 
-      {/* 2. WHERE. Merged repeats say how often and in which words, on ONE
-             card — five identical cards for one letter is the bug this
-             replaces. */}
-      <p className="card__where">
-        {error.count > 1 && (
-          <span className="card__count">
-            {error.count} {t(lang, "card_times")}
-            {" · "}
-          </span>
-        )}
-        {error.words.map((w, i) => (
-          <span key={`${w}-${i}`} className="card__word" dir="rtl" lang="ar">
-            {w}
-          </span>
-        ))}
-      </p>
+      {/* 2. WHERE — the word(s), then what we heard against what to say.
+             Merged repeats say how often and in which words on ONE card; five
+             identical cards for one letter is the bug this replaces.
 
-      {/* 3. CORRECT — the expected letter, shown as a letter. Only where the
-             detector actually has one: duration and ṣifa errors have no
-             "right letter" to show, and an empty box would be noise. */}
-      {error.content && expectedLetter(error) && (
-        <p className="card__correct">
-          <span className="card__correct-label">{t(lang, "card_correct")}</span>
-          <span className="card__letter card__letter--good" dir="rtl" lang="ar">
-            {expectedLetter(error)}
-          </span>
+             The heard/expected pair is the answer to "what should it have
+             sounded like", which used to be a lone "correct: ذ" chip with
+             nothing to compare it against. Shown only when BOTH are single
+             letters — a haraka error reports a name ("fatha") and a duration
+             error reports nothing, and neither belongs in an Arabic chip. */}
+      <div className="where">
+        <p className="where__words">
+          {error.count > 1 && (
+            <span className="card__count">
+              {error.count} {t(lang, "card_times")}
+              {" · "}
+            </span>
+          )}
+          {error.words.map((w, i) => (
+            <span key={`${w}-${i}`} className="card__word" dir="rtl" lang="ar">
+              {w}
+            </span>
+          ))}
         </p>
-      )}
 
-      {/* 5. FIX IT — open by default. It is the actionable part, and burying
-             the answer one tap deep to keep the card tidy is a bad trade. */}
+        {oneLetter(error.heard) && oneLetter(error.expected) && (
+          <p className="where__pair">
+            <span className="where__side">
+              <span className="where__label">{t(lang, "card_you_said")}</span>
+              <span className="card__letter card__letter--said" dir="rtl" lang="ar">
+                {error.heard}
+              </span>
+            </span>
+            <span className="where__arrow" aria-hidden="true">
+              →
+            </span>
+            <span className="where__side">
+              <span className="where__label">{t(lang, "card_correct")}</span>
+              <span className="card__letter card__letter--good" dir="rtl" lang="ar">
+                {error.expected}
+              </span>
+            </span>
+          </p>
+        )}
+      </div>
+
+      {/* 3. HOW TO FIX IT — one instruction, always open. It is the actionable
+             part, and burying the answer one tap deep to keep the card tidy is
+             a bad trade. The server sends the first paragraph of the authored
+             `fix` and nothing after it; see coaching.instruction(). */}
       {c.fix && <p className="card__body card__body--fix">{c.fix}</p>}
 
-      {/* 4. WHY — collapsed. Worth having, not worth reading every time. */}
-      {c.rule && (
-        <details className="card__more">
-          <summary>{t(lang, "card_why")}</summary>
-          <p className="card__body">{c.rule}</p>
-        </details>
-      )}
+      {/* 4. WHAT TO PRACTISE — the ladder. Replaces both the prose drill and
+             the single "re-record this word" button: a learner who got one
+             letter wrong practises THAT LETTER first and arrives back at the
+             ayah having already said it right three times. */}
+      <PracticeLadder
+        lang={lang}
+        error={error}
+        activeLevel={busy ? retry.level : null}
+        phase={busy ? retry.phase : null}
+        letterAudio={audio}
+        onRecord={onRecordRung}
+        onStop={onStopRetry}
+      />
 
-      {/* 6. PRACTICE — the LETTER's sound. The ayah playback lives on the
-             recitation screen; a whole-ayah recording teaches nothing about
-             one consonant. The button appears ONLY when the file exists —
-             `audio_pair` is empty otherwise, and a control that plays nothing
-             is worse than no control. */}
-      {(c.drill || audio) && (
-        <details className="card__more">
-          <summary>{t(lang, "card_practice")}</summary>
-          {c.drill && <p className="card__body">{c.drill}</p>}
-          {audio && (
-            <>
-              <button
-                className="card__replay"
-                onClick={(ev) => {
-                  ev.stopPropagation();
-                  audioRef.current?.play();
-                }}
-              >
-                <Play />
-                {t(lang, "listen_letter")}
-              </button>
-              <audio ref={audioRef} src={audio} preload="none" />
-            </>
-          )}
-        </details>
+      {busy && retry.phase === "recording" && (
+        <p className="card__retry-hint">{t(lang, "retry_word_hint")}</p>
       )}
-
-      {/* THE RECOVERY LOOP. Re-records ONLY this word, through the same
-          word-range machinery the practice segments use — not the whole ayah,
-          which is what made re-checking one letter cost a full re-read. */}
-      {canRetryWord && (
-        <div className="card__retry">
-          <button
-            className={busy ? "card__retry-btn card__retry-btn--live" : "card__retry-btn"}
-            onClick={(ev) => {
-              ev.stopPropagation();
-              busy ? onStopRetry() : onRetryWord(error);
-            }}
-            disabled={retry.phase === "checking" && !busy}
-          >
-            {busy
-              ? retry.phase === "checking"
-                ? t(lang, "retry_checking")
-                : t(lang, "retry_word_stop")
-              : t(lang, "retry_word")}
-          </button>
-          {busy && retry.phase === "recording" && (
-            <span className="card__retry-hint">{t(lang, "retry_word_hint")}</span>
-          )}
-          {/* Not scolding. The same card stays exactly as it was; this one
-              line is the only acknowledgement that the re-read did not land. */}
-          {stillWrong && !busy && (
-            <span className="card__retry-hint">{t(lang, "not_yet")}</span>
-          )}
-        </div>
+      {/* Not scolding. The same card stays exactly as it was; this one line is
+          the only acknowledgement that the re-read did not land. */}
+      {stillWrong && !busy && (
+        <p className="card__retry-hint">{t(lang, "not_yet")}</p>
       )}
 
       {error.needs_teacher && (
@@ -361,16 +349,16 @@ function Correction({
 }
 
 /**
- * The expected letter, for slot 3 — but only when there genuinely is one.
+ * True when a field really is one letter, and so can go in an Arabic chip.
  *
- * `expected` carries different things for different detectors: a letter for a
- * substitution, a haraka NAME ("fatha") for a vowel error, and nothing at all
- * for a duration or ṣifa error. Showing "fatha" inside an Arabic-script chip
- * would be wrong, so this returns a value only for the single-character case.
+ * `expected` and `heard` carry different things for different detectors: a
+ * letter for a substitution, a haraka NAME ("fatha") for a vowel error, a ṣifa
+ * name ("mofakham") for a ṣifa error, and nothing at all for a duration one.
+ * Only the single-character case is a letter; "fatha" set in Amiri at chip size
+ * is nonsense.
  */
-function expectedLetter(e: TajweedError): string {
-  const v = e.expected ?? "";
-  return v.length === 1 ? v : "";
+function oneLetter(v: string | undefined): boolean {
+  return (v ?? "").length === 1;
 }
 
 /** The end of the loop: brief, warm, and then out of the way. */
