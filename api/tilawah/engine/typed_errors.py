@@ -8,7 +8,8 @@ sync or delete the spike copy once you trust this one.
 from dataclasses import dataclass, asdict
 from difflib import SequenceMatcher
 
-from .runlength import GHUNNA_LETTERS, MADD_LETTERS, QALQALA_MARK, tokenize
+from .runlength import (GHUNNA_LETTERS, MADD_LETTERS, MARKS, QALQALA_MARK,
+                        tokenize)
 
 # ── harakat ───────────────────────────────────────────────────────────────
 # THE CATEGORY THAT HAD NO DETECTOR. The QPS phoneme string has carried the
@@ -83,7 +84,7 @@ EMITTED_CODES = frozenset({
     "GHUNNA_SHORT", "GHUNNA_LONG",
     "SHADDA_SHORT", "SHADDA_LONG",
     # structure
-    "QALQALA_DROP", "LETTER_DROPPED", "LETTER_ADDED",
+    "QALQALA_DROP", "QALQALAH_EXCESSIVE", "LETTER_DROPPED", "LETTER_ADDED",
     # vowels
     "HARAKA_SUBSTITUTED", "HARAKA_TO_SUKUN", "SUKUN_TO_HARAKA",
     # fallback
@@ -156,15 +157,21 @@ def _added(unit, at) -> TypedError:
     there is no "extra X" to name. The honest description is that the qalqalah
     was overdone, which is a error the registry already has words for.
 
-    So this routes to QALQALA_EXCESSIVE. That is a classification change rather
+    So this routes to QALQALAH_EXCESSIVE. That is a classification change rather
     than a detection change: the same audio produces the same finding at the
     same position, and only the name it is filed under moves - from a code
     whose card could not be written truthfully to one whose card already is.
     `letter` still carries the mark here and is resolved against the mushaf by
     the pipeline, like every other error.
+
+    THE NAME IS THE REGISTRY'S, NOT THE ENGINE'S. This emitted QALQALA_EXCESSIVE
+    while the registry entry is QALQALAH_EXCESSIVE, so it resolved to nothing and
+    rendered the unauthored stand-in - a card with a location and no words -
+    over an entry that says exactly what to do. EMITTED_CODES did not list it
+    either, so test_code_mapping could not catch it.
     """
     if unit[0] == QALQALA_MARK:
-        return TypedError(code="QALQALA_EXCESSIVE", at=at, letter=QALQALA_MARK)
+        return TypedError(code="QALQALAH_EXCESSIVE", at=at, letter=QALQALA_MARK)
     return TypedError(code="LETTER_ADDED", at=at, letter=unit[0], heard=unit[0])
 
 
@@ -257,6 +264,26 @@ def typed_diff(expected: str, predicted: str) -> list[TypedError]:
             n = min(i2 - i1, j2 - j1)
             for k in range(n):
                 e, g = exp_u[i1 + k], got_u[j1 + k]
+                # A QPS MARK IS NOT A LETTER, SO IT CANNOT BE SUBSTITUTED FOR
+                # ONE. The aligner happily pairs a ڇ against whatever the model
+                # emitted in its slot, and this branch then reported a letter
+                # confusion - which _resolve_marks made WORSE rather than
+                # better, because turning the ڇ in `expected` into the real
+                # letter produced a fluent, plausible, entirely invented card:
+                #
+                #     2:7 «أَبْصَـٰرِهِمْ», unit 30 = the qalqalah on بْ
+                #     -> GENERIC_LETTER_SUBSTITUTED  expected «ب»  heard «ء»
+                #     -> "you read «ب» as «ء»", about a letter the learner said
+                #
+                # The true finding is that the reference sound was not produced,
+                # which is exactly what _missing() reports - and it already
+                # knows a dropped ڇ is QALQALA_DROP and not a dropped letter.
+                # Nothing is claimed about what was said instead: on this side
+                # of the alignment there is no honest answer, and a wrong
+                # correction is worse than a missing one.
+                if e[0] in MARKS or g[0] in MARKS:
+                    out.append(_missing(e, i1 + k))
+                    continue
                 code = _substitution_code(e[0], g[0])
                 if code is None:
                     continue        # bare alif on one side - not a substitution

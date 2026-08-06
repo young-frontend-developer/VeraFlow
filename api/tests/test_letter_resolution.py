@@ -208,7 +208,12 @@ def test_an_added_qalqalah_is_not_reported_as_an_added_letter():
     It cannot be fixed by resolution the way the reference side is: `heard`
     describes the prediction, so there is no mushaf character to look up, and a
     qalqalah is an echo ON a letter rather than a letter. It is filed as
-    QALQALA_EXCESSIVE instead - a code the registry already has words for.
+    QALQALAH_EXCESSIVE instead - a code the registry already has words for.
+
+    THE NAME IS THE REGISTRY'S. This first shipped emitting QALQALA_EXCESSIVE,
+    which is not an entry in any registry generation, so it resolved to nothing
+    and rendered the unauthored stand-in over content that already existed. The
+    spelling is asserted here because that is the only thing that was wrong.
     """
     uthmani, ph, nw = read(113, 1)
     exp = ph.phonemes
@@ -220,6 +225,82 @@ def test_an_added_qalqalah_is_not_reported_as_an_added_letter():
     assert detected, "no error detected for an inserted qalqalah"
     assert not any(e.code == "LETTER_ADDED" and e.letter in MARKS
                    for e in detected)
-    assert any(e.code == "QALQALA_EXCESSIVE" for e in detected)
+    assert any(e.code == "QALQALAH_EXCESSIVE" for e in detected)
+    from tilawah.content import coaching
+    assert coaching.has("QALQALAH_EXCESSIVE"), (
+        "the code the engine emits must be the one the registry is keyed by")
     for e in detected:
         assert e.heard not in MARKS
+
+
+def test_a_qps_mark_is_never_reported_as_a_letter_substitution():
+    """THE INVENTED CARD. The aligner pairs a ڇ against whatever the model put
+    in its slot, and the replace branch used to call that a letter confusion.
+    _resolve_marks then made it WORSE by turning the ڇ in `expected` into the
+    real letter, producing a fluent and completely fabricated correction:
+
+        2:7 «أَبْصَـٰرِهِمْ», the qalqalah on بْ
+        -> GENERIC_LETTER_SUBSTITUTED  expected «ب»  heard «ء»
+        -> "you read «ب» as «ء»" — about a letter the learner did say
+
+    The true finding is that the qalqalah was not produced. Found by replaying
+    a real recitation; no unit test could have caught it, because every layer
+    was behaving as written.
+    """
+    uthmani, ph, nw = read(2, 7)
+    exp = ph.phonemes
+    # Put a hamza where the qalqalah mark is - what the model actually heard.
+    at = exp.index(QALQALA_MARK)
+    heard = exp[:at] + "ء" + exp[at + 1:]
+    detected = typed_diff(exp, heard)
+    pipeline.locate(detected, uthmani, 2, 7, 0, nw)
+
+    subs = [e for e in detected if "SUBSTITUT" in e.code]
+    assert not subs, (
+        "a QPS mark was reported as a letter substitution: "
+        f"{[(e.code, e.letter, e.expected, e.heard) for e in subs]}")
+    assert any(e.code == "QALQALA_DROP" for e in detected), (
+        "the qalqalah that was not produced must still be reported")
+
+
+def test_a_voweled_qalqalah_letter_is_one_card_not_two():
+    """THE JUDGMENT CALL, decided from the 2:7 capture.
+
+    Reading a sakin qalqalah letter WITH a vowel produces two findings on the
+    same letter one unit apart: the vowel that should not be there, and the
+    bounce that therefore cannot happen. They are not two mistakes - qalqalah IS
+    the release of a letter stopped dead, so giving it a vowel removes the thing
+    that would bounce. The missing bounce is a measurement of the same event.
+
+    The vowel error survives, because it is the one whose instruction works;
+    the qalqalah occurrence rides along so the ayah still marks that letter.
+    """
+    shared = dict(letter="ب", word="أَبْصَـٰرِهِمْ", word_index=7)
+    errs = [
+        TypedError(code="SUKUN_TO_HARAKA", at=29, expected="sukun",
+                   heard="fatha", **shared),
+        TypedError(code="QALQALA_DROP", at=30, **shared),
+    ]
+    merged = cards.merge(errs)
+    assert len(merged) == 1, (
+        f"one voweled qalqalah letter produced {len(merged)} cards: "
+        f"{[(g[0].code, g[0].letter) for g in merged]}")
+    assert merged[0][0].code == "SUKUN_TO_HARAKA", "the cause must be the card"
+    assert len(merged[0]) == 2, "the bounce occurrence must still mark the ayah"
+
+
+def test_folding_does_not_swallow_an_unrelated_mistake():
+    """The guard on the above. The fold is one named pair with a stated
+    mechanism, not "errors on the same letter collapse" - which would have
+    hidden the ص substitution two units later in the same word."""
+    merged = cards.merge([
+        TypedError(code="SUKUN_TO_HARAKA", at=29, letter="ب", expected="sukun",
+                   heard="fatha", word="أَبْصَـٰرِهِمْ", word_index=7),
+        TypedError(code="SUB_SAD_SEEN", at=31, letter="ص", expected="ص",
+                   heard="س", word="أَبْصَـٰرِهِمْ", word_index=7),
+        # Same letter, but nowhere near the vowel error: a separate mistake.
+        TypedError(code="QALQALA_DROP", at=48, letter="ب",
+                   word="ٱقْتَرِب", word_index=12),
+    ])
+    assert len(merged) == 3, (
+        f"{[(g[0].code, g[0].letter) for g in merged]}")

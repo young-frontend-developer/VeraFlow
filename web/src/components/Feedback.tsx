@@ -1,14 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  Attempt,
-  PracticeRung,
-  TajweedError,
-  flagWrong,
-  letterAudioUrl,
-} from "../lib/api";
+import { Attempt, PracticeRung, TajweedError, flagWrong } from "../lib/api";
 import { Key, Lang, retryCopy, t } from "../lib/i18n";
+import DurationMeter from "./DurationMeter";
 import ErrorBoundary from "./ErrorBoundary";
-import PracticeLadder from "./PracticeLadder";
+import PracticeLadder, { RungState } from "./PracticeLadder";
 
 /** Stable identity for one merged card, shared with the ayah's red marks. */
 export const cardId = (e: TajweedError) => `${e.code}:${e.letter}`;
@@ -23,6 +18,7 @@ const KIND_KEY: Record<string, Key> = {
   madd: "kind_madd",
   ghunna: "kind_ghunna",
   haraka: "kind_haraka",
+  shadda: "kind_shadda",
 };
 
 export type RetryState = {
@@ -39,7 +35,11 @@ export type RetryState = {
   fixed: string[];
   /** Card re-read that still shows the same mistake. */
   stillWrong: string | null;
+  /** Per card: which rungs are cleared, which failed, and the last score. */
+  rungs: Record<string, RungState>;
 };
+
+export const EMPTY_RUNGS: RungState = { done: [], failed: null, score: null };
 
 /**
  * Result states. The tone rule governs every branch here: no red, no marks
@@ -51,8 +51,10 @@ export default function Feedback({
   attempt,
   activeCardId,
   retry,
+  ayahAudio,
   onRecordRung,
   onStopRetry,
+  onSelfCheck,
   onFocusLetter,
   onRetry,
   cardRefs,
@@ -61,9 +63,13 @@ export default function Feedback({
   attempt: Attempt;
   activeCardId: string | null;
   retry: RetryState;
+  /** Whole-ayah recitation, for the ladder's top rung. */
+  ayahAudio: string;
   /** Record one rung of a card's practice ladder — the word, or the ayah. */
   onRecordRung: (e: TajweedError, rung: PracticeRung) => void;
   onStopRetry: () => void;
+  /** A listen-and-say rung the learner confirms they have done. */
+  onSelfCheck: (e: TajweedError, rung: PracticeRung) => void;
   /** Card tapped: light its letters in the ayah. */
   onFocusLetter: (id: string | null) => void;
   onRetry: () => void;
@@ -135,8 +141,32 @@ export default function Feedback({
     );
   }
 
+  const open = attempt.errors.filter((e) => !retry.fixed.includes(cardId(e)));
+
   return (
     <>
+      {/* THE OUTCOME, IN A SENTENCE, BEFORE ANY CARD.
+          No ring, no badge, no percentage, no confetti. A learner arriving at
+          results should be able to read one line and know where they stand —
+          how many places to look at, and that looking at them is the ordinary
+          business of learning rather than a verdict.
+
+          It counts the OPEN cards, so as they fix things the sentence comes
+          down with them and reads "everything sorted" at the end instead of
+          still announcing the original tally. */}
+      <section className="card verdict">
+        <p className="verdict__title">
+          {open.length === 0
+            ? t(lang, "verdict_all_fixed")
+            : t(lang, "verdict_title").replace("{n}", String(open.length))}
+        </p>
+        <p className="verdict__body">
+          {open.length === 0
+            ? t(lang, "verdict_all_fixed_body")
+            : t(lang, "verdict_body")}
+        </p>
+      </section>
+
       {attempt.errors.map((e) => {
         const id = cardId(e);
         // A card the learner has re-read correctly closes into a confirmation.
@@ -164,39 +194,57 @@ export default function Feedback({
               error={e}
               active={activeCardId === id}
               retry={retry}
+              ayahAudio={ayahAudio}
+              passScore={attempt.pass_score ?? 0.9}
               onRecordRung={onRecordRung}
               onStopRetry={onStopRetry}
+              onSelfCheck={onSelfCheck}
               onFocusLetter={onFocusLetter}
               cardRefs={cardRefs}
             />
           </ErrorBoundary>
         );
       })}
+      {/* The way out. After working through the cards the learner should be
+          able to read the whole ayah again in one tap — that IS the practice,
+          and leaving them to scroll back up to find the record button makes
+          the loop feel unfinished. */}
+      <div className="actions">
+        <button className="btn-quiet" onClick={onRetry}>
+          {t(lang, "verdict_again")}
+        </button>
+      </div>
+
       <WrongFlag lang={lang} attemptId={attempt.id} />
     </>
   );
 }
 
 /**
- * ONE card, in EXACTLY FOUR SLOTS. A correction answers four questions and
- * stops:
+ * ONE card, in the SAME EIGHT SLOTS every time — RULE 12's canonical shape:
  *
- *   1  what happened    the category, the letter, one sentence
- *   2  where            the word(s), and what we heard against what to say
- *   3  how to fix it    ONE instruction
- *   4  what to practise the ladder — letter, syllables, word, ayah
+ *   1  error            the category, and the letter it happened to
+ *   2  rule name        which ruling this is
+ *   3  location         which word, which instance of the letter, how often
+ *   4  what happened    one sentence, plus the duration meter where length is
+ *                       the mistake
+ *   5  how to fix it    the correction, and the physical instruction under it
+ *   6  listen           7  practise           8  re-check
+ *                       all three inside the ladder, because they are one act:
+ *                       hear it, say it, prove it
  *
- * IT USED TO HAVE SIX, and the two that are gone are the reason the card read
- * like a textbook. A "Why" disclosure carried 13-44 words of tajweed theory in
- * vocabulary a beginner does not have; a "Practice" disclosure carried a
- * paragraph describing an exercise. Both were collapsed, which is the tell —
- * material nobody expects to be read every time is material that does not
- * belong on a correction card. Neither is deleted; the server simply stops
- * sending them, and the review tool still shows a qori the full entry.
+ * FIXED, NOT ADAPTIVE. The previous card had four slots and dropped any it had
+ * nothing for, so two cards for two different mistakes had two different
+ * shapes and the learner re-learned the layout on each one. Now every slot has
+ * a fixed position; a slot with nothing in it renders its fallback rather than
+ * collapsing, and the only things that genuinely vanish are those that would be
+ * lies — a heard/expected pair for an error with neither, a meter for an error
+ * with no length.
  *
- * NOTHING IS COLLAPSED NOW. Four short slots, all open, read top to bottom in
- * about five seconds. If a slot has nothing in it, it is omitted rather than
- * shown empty.
+ * WHAT NEVER APPEARS. The error code, in any slot. It travels on the wire for
+ * logs and for the "this is wrong" report, and the client's job is to make sure
+ * a learner never meets it. Slots 1 and 2 are the two that used to leak it, and
+ * both now fall back to a real name rather than an identifier.
  */
 function Correction({
   id,
@@ -204,8 +252,11 @@ function Correction({
   error,
   active,
   retry,
+  ayahAudio,
+  passScore,
   onRecordRung,
   onStopRetry,
+  onSelfCheck,
   onFocusLetter,
   cardRefs,
 }: {
@@ -214,16 +265,25 @@ function Correction({
   error: TajweedError;
   active: boolean;
   retry: RetryState;
+  ayahAudio: string;
+  passScore: number;
   /** Record one rung of THIS card's ladder. */
   onRecordRung: (e: TajweedError, rung: PracticeRung) => void;
   onStopRetry: () => void;
+  onSelfCheck: (e: TajweedError, rung: PracticeRung) => void;
   onFocusLetter: (id: string | null) => void;
   cardRefs: React.MutableRefObject<Record<string, HTMLElement | null>>;
 }) {
   const c = error.content;
-  const audio = letterAudioUrl(c.audio_pair ?? "");
   const busy = retry.cardId === id;
-  const stillWrong = retry.stillWrong === id;
+  const kindTitle = t(lang, KIND_KEY[error.kind] ?? "kind_pronunciation");
+  // Slot 2 in order of specificity: the registry entry's own title, then the
+  // ṣifa's name, then the category. All three are real names — the point is
+  // that there is no fourth option where the code could surface.
+  const ruleName = error.rule_name || error.sifa_name || kindTitle;
+  // Where the mistake is a LENGTH, the numbers are the whole finding.
+  const meter =
+    (error.expected_count ?? 0) > 0 && (error.heard_count ?? 0) > 0;
 
   return (
     <article
@@ -240,10 +300,7 @@ function Correction({
       onClick={() => onFocusLetter(id)}
     >
       {/* The server sends `draft` precisely so this cannot be omitted: nothing
-          here has been reviewed by a qori, and it must not read as if it had.
-          The CODE is deliberately absent — Part B: no internal identifiers on
-          a learner's screen. It still travels on the wire for logs and for the
-          "this is wrong" report. */}
+          here has been reviewed by a qori, and it must not read as if it had. */}
       {error.draft && (
         <p className="card__draft">
           <span className="card__draft-chip">{t(lang, "draft_chip")}</span>
@@ -251,10 +308,9 @@ function Correction({
         </p>
       )}
 
-      {/* 1. WHAT HAPPENED — the title is the learner-facing category, and the
-             letter it happened to. Never the code. */}
+      {/* 1. ERROR — the learner-facing category and the letter. Never the code. */}
       <p className="card__kicker">
-        {t(lang, KIND_KEY[error.kind] ?? "kind_pronunciation")}
+        {kindTitle}
         {error.letter && (
           <>
             {" — "}
@@ -265,17 +321,24 @@ function Correction({
         )}
       </p>
 
-      {c.headline && <h3 className="card__headline">{c.headline}</h3>}
+      {/* 2. RULE NAME — which ruling this is, so the learner can look it up,
+             ask a teacher about it by name, or recognise it next time. The card
+             used to name the CATEGORY and stop, which is a description rather
+             than a name.
 
-      {/* 2. WHERE — the word(s), then what we heard against what to say.
-             Merged repeats say how often and in which words on ONE card; five
-             identical cards for one letter is the bug this replaces.
+             Printed only when it says something the kicker did not. Where no
+             registry title and no ṣifa name exist, `ruleName` falls back to the
+             category — and the category is already slot 1, so rendering it
+             again puts the same three words on two consecutive lines and makes
+             the card look like it failed to load. The slot keeps its position;
+             it just does not repeat. */}
+      {ruleName !== kindTitle && <p className="card__rule">{ruleName}</p>}
 
-             The heard/expected pair is the answer to "what should it have
-             sounded like", which used to be a lone "correct: ذ" chip with
-             nothing to compare it against. Shown only when BOTH are single
-             letters — a haraka error reports a name ("fatha") and a duration
-             error reports nothing, and neither belongs in an Arabic chip. */}
+      {/* 3. LOCATION — the word, WHICH instance of the letter within it, and
+             how often. "The letter ه was wrong" in a word with two of them
+             leaves the learner guessing, and the red mark is on only one — so
+             the words and the highlight disagreed about how many mistakes
+             there were. */}
       <div className="where">
         <p className="where__words">
           {error.count > 1 && (
@@ -290,7 +353,11 @@ function Correction({
             </span>
           ))}
         </p>
+        <Which lang={lang} error={error} />
 
+        {/* What we heard against what to say. Only when BOTH are single
+            letters — a haraka error reports a name ("fatha"), a duration error
+            reports nothing, and neither belongs in an Arabic chip. */}
         {oneLetter(error.heard) && oneLetter(error.expected) && (
           <p className="where__pair">
             <span className="where__side">
@@ -312,39 +379,83 @@ function Correction({
         )}
       </div>
 
-      {/* 3. HOW TO FIX IT — one instruction, always open. It is the actionable
-             part, and burying the answer one tap deep to keep the card tidy is
-             a bad trade. The server sends the first paragraph of the authored
-             `fix` and nothing after it; see coaching.instruction(). */}
-      {c.fix && <p className="card__body card__body--fix">{c.fix}</p>}
+      {/* 4. WHAT HAPPENED. */}
+      {c.headline && <h3 className="card__headline">{c.headline}</h3>}
 
-      {/* 4. WHAT TO PRACTISE — the ladder. Replaces both the prose drill and
-             the single "re-record this word" button: a learner who got one
-             letter wrong practises THAT LETTER first and arrives back at the
-             ayah having already said it right three times. */}
+      {/* ...and where the mistake IS a length, the two lengths side by side.
+          "Held for 2 instead of 6" is a sentence the learner has to convert
+          into a duration, which is the exact thing they got wrong. */}
+      {meter && (
+        <DurationMeter
+          lang={lang}
+          letter={error.letter}
+          expected={error.expected_count ?? 0}
+          heard={error.heard_count ?? 0}
+        />
+      )}
+
+      {/* 5. HOW TO FIX IT — the correction, then the physical instruction.
+             Two different answers to two different questions: `fix` is what to
+             do about THIS mistake, `articulation` is how the sound is made at
+             all — where the tongue, throat or lips go. A card that named the
+             ṣifa and stopped ("the ṣifa did not come out right") answered
+             neither, and it was the most-shown correction in the app. */}
+      {c.fix && <p className="card__body card__body--fix">{c.fix}</p>}
+      {error.articulation && (
+        <p className="card__body card__body--how">
+          {error.sifa_name && (
+            <span className="card__sifa">{error.sifa_name}</span>
+          )}
+          {error.articulation}
+        </p>
+      )}
+
+      {/* 6, 7, 8. LISTEN, PRACTISE, RE-CHECK. */}
       <PracticeLadder
         lang={lang}
         error={error}
         activeLevel={busy ? retry.level : null}
         phase={busy ? retry.phase : null}
-        letterAudio={audio}
+        state={retry.rungs[id] ?? EMPTY_RUNGS}
+        ayahAudio={ayahAudio}
+        passScore={passScore}
         onRecord={onRecordRung}
         onStop={onStopRetry}
+        onSelfCheck={onSelfCheck}
       />
 
       {busy && retry.phase === "recording" && (
         <p className="card__retry-hint">{t(lang, "retry_word_hint")}</p>
-      )}
-      {/* Not scolding. The same card stays exactly as it was; this one line is
-          the only acknowledgement that the re-read did not land. */}
-      {stillWrong && !busy && (
-        <p className="card__retry-hint">{t(lang, "not_yet")}</p>
       )}
 
       {error.needs_teacher && (
         <span className="card__teacher">{t(lang, "teacher_note")}</span>
       )}
     </article>
+  );
+}
+
+/**
+ * RULE 10 — which instance of the letter, when there is more than one.
+ *
+ * Rendered only when the word really does contain the letter twice or more:
+ * "the 1st ص in ٱلصَّمَدُ" is noise in a word with one ص, and noise on every card
+ * is how a genuinely useful disambiguation gets ignored on the cards that need
+ * it. The server counts over the written CHARACTERS of the word, which is what
+ * the learner counts too.
+ */
+function Which({ lang, error }: { lang: Lang; error: TajweedError }) {
+  const first = error.occurrences?.[0];
+  if (!first?.ordinal || !first.of || first.of < 2) return null;
+  return (
+    <p className="where__which">
+      {t(lang, "which_letter")
+        .replace("{n}", String(first.ordinal))
+        .replace("{of}", String(first.of))}
+      <span className="card__letter card__letter--small" dir="rtl" lang="ar">
+        {error.letter}
+      </span>
+    </p>
   );
 }
 

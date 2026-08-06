@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import AyahText, { AyahLine, Mark } from "./AyahText";
 import ErrorBoundary from "./ErrorBoundary";
-import Feedback, { RetryState, SelfPlayback, cardId } from "./Feedback";
+import Feedback, {
+  EMPTY_RUNGS,
+  RetryState,
+  SelfPlayback,
+  cardId,
+} from "./Feedback";
 import { Selection } from "./Picker";
 import ReciterSelect from "./ReciterSelect";
 import {
@@ -15,6 +20,9 @@ import {
 } from "../lib/api";
 import { Lang, t } from "../lib/i18n";
 import { RecorderHandle, startRecording } from "../lib/recorder";
+import Studio from "./Studio";
+import { Failure } from "./States";
+import { Play } from "./Ornament";
 
 type Phase = "idle" | "recording" | "waiting";
 
@@ -45,7 +53,20 @@ export default function Recite({
   const [phase, setPhase] = useState<Phase>("idle");
   const [result, setResult] = useState<Attempt | null>(null);
   const [elapsed, setElapsed] = useState(0);
-  const [failed, setFailed] = useState(false);
+  /**
+   * WHY the last action failed, not merely THAT it did.
+   *
+   *   mic      the browser refused the microphone. Nothing was recorded, and
+   *            the fix is a permission the app cannot grant itself.
+   *   network  the recording was made and the upload or analysis died. The
+   *            learner has already waited, possibly a long time, and their
+   *            audio is still in memory — so this state offers to send it
+   *            again rather than asking them to recite from scratch.
+   *
+   * A single boolean printed one sentence for both, which told the learner
+   * nothing about which of the two very different things had happened.
+   */
+  const [failure, setFailure] = useState<"mic" | "network" | null>(null);
   const [pickingPart, setPickingPart] = useState(false);
 
   // The learner's own recording, kept only for as long as this result is on
@@ -61,6 +82,7 @@ export default function Recite({
     phase: null,
     fixed: [],
     stillWrong: null,
+    rungs: {},
   });
 
   const handleRef = useRef<RecorderHandle | null>(null);
@@ -72,10 +94,23 @@ export default function Recite({
    * learner stops.
    */
   const rangeRef = useRef<{ start_word: number; num_words: number } | null>(null);
-  const ringRef = useRef<HTMLSpanElement>(null);
-  const ringOuterRef = useRef<HTMLSpanElement>(null);
+  /** The rung level being recorded, captured for the same reason as the range. */
+  const levelRef = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const cardRefs = useRef<Record<string, HTMLElement | null>>({});
+
+  /**
+   * The two figures on the dark card's stats row: how long the last take ran
+   * and what it scored.
+   *
+   * Taken from the last COMPLETED attempt in this session and nowhere else. Not
+   * from history — that would need consent the learner may not have given — and
+   * never invented. Both start empty, and Studio omits the whole row until
+   * there is something true to put in it, because a stat slot showing a dash
+   * is an invitation for someone to fill it later with a plausible number.
+   */
+  const [lastSeconds, setLastSeconds] = useState(0);
+  const [lastScore, setLastScore] = useState<number | null>(null);
 
   // Whole ayat run to nearly four minutes, and "193.9 s" is not a duration a
   // person can feel. Past a minute, read it as minutes.
@@ -97,51 +132,44 @@ export default function Recite({
     setPhase("idle");
     setResult(null);
     setElapsed(0);
-    setFailed(false);
+    setFailure(null);
     setPickingPart(false);
     setOwnRecording(null);
     setActiveCardId(null);
     setRetry({ cardId: null, level: null, phase: null, fixed: [],
-               stillWrong: null });
+               stillWrong: null, rungs: {} });
   }, [key]);
 
   useEffect(() => () => handleRef.current?.cancel(), []);
 
-  // Drive the breathing ring from the live mic level. Written straight to the
-  // DOM rather than through state: this runs at 60fps and React does not need
-  // to know about any of it.
+  // The elapsed clock. Studio draws the waveform itself from the same handle,
+  // at frame rate and straight to the DOM — this only has to keep the timer
+  // honest, so it ticks four times a second rather than sixty.
   useEffect(() => {
     if (phase !== "recording") return;
-    let raf = 0;
-    const tick = () => {
+    const id = window.setInterval(() => {
       const h = handleRef.current;
-      if (h) {
-        const level = h.level();
-        if (ringRef.current)
-          ringRef.current.style.transform = `scale(${1 + level * 0.34})`;
-        if (ringOuterRef.current)
-          ringOuterRef.current.style.transform = `scale(${1.25 + level * 0.6})`;
-        setElapsed((Date.now() - h.startedAt) / 1000);
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+      if (h) setElapsed((Date.now() - h.startedAt) / 1000);
+    }, 250);
+    return () => window.clearInterval(id);
   }, [phase]);
 
   async function start() {
     setResult(null);
-    setFailed(false);
+    setFailure(null);
     setActiveCardId(null);
     setRetry({ cardId: null, level: null, phase: null, fixed: [],
-               stillWrong: null });
+               stillWrong: null, rungs: {} });
     audioRef.current?.pause();
     try {
       handleRef.current = await startRecording();
       setElapsed(0);
       setPhase("recording");
     } catch {
-      setFailed(true);
+      // getUserMedia rejects for a denied permission, a missing device and a
+      // non-secure origin alike. All three land the learner in the same place:
+      // no microphone, and no amount of retrying inside the app fixes it.
+      setFailure("mic");
     }
   }
 
@@ -152,18 +180,52 @@ export default function Recite({
     try {
       const blob = await h.stop();
       setOwnRecording(blob);
-      setResult(
-        await submitAttempt(blob, sura.number, ayah.aya, lang, {
-          start_word: segment.start_word,
-          num_words: segment.num_words,
-        }),
-      );
+      const out = await send(blob);
+      setResult(out);
+      remember(out);
     } catch {
-      setFailed(true);
+      setFailure("network");
     } finally {
       handleRef.current = null;
       setPhase("idle");
     }
+  }
+
+  const send = (blob: Blob) =>
+    submitAttempt(blob, sura.number, ayah.aya, lang, {
+      start_word: segment.start_word,
+      num_words: segment.num_words,
+    });
+
+  /**
+   * Send the recording we already have, again.
+   *
+   * THE RECOVERY THAT MATTERS. A network failure during analysis arrives after
+   * the learner has recited and then waited — sometimes half a minute. Asking
+   * them to record the whole ayah again to recover from OUR failure is the
+   * least forgivable moment in the app. The blob is still in memory for
+   * playback, so it can simply be resent, and the retry costs them nothing.
+   */
+  async function resend() {
+    if (!ownRecording) return;
+    setFailure(null);
+    setPhase("waiting");
+    try {
+      const out = await send(ownRecording);
+      setResult(out);
+      remember(out);
+    } catch {
+      setFailure("network");
+    } finally {
+      setPhase("idle");
+    }
+  }
+
+  /** Keep the last real figures for the dark card. Only from a judged take. */
+  function remember(out: Attempt) {
+    if (out.status !== "ok" || !out.analysable) return;
+    setLastSeconds(out.duration_s);
+    setLastScore(out.score ?? null);
   }
 
   /* ── the recovery loop ──────────────────────────────────────────────────
@@ -198,17 +260,19 @@ export default function Recite({
     try {
       handleRef.current = await startRecording();
       rangeRef.current = range;
+      levelRef.current = rung.level;
       setRetry((r) => ({ ...r, cardId: cardId(e), level: rung.level,
                          phase: "recording", stillWrong: null }));
     } catch {
-      setFailed(true);
+      setFailure("network");
     }
   }
 
   async function stopRecordRung(e: TajweedError) {
     const h = handleRef.current;
     const range = rangeRef.current;
-    if (!h || !range) return;
+    const level = levelRef.current;
+    if (!h || !range || level === null) return;
     const id = cardId(e);
     setRetry((r) => ({ ...r, phase: "checking" }));
     try {
@@ -223,20 +287,71 @@ export default function Recite({
       // A re-read we could not judge is NOT a fix. Only a clean, analysable
       // result closes the card; anything else leaves it exactly as it was.
       const judged = out.status === "ok" && out.analysable;
-      setRetry((r) => ({
-        cardId: null,
-        level: null,
-        phase: null,
-        fixed: judged && !stillThere ? [...r.fixed, id] : r.fixed,
-        stillWrong: judged && stillThere ? id : null,
-      }));
+      const score = out.score ?? 0;
+      const need = out.pass_score ?? 0.9;
+      // BOTH CONDITIONS, and the second is the one that matters. A learner can
+      // score 0.95 on a long range while making exactly the mistake they were
+      // sent to fix, and unlocking on the number alone would wave that through.
+      const cleared = judged && !stillThere && score >= need;
+      const isLast = level >= (e.practice?.length ?? 0);
+
+      setRetry((r) => {
+        const prev = r.rungs[id] ?? EMPTY_RUNGS;
+        return {
+          cardId: null,
+          level: null,
+          phase: null,
+          // The card itself closes only when the LAST rung is cleared — the
+          // ayah, which is the test. Clearing the word rung is progress, not a
+          // finish, and closing there would send the learner away one rung
+          // short of putting it back in context.
+          fixed: cleared && isLast ? [...r.fixed, id] : r.fixed,
+          stillWrong: cleared ? null : id,
+          rungs: {
+            ...r.rungs,
+            [id]: {
+              done: cleared && !prev.done.includes(level)
+                ? [...prev.done, level]
+                : prev.done,
+              failed: cleared ? null : level,
+              score: judged ? score : null,
+            },
+          },
+        };
+      });
     } catch {
       setRetry((r) => ({ ...r, cardId: null, level: null, phase: null }));
-      setFailed(true);
+      setFailure("network");
     } finally {
       handleRef.current = null;
       rangeRef.current = null;
+      levelRef.current = null;
     }
+  }
+
+  /**
+   * A listen-and-say rung the learner says they have done.
+   *
+   * SELF-ATTESTED, AND LABELLED AS SUCH. The engine has no target for a bare
+   * letter — see engine/practice.py — so there is nothing to score here and
+   * nothing is claimed. It still advances the ladder, because the ladder is an
+   * ORDER and the narrow rungs are the part a learner most needs to do before
+   * the wide ones. The alternative was leaving these rungs with no way to be
+   * cleared at all, which would have made the unlock chain stop at rung one.
+   */
+  function selfCheck(e: TajweedError, rung: PracticeRung) {
+    const id = cardId(e);
+    setRetry((r) => {
+      const prev = r.rungs[id] ?? EMPTY_RUNGS;
+      if (prev.done.includes(rung.level)) return r;
+      return {
+        ...r,
+        rungs: {
+          ...r.rungs,
+          [id]: { ...prev, done: [...prev.done, rung.level], failed: null },
+        },
+      };
+    });
   }
 
   const errors = result?.status === "ok" ? result.errors : [];
@@ -251,6 +366,17 @@ export default function Recite({
         at: o.at,
         cardId: cardId(e),
         letter: e.letter,
+        // The exact character range for THIS sound. For a madd that is the
+        // lengthening mark alone rather than the consonant it follows, which
+        // is what lets the note below sit on the thing it is about.
+        span: o.span,
+        // RULE 2: the requirement the length in the card, next to the mark.
+        // Only duration errors carry one — everything else is a red letter
+        // with nothing hanging off it.
+        note:
+          (e.expected_count ?? 0) > 0
+            ? `${e.expected_count} ${t(lang, "harakat")}`
+            : undefined,
       })),
     );
 
@@ -379,9 +505,7 @@ export default function Recite({
             onClick={() => audioRef.current?.play()}
           >
             <span className="listen__glyph" aria-hidden="true">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                <path d="M3 1.6 10 6 3 10.4Z" />
-              </svg>
+              <Play size={12} />
             </span>
             {t(lang, "listen")}
           </button>
@@ -403,42 +527,59 @@ export default function Recite({
         </>
       )}
 
-      {phase === "recording" && (
-        <>
-          <div className="breath">
-            <span
-              className="breath__ring breath__ring--outer"
-              ref={ringOuterRef}
-              aria-hidden="true"
-            />
-            <span className="breath__ring" ref={ringRef} aria-hidden="true" />
-            <span className="breath__timer">{mmss(elapsed)}</span>
-          </div>
-          <p className="breath__hint">{t(lang, "recording_hint")}</p>
-        </>
+      {/* THE ONE DARK SURFACE IN THE APP. It carries the whole recording and
+          analysing experience — waveform, stats, button, copy — and disappears
+          the moment a result arrives. The learner goes into it to recite and
+          comes straight back out to the ivory; that is what makes it read as a
+          moment of focus rather than as a second theme. */}
+      <Studio
+        lang={lang}
+        phase={
+          phase === "recording"
+            ? "recording"
+            : phase === "waiting"
+              ? "analyzing"
+              : "idle"
+        }
+        elapsed={elapsed}
+        level={() => handleRef.current?.level() ?? 0}
+        lastSeconds={lastSeconds}
+        lastScore={lastScore}
+        disabled={failure === "mic"}
+        onStart={start}
+        onStop={stop}
+      />
+
+      {/* NO MICROPHONE. Not a toast: the app cannot fix this itself, so the
+          state has to say what happened and what the learner must do in their
+          browser — and it must not pretend a retry button will help. */}
+      {failure === "mic" && (
+        <Failure
+          lang={lang}
+          tone="warm"
+          title={t(lang, "mic_denied_title")}
+          body={t(lang, "mic_denied_body")}
+          onRetry={start}
+        />
       )}
 
-      {phase === "waiting" && (
-        <p className="waiting" role="status">
-          {t(lang, "waiting")}
-          <br />
-          <span className="waiting__hint">{t(lang, "waiting_hint")}</span>
-        </p>
-      )}
-
-      <button
-        className={phase === "recording" ? "record record--stop" : "record"}
-        disabled={phase === "waiting"}
-        onClick={phase === "recording" ? stop : start}
-      >
-        <span className="record__dot" aria-hidden="true" />
-        {phase === "recording" ? t(lang, "stop") : t(lang, "record")}
-      </button>
-
-      {failed && (
-        <div className="notice">
-          <p className="notice__body">{t(lang, "error_generic")}</p>
-        </div>
+      {/* THE FAILURE THAT DESERVES THE MOST CARE. The learner has already
+          recited and waited, and the recording is still in memory — so this
+          offers to send THAT audio again rather than asking them to perform
+          the whole ayah a second time for our sake. */}
+      {failure === "network" && (
+        <Failure
+          lang={lang}
+          tone="warm"
+          title={t(lang, "net_failed_title")}
+          body={
+            ownRecording
+              ? t(lang, "net_failed_body_kept")
+              : t(lang, "net_failed_body")
+          }
+          retryKey={ownRecording ? "net_failed_resend" : "retry_again"}
+          onRetry={ownRecording ? resend : start}
+        />
       )}
 
       {result && phase === "idle" && (
@@ -470,11 +611,21 @@ export default function Recite({
             attempt={result}
             activeCardId={activeCardId}
             retry={retry}
+            // The ladder's top rung plays the real recitation of this ayah, at
+            // normal speed and slowed. Resolved here because it depends on the
+            // reciter the learner picked, which the server does not hold — and
+            // empty for a partial range, since everyayah has no file for one.
+            ayahAudio={
+              selection.whole
+                ? expertAudioUrl(sura.number, ayah.aya, reciter)
+                : ""
+            }
             onRecordRung={recordRung}
             onStopRetry={() => {
               const e = errors.find((x) => cardId(x) === retry.cardId);
               if (e) stopRecordRung(e);
             }}
+            onSelfCheck={selfCheck}
             onFocusLetter={setActiveCardId}
             onRetry={start}
             cardRefs={cardRefs}

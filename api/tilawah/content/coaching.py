@@ -60,6 +60,10 @@ _ROOT = Path(__file__).resolve().parents[3]
 V3 = _ROOT / "tajweed_error_registry_v3.json"
 V4 = _ROOT / "tajweed_registry_v4_coaching.json"
 V5 = _ROOT / "tajweed_registry_v5_gaps.json"
+# v6 closes the four codes the engine could always emit and nobody had written
+# words for - SHADDA_SHORT, SHADDA_LONG, GHUNNA_LONG, SUB_HA_HEH. Each rendered
+# the unauthored stand-in: a located card with nothing to say.
+V6 = _ROOT / "tajweed_registry_v6_gaps.json"
 
 # What the REGISTRIES author. All four are still parsed, still validated, and
 # still available to the review tool, which reads the registry directly.
@@ -212,12 +216,13 @@ def registry() -> dict:
     merged = _load(V3, adapt=_adapt_v3)
     merged.update(_load(V4))
     merged.update(_load(V5))
+    merged.update(_load(V6))
     return merged
 
 
 def missing_sources() -> list[str]:
     """Registry files this module expects but cannot find."""
-    return [p.name for p in (V3, V4, V5) if not p.exists()]
+    return [p.name for p in (V3, V4, V5, V6) if not p.exists()]
 
 
 def has(code: str) -> bool:
@@ -428,7 +433,23 @@ def instruction(text: str) -> str:
 # with no ق in it. Until then, suppression is the honest option: the card keeps
 # what happened, where, and what to practise, and simply says nothing about how
 # rather than saying something false.
-LETTER_SPECIFIC_EXAMPLE = frozenset({"QALQALAH_MISSING", "HAMS_LOST"})
+#     MAKHARIJ_INTERDENTAL_TO_ZAY   covers ذ->ز AND ظ->ز, and its HEADLINE says
+#                                   "Siz «ذ» harfini «ز» kabi o'qidingiz"
+#
+# The third one is the worst of the three and was found by replaying a real
+# 2:7 recitation: a learner who read «عَظِيمٌ» with a ز was shown a card about ذ,
+# a letter that does not occur in the word. Two entries share this code by
+# design - it is one confusion with two sources - but the authored text picked
+# one source and named it.
+LETTER_SPECIFIC_EXAMPLE = frozenset({"QALQALAH_MISSING", "HAMS_LOST",
+                                     "MAKHARIJ_INTERDENTAL_TO_ZAY"})
+
+# Where a mismatched example is FIXABLE rather than merely suppressible. A
+# letter confusion always has a correct card available - the generic, whose text
+# is templated on {expected} and {actual} and so names whatever letters the
+# detector actually found. Falling back to it beats blanking, because the
+# learner keeps a real instruction instead of losing one.
+SUBSTITUTION_FALLBACK = "GENERIC_LETTER_SUBSTITUTED"
 
 _ARABIC_RUN = re.compile(r"[ء-ي]+")
 
@@ -476,11 +497,35 @@ def render(code: str, lang: str, fields: dict) -> dict | None:
                       safe, code=code, key=key)
            for key in CARD_FIELDS}
 
-    # Silence an instruction whose worked example is about a different letter
-    # than the one the learner actually got wrong. See LETTER_SPECIFIC_EXAMPLE:
-    # a ق qalqalah must not be answered with a drill on د, and the practice
-    # ladder below it is already showing ق.
-    if contradicts_letter(code, out["fix"], str(safe.get("letter", ""))):
+    # An authored worked example about a DIFFERENT letter than the one the
+    # learner got wrong. See LETTER_SPECIFIC_EXAMPLE.
+    letter = str(safe.get("letter", ""))
+    bad_fix = contradicts_letter(code, out["fix"], letter)
+    bad_headline = contradicts_letter(code, out["headline"], letter)
+
+    if bad_headline and resolve(code) != SUBSTITUTION_FALLBACK:
+        # THE HEADLINE IS THE WHOLE CARD'S CLAIM, so a wrong letter there cannot
+        # simply be blanked the way an instruction can - that would leave a card
+        # with no statement of what happened. For a letter confusion there is a
+        # correct card available: the generic is templated on {expected} and
+        # {actual} and therefore names the letters actually detected. Swapping
+        # to it keeps a full, true card instead of half of a false one.
+        generic = render(SUBSTITUTION_FALLBACK, lang, fields)
+        if generic and generic["headline"].strip():
+            # The TEXT comes from the generic; everything else stays this
+            # entry's, because the classification was never what was wrong.
+            generic["severity"] = spec.get("severity", "medium")
+            generic["group"] = spec.get("group", "")
+            generic["label"] = ""
+            generic["audio_pair"] = audio_url(spec.get("audio_pair", ""))
+            generic["reviewed"] = spec.get("status", "draft") == "reviewed"
+            return generic
+        out["headline"] = ""
+
+    # A mismatched instruction with a sound headline is suppressed on its own: a
+    # ق qalqalah must not be answered with a drill on د, and the practice ladder
+    # below it is already showing ق.
+    if bad_fix:
         out["fix"] = ""
 
     out["severity"] = spec.get("severity", "medium")

@@ -43,6 +43,8 @@ export type ErrorContent = {
   headline: string;
   fix: string;
   severity: string;
+  /** Whether a qori has signed this text off. Almost never true today. */
+  reviewed?: boolean;
   /** The registry entry's own short title. Never the error code. */
   label?: string;
   /**
@@ -67,7 +69,14 @@ export type ErrorKind =
   | "tajweed"
   | "madd"
   | "ghunna"
-  | "haraka";
+  | "haraka"
+  /**
+   * Length on a DOUBLED CONSONANT. Its own kind because it is not madd: madd
+   * lengthens a vowel on ا و ي, shadda holds a consonant, and they are
+   * different rulings with different corrections. SHADDA_* used to be titled
+   * as madd, which pointed the learner at the wrong rule entirely.
+   */
+  | "shadda";
 
 /**
  * One rung of the practice ladder — see engine/practice.py, which builds them.
@@ -89,8 +98,32 @@ export type PracticeRung = {
    * control that cannot do what it says. Those two rungs are listen-and-say.
    */
   recordable: boolean;
+  /**
+   * How this rung is judged, and therefore which control it gets.
+   *
+   *   score  recorded and diffed against a real target — word and ayah
+   *   self   the learner confirms they said it — letter and syllables
+   *
+   * Both gate the next rung, so the ladder is climbed in order either way.
+   * What differs is who judges, and the UI has to be honest about which:
+   * a `self` rung that displayed a percentage would be inventing one.
+   */
+  check: "score" | "self";
   /** Ayah-relative word to re-record, for the `word` rung. -1 otherwise. */
   word_index: number;
+  /**
+   * Playable URL for this rung, or "" for none — and "" means render NO
+   * control, never a dead one.
+   */
+  audio: string;
+  /**
+   * Where this rung's audio comes from. `ayah` is resolved CLIENT-SIDE from
+   * the reciter the learner picked, which the server does not know; `letter`
+   * arrives as a ready URL in `audio`. Empty means there is no recording for
+   * this rung and none is claimed — today that is every word rung, because
+   * everyayah serves whole-ayah files with no word timings to clip.
+   */
+  audio_source: "letter" | "ayah" | "";
 };
 
 /** One place this error happened. A merged card has several. */
@@ -99,6 +132,17 @@ export type Occurrence = {
   word: string;
   /** Index of that word WITHIN THE AYAH — feeds `start_word` on re-record. */
   word_index: number;
+  /**
+   * The Uthmani character range to paint, narrowed to THE SOUND rather than
+   * the letter-group containing it. For a madd this is the lengthening mark
+   * alone, not the consonant it sits after — so "2 harakat kerak" points at
+   * the thing it is about. Absent on attempts replayed from before this
+   * existed, in which case the caller falls back to the segment.
+   */
+  span?: [number, number];
+  /** Which instance of this letter within its word, 1-based, and how many. */
+  ordinal?: number;
+  of?: number;
 };
 
 export type TajweedError = {
@@ -133,6 +177,25 @@ export type TajweedError = {
   occurrences: Occurrence[];
   /** The distinct words it touched, in reading order. */
   words: string[];
+  /**
+   * The name of the ruling this card is about — the registry entry's own short
+   * title, or the ṣifa's name. Empty when neither exists, and empty means fall
+   * back to the `kind` title, which is also a real name. Never the code.
+   */
+  rule_name?: string;
+  /** Which ṣifa property was wrong, named. Empty for non-ṣifa errors. */
+  sifa_name?: string;
+  /**
+   * Where the tongue, throat or lips go to make this sound. Answers "which
+   * articulation point" and "which mouth position" — the two questions a card
+   * saying only "the ṣifa was wrong" could never answer.
+   */
+  articulation?: string;
+  /** Which ṣifa field the detector compared. Internal; never rendered raw. */
+  sifa?: string;
+  /** Reference and heard length, in harakat. 0 when not a duration error. */
+  expected_count?: number;
+  heard_count?: number;
   needs_teacher?: boolean;
   /**
    * No qori has signed this off. Outside production that is the normal case,
@@ -172,6 +235,17 @@ export type Attempt = {
   errors: TajweedError[];
   snr_db: number;
   duration_s: number;
+  /**
+   * Fraction of the recited range's sounds with no error against them, and the
+   * mark a practice rung has to clear before the next unlocks.
+   *
+   * `pass_score` is SENT rather than hard-coded here on purpose: it is a guess
+   * made before any learner has used the ladder, and it is meant to be tuned
+   * from real attempts. A threshold compiled into the bundle would need a
+   * release to move.
+   */
+  score?: number;
+  pass_score?: number;
 };
 
 // Anonymous until there is a reason to have accounts. Stored locally so the

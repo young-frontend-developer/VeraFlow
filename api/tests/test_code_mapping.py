@@ -134,12 +134,85 @@ def test_unauthored_sifat_stay_generic(field):
         sifat_codes.GENERIC
 
 
+# ── RULE 5: never invent tajweed that cannot exist ────────────────────────
+
+@pytest.mark.parametrize("letter", ["ا", "ى", "و", "ي"])
+@pytest.mark.parametrize("exp,heard", [("mofakham", "moraqaq"),
+                                        ("moraqaq", "mofakham")])
+def test_a_madd_letter_has_no_heaviness_of_its_own(letter, exp, heard):
+    """"The alif became heavy" is not a correction, it is a category error: ا
+    has no tafkheem ruling, it takes the weight of the consonant before it. The
+    pipeline re-anchors these onto that consonant; anything still carrying a
+    madd letter by the time it reaches here had no consonant to move to, and
+    gets no card at all."""
+    assert sifat_codes.code_for("tafkheem_or_taqeeq", letter, exp, heard) is None
+
+
+@pytest.mark.parametrize("letter", ["ه", "س", "ل", "ر", "ن"])
+def test_qalqalah_is_only_ever_about_the_five_qalqalah_letters(letter):
+    """A qalqalah reported on a letter outside «قطب جد» is the model guessing a
+    value for a field that does not apply. Correcting it would teach a ruling
+    that does not exist."""
+    assert sifat_codes.code_for("qalqla", letter, "moqalqal",
+                                "not_moqalqal") is None
+
+
+@pytest.mark.parametrize("letter", ["ب", "س", "ك", "ر"])
+def test_ghunna_is_only_ever_about_the_nasal_letters(letter):
+    """Nothing outside ن and م has a nasal to hold."""
+    assert sifat_codes.code_for("ghonna", letter, "maghnoon",
+                                "not_maghnoon") is None
+
+
+def test_the_possible_cases_still_fire():
+    """The guard must refuse impossibilities WITHOUT costing recall on the real
+    thing - a heavy ت and a soft ق are both ordinary, correctable mistakes."""
+    assert sifat_codes.code_for(
+        "tafkheem_or_taqeeq", "ت", "moraqaq", "mofakham") == "TAFKHEEM_ADDED"
+    assert sifat_codes.code_for(
+        "qalqla", "د", "moqalqal", "not_moqalqal") == "QALQALAH_MISSING"
+    assert sifat_codes.code_for(
+        "ghonna", "م", "maghnoon", "not_maghnoon") == "GHUNNA_MISSING"
+
+
+def test_heaviness_on_a_madd_letter_is_reanchored_to_its_consonant():
+    """The observation is real - something DID come out light - so the error is
+    moved onto the letter it is actually about rather than thrown away."""
+    from tilawah.engine.pipeline import _reanchor_tafkheem
+
+    # «طَا»: groups are [ط, ا] and the heaviness belongs to the ط.
+    keys = ["ط", "ا"]
+    assert _reanchor_tafkheem("tafkheem_or_taqeeq", 1, "ا", keys) == (0, "ط")
+    # No consonant in front of it: nothing to re-anchor to, left alone so
+    # code_for can refuse it.
+    assert _reanchor_tafkheem("tafkheem_or_taqeeq", 0, "ا", ["ا"]) == (0, "ا")
+    # A different ṣifa is never moved.
+    assert _reanchor_tafkheem("hams_or_jahr", 1, "ا", keys) == (1, "ا")
+
+
 def test_heavy_degree_difference_is_not_an_error():
     """mofakham vs low_mofakham is a degree, not a direction. No card."""
     assert sifat_codes.code_for(
         "tafkheem_or_taqeeq", "ق", "mofakham", "low_mofakham") is None
     assert sifat_codes.code_for(
         "tafkheem_or_taqeeq", "ق", "low_mofakham", "mofakham") is None
+
+
+def test_looseness_degree_difference_is_not_an_error():
+    """The same rule for shidda. `shadeed` is the only value meaning the
+    airflow was cut, so rikhw vs between is a difference of degree between two
+    letters that both flowed — not something a teacher corrects.
+
+    Measured, not assumed: 4 of the 16 ṣifa disagreements on a real 2:7
+    recitation were this pair, and every one produced a card reading "the ṣifa
+    did not come out right"."""
+    assert sifat_codes.code_for(
+        "shidda_or_rakhawa", "س", "rikhw", "between") is None
+    assert sifat_codes.code_for(
+        "shidda_or_rakhawa", "س", "between", "rikhw") is None
+    # The direction that IS an error keeps firing.
+    assert sifat_codes.code_for(
+        "shidda_or_rakhawa", "ط", "shadeed", "between") == "SHIDDA_LOST"
 
 
 def test_every_routed_sifat_code_has_an_entry():
@@ -235,7 +308,7 @@ def test_alif_substitution_produces_no_error():
     ("GHUNNA_TOO_SHORT", "ghunna", "ghunna"),
     ("HARAKA_SUBSTITUTED", "haraka", "haraka"),
     # no group at all - must still land on a real title, never on the code
-    ("SHADDA_LONG", "", "madd"),
+    ("SHADDA_LONG", "", "shadda"),
     ("GHUNNA_LONG", "", "ghunna"),
     ("SUB_HA_HEH", "", "wrong_letter"),
 ])
@@ -243,6 +316,41 @@ def test_kind_of(code, group, kind):
     from tilawah.engine import cards
 
     assert cards.kind_of(code, group) == kind
+
+
+# ── RULE 1: duration and nasalisation are never "pronunciation" ───────────
+
+@pytest.mark.parametrize("sifa,kind", [
+    ("ghonna", "ghunna"),
+    ("qalqla", "tajweed"),
+    ("tafkheem_or_taqeeq", "pronunciation"),
+    ("hams_or_jahr", "pronunciation"),
+])
+def test_the_sifa_decides_the_kind_not_the_fallback_group(sifa, kind):
+    """A ṣifa disagreement nobody authored an entry for resolves to
+    GENERIC_SIFAT_MISMATCH, whose registry group is `fallback` - which says
+    where the entry came from and NOTHING about what the learner did. Routing on
+    it titled every unrouted ghunna fault "Talaffuz", which is exactly the
+    mad/ghunna-versus-ṣifat confusion RULE 1 forbids.
+
+    The detector knew which property flipped the whole time; the card just was
+    not asking.
+    """
+    from tilawah.engine import cards
+
+    assert cards.kind_of("GENERIC_SIFAT_MISMATCH", "fallback", sifa) == kind
+
+
+def test_shadda_length_is_not_a_madd_card():
+    """RULE 1, the other direction. Madd is the lengthening of a vowel on ا و ي;
+    shadda is the holding of a doubled CONSONANT. SHADDA_* fell through
+    kind_of's `startswith` into `madd`, so under-holding the ّ in «إِيَّاكَ» was
+    titled as a madd error and pointed the learner at the wrong ruling."""
+    from tilawah.engine import cards
+
+    assert cards.kind_of("SHADDA_SHORT", "") == cards.SHADDA
+    assert cards.kind_of("SHADDA_LONG", "") == cards.SHADDA
+    assert cards.SHADDA != cards.MADD
 
 
 def test_every_emitted_code_gets_a_real_kind():

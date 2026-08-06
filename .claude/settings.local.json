@@ -207,7 +207,17 @@
       "Bash(ps -W)",
       "Bash(awk '{print $6, $7}')",
       "Bash(taskkill //F //IM chrome.exe)",
-      "Bash(awk '{print $6,$7}')"
+      "Bash(awk '{print $6,$7}')",
+      "PowerShell(git *)",
+      "Bash(curl -s -o /dev/null -w \"api:%{http_code}\\\\n\" http://localhost:8001/api/meta)",
+      "Bash(curl -s -o /dev/null -w \"web:%{http_code}\\\\n\" http://localhost:5199/)",
+      "Bash(curl *)",
+      "Bash(git rm *)",
+      "Bash(PYTHONIOENCODING=utf-8 py -3.13 tools/audit_cards.py)",
+      "Bash(grep -n \"setRetry\\({ cardId: null, level: null, phase: null, fixed: \\\\[\\\\]\" src/components/Recite.tsx)",
+      "PowerShell(Get-Process *)",
+      "Bash(npm install *)",
+      "Bash(grep -v '^$')"
     ]
   }
 }

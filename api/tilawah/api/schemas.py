@@ -182,6 +182,12 @@ class AttemptOut(BaseModel):
     errors: list = []
     snr_db: float = 0.0
     duration_s: float = 0.0
+    # Fraction of the recited range's sounds with no error against them, and the
+    # mark a practice rung must clear before the next unlocks. `pass_score` is
+    # sent rather than hard-coded in the client so it can be tuned from real
+    # usage without shipping a new bundle - see Settings.practice_pass.
+    score: float = 0.0
+    pass_score: float = 0.0
 
 
 class WrongFlagIn(BaseModel):

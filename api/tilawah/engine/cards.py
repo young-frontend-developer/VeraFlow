@@ -36,8 +36,34 @@ TAJWEED = "tajweed"
 MADD = "madd"
 GHUNNA = "ghunna"
 HARAKA = "haraka"
+# A doubled consonant held for the wrong length. NOT madd - madd is the
+# lengthening of a vowel on ا و ي, and shadda is the holding of a consonant.
+# They are different rulings with different corrections, and SHADDA_* used to
+# fall through kind_of()'s `startswith` into MADD, so a learner who under-held
+# the ّ in «إِيَّاكَ» was shown a madd card. See RULE 1.
+SHADDA = "shadda"
 
-KINDS = (EXTRA, MISSING, WRONG, PRONUNCIATION, TAJWEED, MADD, GHUNNA, HARAKA)
+KINDS = (EXTRA, MISSING, WRONG, PRONUNCIATION, TAJWEED, MADD, GHUNNA, HARAKA,
+         SHADDA)
+
+# ── ṣifa -> kind ──────────────────────────────────────────────────────────
+# RULE 1, ENFORCED AT THE ROUTING LAYER. When the ṣifa comparison is the
+# detector, it says WHICH property flipped, and that property decides what kind
+# of card this is - not the registry `group`, which for an unrouted ṣifa is
+# `fallback` and means only "nobody wrote an entry".
+#
+# The failure this fixes: a ghunna held on a letter that should carry none, or
+# any ghunna disagreement other than the one GHUNNA_MISSING covers, resolved to
+# GENERIC_SIFAT_MISMATCH -> group `fallback` -> "Talaffuz". A nasalisation error
+# titled "pronunciation" is precisely the mad/ghunna-vs-ṣifat confusion.
+_BY_SIFA = {
+    "ghonna": GHUNNA,
+    "qalqla": TAJWEED,
+    "tafkheem_or_taqeeq": PRONUNCIATION,
+    "hams_or_jahr": PRONUNCIATION,
+    "shidda_or_rakhawa": PRONUNCIATION,
+    "itbaq": PRONUNCIATION,
+}
 
 # Explicit overrides, checked before the group fallback. These are the codes
 # whose registry group does not describe what the learner experienced:
@@ -46,12 +72,15 @@ KINDS = (EXTRA, MISSING, WRONG, PRONUNCIATION, TAJWEED, MADD, GHUNNA, HARAKA)
 _BY_CODE = {
     "LETTER_ADDED": EXTRA,
     "LETTER_DROPPED": MISSING,
-    # Both generics are filed under group `fallback`, which says where the
-    # entry came from and nothing about what the learner did. They land on
-    # opposite titles: one is the wrong letter, the other the right letter
-    # said wrongly.
+    # Filed under group `fallback`, which says where the entry came from and
+    # nothing about what the learner did.
     "GENERIC_LETTER_SUBSTITUTED": WRONG,
-    "GENERIC_SIFAT_MISMATCH": PRONUNCIATION,
+    # GENERIC_SIFAT_MISMATCH IS DELIBERATELY ABSENT. It used to sit here mapped
+    # to PRONUNCIATION, and _BY_CODE is consulted first - so an unrouted ghunna
+    # or qalqalah fault was titled "Talaffuz" even though the detector had said
+    # which property flipped. That is the RULE 1 confusion, hard-coded. It now
+    # falls through to _BY_SIFA, and only to `fallback` -> PRONUNCIATION when
+    # there is genuinely no ṣifa to route on.
     "QALQALA_DROP": TAJWEED,
     "QALQALAH_MISSING": TAJWEED,
     "QALQALAH_EXCESSIVE": TAJWEED,
@@ -69,16 +98,27 @@ _BY_GROUP = {
 }
 
 
-def kind_of(code: str, group: str = "") -> str:
-    """The learner-facing category for one code."""
+def kind_of(code: str, group: str = "", sifa: str = "") -> str:
+    """The learner-facing category for one code.
+
+    `sifa` is the ṣifa property that disagreed, for errors that came from the
+    ṣifa comparison. It OUTRANKS the registry group, because a group of
+    `fallback` describes the state of the content and not the error - see
+    _BY_SIFA. It does not outrank an explicit per-code override, which is a
+    decision about a specific entry.
+    """
     if code in _BY_CODE:
         return _BY_CODE[code]
+    if sifa in _BY_SIFA:
+        return _BY_SIFA[sifa]
     if group in _BY_GROUP:
         return _BY_GROUP[group]
-    # A duration error on a letter that is neither madd nor nasal - the
-    # SHADDA_* family. It is a length error, so it reads as one.
-    if code.startswith(("MADD_", "SHADDA_")):
+    if code.startswith("MADD_"):
         return MADD
+    # Length on a doubled consonant, not on a madd letter. Its own kind - see
+    # SHADDA above.
+    if code.startswith("SHADDA_"):
+        return SHADDA
     if code.startswith("GHUNNA_"):
         return GHUNNA
     if code.startswith(("HARAKA_", "SUKUN_")):
@@ -101,6 +141,10 @@ WIRE_KEYS = (
     "expected_count", "heard_count", "sifa",
     "word", "word_index", "words", "count", "occurrences",
     "status", "draft", "needs_teacher", "content", "practice",
+    # RULE 12's fixed card shape. `rule_name` fills the "which rule" slot,
+    # `sifa_name` the "which ṣifa", `articulation` the "which mouth position" -
+    # the three questions a card could not previously answer at all.
+    "rule_name", "sifa_name", "articulation",
 )
 
 
@@ -131,10 +175,17 @@ def ensure_shape(err: dict) -> dict:
     out.setdefault("draft", False)
     out.setdefault("needs_teacher", False)
     out.setdefault("content", None)
+    # RULE 12's three newest slots. A legacy row predates all of them, and they
+    # are left EMPTY rather than reconstructed: `rule_name` and `articulation`
+    # are authored text, and inventing either for an old attempt would put words
+    # on a card that no qori wrote and no detector supported.
+    for key in ("rule_name", "sifa_name", "articulation"):
+        out.setdefault(key, "")
 
     body = out.get("content") or {}
     if not out.get("kind"):
-        out["kind"] = kind_of(out["code"], body.get("group", ""))
+        out["kind"] = kind_of(out["code"], body.get("group", ""),
+                              out.get("sifa", ""))
 
     # One legacy error IS one occurrence. Rebuilding it that way keeps the
     # ayah's red letter working for old attempts instead of silently marking
@@ -192,18 +243,96 @@ def merge(errors: list[TypedError]) -> list[list[TypedError]]:
     buckets: dict[tuple[str, str], list[TypedError]] = {}
     for e in errors:
         buckets.setdefault((resolve(e.code), e.letter), []).append(e)
-    return list(buckets.values())
+    return _fold_consequences(buckets)
 
 
-def occurrences(group: list[TypedError]) -> list[dict]:
+# ── one mistake that the engine necessarily reports twice ─────────────────
+# A sakin qalqalah letter read WITH a vowel produces two findings, and they are
+# not two mistakes:
+#
+#     2:7  «أَبْصَـٰرِهِمْ»,  بْ read as بَ
+#       unit 29  SUKUN_TO_HARAKA  on ب   the vowel that should not be there
+#       unit 30  QALQALA_DROP     on ب   the bounce that therefore cannot happen
+#
+# The second is not an independent error a learner can fix. Qalqalah IS the
+# release of a letter stopped dead; give the letter a vowel and there is nothing
+# to release, so the missing bounce is a MEASUREMENT OF THE SAME EVENT. Two
+# cards would ask the learner to correct a consequence separately from its
+# cause, and the correction for the consequence - "let it bounce" - is not even
+# actionable while the vowel is still there.
+#
+# SO THE EFFECT IS FOLDED INTO THE CAUSE, not merged with it. The surviving card
+# is the vowel error, which is the one with an instruction that works; the
+# qalqalah occurrence joins its `occurrences` so the ayah still marks that letter
+# and tapping it still lands on a card that explains it.
+#
+# DELIBERATELY NARROW. This is one named pair with a stated mechanism, not a
+# general "errors on the same letter collapse" rule - which would have hidden
+# the SUB_SAD_SEEN on ص two units later, an unrelated mistake in the same word.
+# Adjacency is required for the same reason: two qalqalah letters elsewhere in
+# the ayah are not caused by this vowel.
+_CAUSE = "SUKUN_TO_HARAKA"
+_EFFECT = frozenset({"QALQALAH_MISSING"})     # resolved codes
+# The ṣifa detector reports a missing qalqalah on the LETTER's unit and the
+# phoneme diff reports it on the MARK's unit, one later. Both are the same
+# letter's bounce.
+_ADJACENT = 1
+
+
+def _fold_consequences(
+    buckets: dict[tuple[str, str], list[TypedError]],
+) -> list[list[TypedError]]:
+    causes = {letter: group for (code, letter), group in buckets.items()
+              if code == _CAUSE}
+    if not causes:
+        return list(buckets.values())
+
+    out: list[list[TypedError]] = []
+    for (code, letter), group in buckets.items():
+        cause = causes.get(letter)
+        if cause is not None and code in _EFFECT:
+            near_ids = {id(e) for e in group
+                        if any(abs(e.at - c.at) <= _ADJACENT for c in cause)}
+            cause.extend(e for e in group if id(e) in near_ids)
+            # An occurrence too far from any vowel error is a separate mistake
+            # on the same letter and keeps its own card. Partitioned by
+            # IDENTITY: TypedError is a dataclass, so two occurrences that
+            # happen to carry the same values compare equal and `not in` would
+            # discard a real one.
+            rest = [e for e in group if id(e) not in near_ids]
+            if rest:
+                out.append(rest)
+            continue
+        out.append(group)
+    return out
+
+
+def occurrences(group: list[TypedError], spans: dict[int, tuple[int, int]] |
+                None = None, uthmani: str = "") -> list[dict]:
     """Where each occurrence happened, in reading order.
 
     Every one is kept. The card shows a count and the distinct words, but the
     ayah needs each individual `at` to mark every affected letter red - which is
     the requirement merging must not break.
+
+    `span` is the Uthmani character range to paint, narrowed to the SOUND rather
+    than the letter-group it sits in (RULE 2), and `ordinal`/`of` say which
+    instance of the letter within its word this is (RULE 10). Both are omitted
+    rather than guessed when the caller has no text to derive them from - the
+    history endpoint replays rows written before either existed.
     """
-    return [{"at": e.at, "word": e.word, "word_index": e.word_index}
-            for e in sorted(group, key=lambda e: e.at)]
+    out = []
+    for e in sorted(group, key=lambda x: x.at):
+        one = {"at": e.at, "word": e.word, "word_index": e.word_index}
+        span = (spans or {}).get(e.at)
+        if span:
+            one["span"] = [span[0], span[1]]
+            if uthmani:
+                from .segments import occurrence_ordinal
+                ordinal, total = occurrence_ordinal(uthmani, span, e.letter)
+                one["ordinal"], one["of"] = ordinal, total
+        out.append(one)
+    return out
 
 
 def distinct_words(group: list[TypedError]) -> list[str]:

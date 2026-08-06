@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
-import ConsentGate from "./components/ConsentGate";
-import Library from "./components/Library";
 import LangToggle from "./components/LangToggle";
-import Log from "./components/Log";
+import Onboarding, { Experience } from "./components/Onboarding";
 import PilotBanner from "./components/PilotBanner";
 import Picker, { Selection } from "./components/Picker";
+import Profile from "./components/Profile";
 import { ReadMode } from "./components/Reader";
 import Recite from "./components/Recite";
 import Review from "./components/Review";
+import { Learn, Memorize } from "./components/Soon";
 import TabBar, { Tab } from "./components/TabBar";
+import Today from "./components/Today";
+import { Failure, Loading } from "./components/States";
 import {
   Ayah,
   Meta,
@@ -35,6 +37,16 @@ const RECITER_KEY = "tilawah_reciter";
 const CONSENT_KEY = "tilawah_consent";
 const AUDIO_CONSENT_KEY = "tilawah_consent_audio";
 const CONSENT_SEEN_KEY = "tilawah_consent_seen";
+/**
+ * How much Qur'an reading the learner said they had done, at onboarding.
+ *
+ * It exists to pick a DEFAULT RECITER and nothing else: a muallim recording
+ * repeats each phrase and is genuinely easier to follow when you are starting,
+ * a murattal is not. Storing an answer nothing reads would be a survey
+ * pretending to be personalisation, so the one thing it decides is the one
+ * thing it is asked for.
+ */
+const EXPERIENCE_KEY = "tilawah_experience";
 
 function initialLang(): Lang {
   const saved = localStorage.getItem(LANG_KEY);
@@ -86,7 +98,7 @@ function ReviewApp() {
 
 function LearnerApp() {
   const [lang, setLang] = useState<Lang>(initialLang);
-  const [tab, setTab] = useState<Tab>("practice");
+  const [tab, setTab] = useState<Tab>("today");
   const [ayat, setAyat] = useState<Ayah[]>([]);
   const [current, setCurrent] = useState<Ayah | null>(null);
   const [suras, setSuras] = useState<Sura[]>([]);
@@ -198,11 +210,25 @@ function LearnerApp() {
     if (consentSeen) setConsent(consented, audioConsented).catch(() => {});
   }, [consented, audioConsented, consentSeen]);
 
-  function decide(next: boolean, nextAudio: boolean) {
+  function decide(
+    next: boolean,
+    nextAudio: boolean,
+    experience: Experience | null = null,
+  ) {
     setConsented(next);
     setAudioConsented(nextAudio);
     setConsentSeen(true);
     localStorage.setItem(CONSENT_SEEN_KEY, "1");
+    // The experience answer spends itself here and nowhere else: a beginner
+    // gets the muallim recording, which repeats each phrase. If no muallim is
+    // in the list the server's default stands — never a guessed folder name.
+    if (experience) {
+      localStorage.setItem(EXPERIENCE_KEY, experience);
+      if (experience === "new") {
+        const muallim = reciters.find((r) => r.style === "muallim");
+        if (muallim) setReciter(muallim.id);
+      }
+    }
     // Deliberately does NOT call setConsent here. The effect above already
     // mirrors the flags to the server, and calling it from both places fired
     // two concurrent writes - the decline path deletes rows, so the two
@@ -210,7 +236,8 @@ function LearnerApp() {
     // written, surfacing in the browser as an unexplained CORS error.
   }
 
-  // Asked once, before anything is recorded — not buried in a settings tab.
+  // First run. Welcome, language, experience, then consent — asked once, before
+  // anything is recorded, and never buried in a settings tab.
   if (!consentSeen) {
     return (
       <div className="app">
@@ -218,10 +245,11 @@ function LearnerApp() {
           <h1 className="wordmark">Tilawah</h1>
           <LangToggle lang={lang} onChange={setLang} />
         </header>
-        <ConsentGate
+        <Onboarding
           lang={lang}
           audioOffered={info?.collect_audio_offered ?? false}
-          onDecide={decide}
+          onLang={setLang}
+          onDone={decide}
         />
       </div>
     );
@@ -261,14 +289,46 @@ function LearnerApp() {
         />
       )}
 
-      <main className="app__main">
+      <main className="app__main" key={tab}>
         {failed ? (
-          <div className="notice">
-            <p className="notice__body">{t(lang, "error_generic")}</p>
-          </div>
+          <Failure
+            lang={lang}
+            title={t(lang, "error_generic")}
+            body={t(lang, "api_stale_body")}
+            onRetry={() => window.location.reload()}
+          />
+        ) : tab === "today" ? (
+          suras.length === 0 ? (
+            <Loading rows={5} />
+          ) : (
+            <Today
+              lang={lang}
+              suras={suras}
+              place={place}
+              consented={consented}
+              onResume={(sura, aya) => {
+                setPlace({ sura, aya });
+                setSelection(null);
+                setTab("practice");
+              }}
+              onPick={(sura, aya) => {
+                setPlace({ sura, aya });
+                setSelection(null);
+                setTab("practice");
+              }}
+              onBrowse={() => {
+                setSelection(null);
+                setTab("practice");
+              }}
+            />
+          )
+        ) : tab === "learn" ? (
+          <Learn lang={lang} />
+        ) : tab === "memorize" ? (
+          <Memorize lang={lang} />
         ) : tab === "practice" ? (
           suras.length === 0 ? (
-            <p className="empty">{t(lang, "loading")}</p>
+            <Loading rows={6} />
           ) : selection ? (
             <Recite
               lang={lang}
@@ -295,28 +355,17 @@ function LearnerApp() {
               onReciter={setReciter}
             />
           )
-        ) : tab === "library" ? (
-          <Library
-            lang={lang}
-            ayat={ayat}
-            current={current}
-            onPick={(a) => {
-              setCurrent(a);
-              // The shortlist is a shortcut into the real catalogue now, not a
-              // parallel world: jump the picker to that ayah and let it resolve
-              // the segments the same way as any other choice.
-              setSelection(null);
-              setPlace({ sura: a.sura, aya: a.aya });
-              setTab("practice");
-            }}
-          />
         ) : (
-          <Log
+          <Profile
             lang={lang}
-            ayat={ayat}
+            suras={suras}
+            reciters={reciters}
+            reciter={reciter}
             consented={consented}
             audioConsented={audioConsented}
             audioOffered={info?.collect_audio_offered ?? false}
+            onReciter={setReciter}
+            onLang={setLang}
             onConsent={(v, a) => {
               setConsented(v);
               setAudioConsented(a);

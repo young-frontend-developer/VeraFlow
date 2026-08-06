@@ -26,6 +26,10 @@ api/calibration/tolerances.suggested.json
 # node
 node_modules/
 web/.env
+# Machine-local API override. It WAS committed once, pointing the client at a
+# throwaway port used for one debugging session, which silently redirects every
+# other checkout's dev client at a server that is not running.
+web/.env.local
 web/dist/
 
 # spike artefacts - the clips are personal recitations, keep them local
@@ -39,3 +43,6 @@ spike/typed.csv
 
 # Playwright screenshots from web/e2e-recite.mjs — artifacts, not source.
 web/e2e-shots/
+
+# Playwright screenshots from web/e2e-screens.mjs — artifacts, not source.
+web/screens/

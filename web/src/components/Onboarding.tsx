@@ -1,0 +1,161 @@
+import { useState } from "react";
+import ConsentGate from "./ConsentGate";
+import { ArchOrnament, StarOrnament, Tick } from "./Ornament";
+import { Lang, t } from "../lib/i18n";
+
+/**
+ * First run: welcome → language → experience → consent.
+ *
+ * THERE IS NO SIGN UP OR LOG IN, and that is a decision rather than an
+ * omission. Tilawah has no accounts: identity is an anonymous id in this
+ * browser's storage, consent is held per device, and withdrawing it deletes the
+ * server rows. An auth screen would be a privacy architecture change dressed as
+ * a visual one, and a designed-but-inert one would be a form that cannot work.
+ * The CONSENT step is the real account decision here, so it is where the flow
+ * ends.
+ *
+ * THE EXPERIENCE STEP DOES SOMETHING. It sets the default reciter — a muallim
+ * recording repeats each phrase and is genuinely easier to follow when you are
+ * starting, a murattal is not. A step that only recorded an answer nobody reads
+ * would be a survey pretending to be personalisation, and this app does not
+ * have anywhere else to spend that answer yet.
+ */
+
+export type Experience = "new" | "some" | "fluent";
+
+const STEPS = 4;
+
+export default function Onboarding({
+  lang,
+  audioOffered,
+  onLang,
+  onDone,
+}: {
+  lang: Lang;
+  audioOffered: boolean;
+  onLang: (l: Lang) => void;
+  onDone: (
+    consented: boolean,
+    audioConsented: boolean,
+    experience: Experience | null,
+  ) => void;
+}) {
+  const [step, setStep] = useState(0);
+  const [experience, setExperience] = useState<Experience | null>(null);
+
+  return (
+    <div className="onboard">
+      <div className="onboard__step" key={step}>
+        {step === 0 && (
+          <>
+            <StarOrnament className="onboard__ornament" size={46} />
+            <h2 className="onboard__display">{t(lang, "onboard_welcome")}</h2>
+            <p className="onboard__lede">{t(lang, "onboard_welcome_body")}</p>
+            <div className="onboard__foot">
+              <button className="btn-primary" onClick={() => setStep(1)}>
+                {t(lang, "onboard_begin")}
+              </button>
+            </div>
+          </>
+        )}
+
+        {step === 1 && (
+          <>
+            <h2 className="onboard__display">{t(lang, "onboard_lang")}</h2>
+            <p className="onboard__lede">{t(lang, "onboard_lang_body")}</p>
+            {/* Each language is shown IN ITSELF, at reading size. A dropdown
+                asks you to recognise a code; this asks you to recognise your
+                own language, which is the actual question. */}
+            <div className="choice">
+              {(
+                [
+                  ["uz", "Oʻzbekcha", "Uzbek"],
+                  ["ru", "Русский", "Russian"],
+                ] as const
+              ).map(([code, native, english]) => (
+                <button
+                  key={code}
+                  className="choice__item"
+                  aria-pressed={lang === code}
+                  onClick={() => onLang(code)}
+                >
+                  <span>
+                    <span className="choice__name">{native}</span>
+                    <span className="choice__note">{english}</span>
+                  </span>
+                  <span className="choice__tick">
+                    <Tick />
+                  </span>
+                </button>
+              ))}
+            </div>
+            <div className="onboard__foot">
+              <button className="btn-primary" onClick={() => setStep(2)}>
+                {t(lang, "onboard_next")}
+              </button>
+            </div>
+          </>
+        )}
+
+        {step === 2 && (
+          <>
+            <ArchOrnament className="onboard__ornament" size={46} />
+            <h2 className="onboard__display">{t(lang, "onboard_level")}</h2>
+            <p className="onboard__lede">{t(lang, "onboard_level_body")}</p>
+            <div className="choice">
+              {(
+                [
+                  ["new", "onboard_level_new", "onboard_level_new_note"],
+                  ["some", "onboard_level_some", "onboard_level_some_note"],
+                  ["fluent", "onboard_level_fluent", "onboard_level_fluent_note"],
+                ] as const
+              ).map(([code, label, note]) => (
+                <button
+                  key={code}
+                  className="choice__item"
+                  aria-pressed={experience === code}
+                  onClick={() => setExperience(code)}
+                >
+                  <span>
+                    <span className="choice__name">{t(lang, label)}</span>
+                    <span className="choice__note">{t(lang, note)}</span>
+                  </span>
+                  <span className="choice__tick">
+                    <Tick />
+                  </span>
+                </button>
+              ))}
+            </div>
+            <div className="onboard__foot">
+              <button className="btn-primary" onClick={() => setStep(3)}>
+                {t(lang, "onboard_next")}
+              </button>
+              {/* Optional means skippable, and skippable means the skip is
+                  visible rather than hidden behind a back gesture. */}
+              <button className="onboard__skip" onClick={() => setStep(3)}>
+                {t(lang, "onboard_skip")}
+              </button>
+            </div>
+          </>
+        )}
+
+        {step === 3 && (
+          <ConsentGate
+            lang={lang}
+            audioOffered={audioOffered}
+            onDecide={(c, a) => onDone(c, a, experience)}
+          />
+        )}
+      </div>
+
+      <div className="onboard__dots" aria-hidden="true">
+        {Array.from({ length: STEPS }, (_, i) => (
+          <span
+            key={i}
+            className={i === step ? "onboard__dot onboard__dot--on" : "onboard__dot"}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}

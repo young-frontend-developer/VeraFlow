@@ -1,60 +1,75 @@
-/* Tilawah — a quiet room before Fajr.
+/* Tilawah — one visual system, applied everywhere.
  *
- * Deep green as mass, warm paper as ground, brass only where light falls.
- * Nothing here shouts: no red, no scores, no badges. Correction is a lamp
- * brought closer, not a mark against you.
+ * Warm ivory ground, deep charcoal text, forest green as the single accent,
+ * sage and beige as its quiet relatives. Serif for anything that speaks,
+ * grotesque for anything that instructs, and a real Quranic face for the text
+ * itself. Cards float on the ground rather than stacking against it.
+ *
+ * THE ONE DELIBERATE CONTRAST is the recording and analysing state: a dark
+ * navy card with an amber waveform. The learner enters it to recite and comes
+ * straight back out to the ivory. That palette appears nowhere else, which is
+ * what makes it read as a moment rather than as a theme.
+ *
+ * ONE RED IS ALSO GONE. A misread letter is marked in warm terracotta, never
+ * in alarm red: the mark is guidance about a letter, not a verdict on the
+ * person reciting.
  */
 
+@import "@fontsource/cormorant-garamond/400.css";
+@import "@fontsource/cormorant-garamond/500.css";
+@import "@fontsource/cormorant-garamond/600.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
 @import "@fontsource/amiri-quran/400.css";
-@import "@fontsource/literata/400.css";
-@import "@fontsource/literata/500.css";
-@import "@fontsource/golos-text/400.css";
-@import "@fontsource/golos-text/500.css";
-@import "@fontsource/golos-text/600.css";
 
 :root {
-  /* ground */
-  --paper: #f4efe3;
-  --paper-lift: #fbf8f1;
-  --paper-sunk: #e9e1d1;
+  /* ── ground ─────────────────────────────────────────────────────────── */
+  --ivory: #faf8f4;
+  --ivory-sunk: #f6f3ee;
+  --ivory-lift: #f7f5f1;
+  --beige: #ede7dd;
+  --card: #ffffff;
+  --border: #ece8e2;
 
-  /* ink */
-  --ink: #15241d;
-  --ink-soft: #5b6a61;
-  --ink-faint: #6b786f;
+  /* ── ink ────────────────────────────────────────────────────────────── */
+  --ink: #222222;
+  --ink-2: #7e7e7e;
+  --ink-3: #a7a7a7;
 
-  /* mass */
-  --green: #1d4634;
-  --green-deep: #0d2419;
+  /* ── accent ─────────────────────────────────────────────────────────── */
+  --green: #1d5a46;
+  --green-soft: rgba(29, 90, 70, 0.08);
+  --sage: #a9b99d;
+  --sage-soft: rgba(169, 185, 157, 0.22);
 
-  /* light */
-  --brass: #a17836;
-  --brass-lift: #c79b4e;
-  --brass-wash: rgba(161, 120, 54, 0.14);
+  /* The correction colour. Warm terracotta, deliberately desaturated — this
+   * marks a letter to work on, and an alarm red would make it a failure. */
+  --terra: #a9603f;
+  --terra-lift: #92502f;
+  --terra-soft: rgba(169, 96, 63, 0.1);
 
-  --rule: rgba(21, 36, 29, 0.13);
-  --rule-soft: rgba(21, 36, 29, 0.07);
+  /* The dark moment. Recording and analysing only. */
+  --night: #10161c;
+  --night-2: #1b2530;
+  --amber: #d9a441;
+  --amber-soft: rgba(217, 164, 65, 0.28);
 
-  /* The one red in the app, and it is used in exactly one place: the letter
-   * that was misread, in the ayah. Not a strike-through, not a fill behind the
-   * text — the glyph itself, recoloured, so the eye lands on the letter and
-   * not on a marker over it. Deliberately a deep madder rather than a warning
-   * red: it has to read as "this one" in a room lit by brass, not as an alert.
-   *
-   * This is a deliberate softening of the original "no red anywhere" rule, on
-   * the grounds that a learner has to be able to FIND the letter before any of
-   * the tone work matters. */
-  --wrong: #a8331f;
-  --wrong-lift: #c4472f;
+  /* ── type ───────────────────────────────────────────────────────────── */
+  --serif: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  --sans: Inter, -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+  --arabic: "Amiri Quran", serif;
 
-  --serif: "Literata", Georgia, serif;
-  --sans: "Golos Text", system-ui, -apple-system, sans-serif;
-  --arabic: "Amiri Quran", "Traditional Arabic", serif;
-
-  --shell: 30rem;
-  --tabbar-h: 4.75rem;
-
+  /* ── form ───────────────────────────────────────────────────────────── */
+  --pad: 24px;
+  --r-card: 26px;
+  --r-soft: 18px;
+  --r-chip: 999px;
+  /* Near-invisible. A card is separated from the ground by a hairline and a
+   * breath of shadow, never by weight. */
+  --lift: 0 2px 8px rgba(0, 0, 0, 0.03);
+  --lift-2: 0 6px 22px rgba(0, 0, 0, 0.05);
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --t: 200ms;
 }
 
 *,
@@ -66,204 +81,53 @@
 html,
 body,
 #root {
-  height: 100%;
+  min-height: 100%;
 }
 
 body {
   margin: 0;
-  background: var(--paper);
+  background: var(--ivory);
   color: var(--ink);
   font-family: var(--sans);
   font-size: 16px;
-  line-height: 1.55;
+  line-height: 1.65;
+  letter-spacing: 0.005em;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-button {
+button,
+input,
+select,
+textarea {
   font: inherit;
   color: inherit;
-  border: 0;
-  background: none;
+}
+
+button {
   cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
 }
 
-:focus-visible {
-  outline: 2px solid var(--brass);
-  outline-offset: 3px;
-  border-radius: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* ── shell ──────────────────────────────────────────────────────────────── */
-
-.app {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-  max-width: var(--shell);
-  margin: 0 auto;
-  background: var(--paper);
-}
-
-.app__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.35rem 1.5rem 1.1rem;
-}
-
-.wordmark {
-  font-family: var(--serif);
-  font-size: 1.2rem;
-  font-weight: 500;
-  letter-spacing: 0.055em;
-  color: var(--green);
+h1,
+h2,
+h3,
+h4,
+p,
+ul,
+ol,
+figure {
   margin: 0;
 }
 
-.app__main {
-  flex: 1;
-  padding: 0 1.5rem calc(var(--tabbar-h) + 2.5rem);
-}
-
-/* ── language ───────────────────────────────────────────────────────────── */
-/* A hairline well with a sliding paper chip — reads as part of the page
- * rather than a control dropped on top of it. */
-
-.lang {
-  display: flex;
-  position: relative;
-  padding: 0.2rem;
-  background: var(--paper-sunk);
-  border-radius: 999px;
-}
-
-.lang__chip {
-  position: absolute;
-  top: 0.2rem;
-  bottom: 0.2rem;
-  width: calc(50% - 0.2rem);
-  background: var(--paper-lift);
-  border-radius: 999px;
-  box-shadow: 0 1px 2px rgba(21, 36, 29, 0.1);
-  transition: transform 0.34s var(--ease);
-}
-
-.lang__btn {
-  position: relative;
-  z-index: 1;
-  padding: 0.3rem 0.7rem;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.11em;
-  color: var(--ink-faint);
-  transition: color 0.24s var(--ease);
-}
-
-.lang__btn[aria-pressed="true"] {
-  color: var(--green);
-}
-
-/* ── ayah ───────────────────────────────────────────────────────────────── */
-
-.ayah {
-  position: relative;
-  padding: 2.4rem 0 2.1rem;
-  border-top: 1px solid var(--rule);
-  border-bottom: 1px solid var(--rule);
-  overflow: hidden;
-}
-
-.ayah__text {
-  display: block;
-  font-family: var(--arabic);
-  font-size: clamp(2rem, 8.5vw, 2.85rem);
-  line-height: 2.35;
-  text-align: center;
-  color: var(--ink);
-  position: relative;
-  z-index: 1;
-}
-
-/* THE ERRORED LETTER, IN RED, ON THE GLYPH.
- *
- * A second copy of the whole ayah, painted over the first in red and clipped
- * to the rectangle one letter-group occupies. Identical text at an identical
- * position, so the cursive joining forms are the original's — the ayah is
- * never split into elements, which is what would break them.
- *
- * There is no background fill. The letter changes colour; nothing is drawn
- * behind or through it. One of these exists per occurrence, so every errored
- * letter is marked, not just the first. */
-/* Position and width come from the measured text box, inline — `inset: 0`
-   would anchor this to the container's padding box instead, which put the copy
-   2.4rem above the real text and painted a second, offset ayah over the page. */
-.ayah__mark {
-  position: absolute;
-  z-index: 2;
-  pointer-events: none;
-  color: var(--wrong);
-  opacity: 0.82;
-  animation: mark-settle 0.7s var(--ease) both;
-}
-
-.ayah__mark .ayah__text {
-  color: inherit;
-}
-
-/* The card being read. Its letters come forward; the rest stay quiet, so a
- * learner working through six corrections can always see which one is theirs. */
-.ayah__mark--active {
-  opacity: 1;
-  color: var(--wrong-lift);
-}
-
-/* Tap target over a red letter. Padded well past the glyph — a clipped shape
- * is a poor thing to aim a finger at. Invisible by design: the red letter is
- * the affordance, this is only the hit area. */
-.ayah__hit {
-  position: absolute;
-  z-index: 3;
+ul,
+ol {
   padding: 0;
-  border: 0;
-  border-radius: 0.35rem;
-  background: none;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+  list-style: none;
 }
 
-.ayah__hit:focus-visible {
-  outline: 2px solid var(--brass);
-  outline-offset: 2px;
-}
-
-@keyframes mark-settle {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 0.82;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ayah__mark {
-    animation: none;
-  }
-}
-
-/* Visually hidden, still read aloud. */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -271,621 +135,15 @@ button {
   padding: 0;
   margin: -1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  clip: rect(0 0 0 0);
   white-space: nowrap;
   border: 0;
 }
 
-/* Dawn light crossing the page, right to left, the way the line is read.
- * This is the app's one piece of ambient motion — it stands in for both the
- * listening state and the waiting state, so nothing needs a spinner. */
-.ayah__sweep {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  background-image: linear-gradient(
-    to left,
-    transparent 0%,
-    rgba(255, 246, 226, 0.35) 40%,
-    rgba(255, 248, 232, 0.72) 50%,
-    rgba(255, 246, 226, 0.35) 60%,
-    transparent 100%
-  );
-  background-size: 55% 100%;
-  background-repeat: no-repeat;
-  animation: sweep 3.4s ease-in-out infinite;
-}
-
-.ayah__sweep--slow {
-  animation-duration: 5.2s;
-}
-
-@keyframes sweep {
-  from {
-    background-position: 155% 0;
-  }
-  to {
-    background-position: -55% 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ayah__sweep {
-    background-image: none;
-    background-color: rgba(255, 246, 226, 0.28);
-  }
-}
-
-/* ── recitation screen ──────────────────────────────────────────────────── */
-
-.eyebrow {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.2rem;
-}
-
-.eyebrow__name {
-  font-family: var(--serif);
-  font-size: 1.05rem;
-  font-weight: 500;
-  margin: 0;
-}
-
-.eyebrow__meta {
-  font-size: 0.72rem;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
-
-.listen {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  width: 100%;
-  padding: 0.95rem 0;
-  color: var(--ink-soft);
-  font-size: 0.9rem;
-  border-bottom: 1px solid var(--rule-soft);
-}
-
-.listen__glyph {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 2rem;
-  height: 2rem;
-  border: 1px solid var(--rule);
-  border-radius: 50%;
-  color: var(--green);
-}
-
-.listen:disabled {
-  opacity: 0.45;
-}
-
-/* ── record control ─────────────────────────────────────────────────────── */
-
-.record {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  width: 100%;
-  margin-top: 2rem;
-  padding: 1.15rem 1.5rem;
-  background: var(--green);
-  color: var(--paper-lift);
-  border-radius: 1.1rem;
-  font-size: 1rem;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  transition:
-    background 0.24s var(--ease),
-    transform 0.16s var(--ease);
-}
-
-.record:active {
-  transform: scale(0.985);
-}
-
-.record--stop {
-  background: var(--green-deep);
-}
-
-.record:disabled {
-  opacity: 0.4;
-}
-
-.record__dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  background: var(--brass-lift);
-  border-radius: 50%;
-}
-
-.record--stop .record__dot {
-  border-radius: 0.1rem;
-  background: var(--paper-lift);
-}
-
-/* ── breath: live level while recording ─────────────────────────────────── */
-/* A slow ring that widens with the voice. Not a waveform — a waveform reads as
- * measurement, and nothing here is being measured against you. */
-
-.breath {
-  position: relative;
-  display: grid;
-  place-items: center;
-  height: 8.5rem;
-  margin-top: 1.6rem;
-}
-
-.breath__ring {
-  position: absolute;
-  width: 5.5rem;
-  height: 5.5rem;
-  border: 1px solid var(--brass);
-  border-radius: 50%;
-  opacity: 0.5;
-  transition:
-    transform 0.12s linear,
-    opacity 0.3s var(--ease);
-}
-
-.breath__ring--outer {
-  border-color: var(--brass-lift);
-  opacity: 0.28;
-}
-
-.breath__timer {
-  position: relative;
-  font-family: var(--serif);
-  font-size: 1.5rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--green);
-}
-
-.breath__hint {
-  margin-top: 0.5rem;
-  font-size: 0.82rem;
-  color: var(--ink-faint);
-  text-align: center;
-}
-
-/* ── waiting ────────────────────────────────────────────────────────────── */
-
-.waiting {
-  margin-top: 1.7rem;
-  text-align: center;
-  font-size: 0.9rem;
-  color: var(--ink-soft);
-}
-
-/* ── cards ──────────────────────────────────────────────────────────────── */
-
-.card {
-  margin-top: 1.5rem;
-  padding: 1.4rem 1.35rem;
-  background: var(--paper-lift);
-  border: 1px solid var(--rule-soft);
-  border-radius: 1rem;
-}
-
-.card--lit {
-  border-left: 2px solid var(--brass);
-}
-
-/* Unreviewed content — the normal case outside production. Dashed and set
-   apart on purpose: now that most cards are drafts, telling at a glance which
-   ones no qori has read matters more, not less. */
-.card--draft {
-  border-left: 2px dashed var(--brass);
-  border-style: dashed;
-  background: transparent;
-}
-
-.card__draft {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.45rem;
-  margin: 0 0 0.9rem;
-  font-size: 0.76rem;
-  line-height: 1.5;
-  color: var(--ink-faint);
-}
-
-.card__draft-chip {
-  flex: none;
-  padding: 0.1rem 0.42rem;
-  border: 1px solid var(--brass);
-  border-radius: 0.3rem;
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: var(--brass);
-}
-
-/* `.card__code` is gone. It set an internal error code in a monospace face on
-   a learner's screen — the one thing the card contract forbids outright. The
-   rule was already unused; leaving the style behind was an invitation. */
-
-.card__rule {
-  font-family: var(--serif);
-  font-size: 1.1rem;
-  font-weight: 500;
-  margin: 0 0 0.5rem;
-}
-
-/* The headline carries the card. Full ink, serif, and never collapsed —
-   everything else on the card is optional reading and this is not. */
-.card__headline {
-  font-family: var(--serif);
-  font-size: 1.06rem;
-  font-weight: 500;
-  line-height: 1.6;
-  color: var(--ink);
-  margin: 0 0 0.7rem;
-}
-
-/* rules.json's short label, above the headline. Coaching entries have no
-   label — their headline says everything the label used to. */
-.card__kicker {
-  margin: 0 0 0.3rem;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
-
-.card__word {
-  font-family: var(--arabic);
-  font-size: 1.5rem;
-  line-height: 2;
-  margin-left: 0.4rem;
-}
-
-.card__said {
-  margin: 0;
-  color: var(--ink);
-}
-
-/* Fix is the default expansion: no toggle, just there. */
-.card__body--fix {
-  color: var(--ink);
-  white-space: pre-line;
-}
-
-/* Rule and drill, collapsed. <details> rather than component state — one tap,
-   no JS, and it stays open while the learner works through the drill. */
-/* `.card__more` — the collapsed "Why" and "Practice" disclosures — is gone
-   with the two slots it wrapped. A correction card has four sections and all
-   four are open; there is nothing left to fold away, and material nobody
-   expected to read every time was material that did not belong on the card. */
-
-.card__label {
-  margin: 1.25rem 0 0.25rem;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
-
-.card__body {
-  margin: 0;
-  color: var(--ink-soft);
-}
-
-.card__teacher {
-  display: block;
-  margin-top: 1.25rem;
-  padding: 0.8rem 0.9rem;
-  background: var(--brass-wash);
-  border-radius: 0.6rem;
-  font-size: 0.87rem;
-  color: #6d5222;
-}
-
-/* all-clear: a single brass hairline and a serif line. No confetti. */
-.clear {
-  margin-top: 2rem;
-  text-align: center;
-}
-
-.clear__mark {
-  width: 2.6rem;
-  height: 2.6rem;
-  margin: 0 auto 1rem;
-  border: 1px solid var(--brass);
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  color: var(--brass);
-  animation: lamp-settle 0.8s var(--ease) both;
-}
-
-.clear__title {
-  font-family: var(--serif);
-  font-size: 1.3rem;
-  font-weight: 500;
-  margin: 0 0 0.35rem;
-}
-
-.clear__body {
-  margin: 0;
-  color: var(--ink-soft);
-}
-
-/* a lit lamp, not a tick — a checkmark reads as a graded answer */
-.clear__flame {
-  width: 0.55rem;
-  height: 0.55rem;
-  border-radius: 50%;
-  background: var(--brass);
-  box-shadow: 0 0 0 4px rgba(161, 120, 54, 0.16);
-}
-
-.card__letter {
-  font-family: var(--arabic);
-  margin-inline-start: 0.5rem;
-  color: var(--brass);
-}
-
-/* ── SLOT 2: where ──────────────────────────────────────────────────────── */
-
-/* On a merged card this carries the count and every word the letter appeared
-   in, which is what replaces five identical cards saying the same thing five
-   times. */
-.where {
-  margin: 0 0 0.85rem;
-}
-
-.where__words {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.15rem 0.4rem;
-  margin: 0;
-}
-
-.card__count {
-  font-size: 0.8rem;
-  color: var(--ink-faint);
-}
-
-/* What we heard, then what to say — side by side, because the comparison IS
-   the explanation. A lone "correct: ذ" chip with nothing beside it asked the
-   learner to remember what they had just been told they said. */
-.where__pair {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin: 0.7rem 0 0;
-}
-
-.where__side {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-
-.where__label {
-  font-size: 0.64rem;
-  font-weight: 600;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
-
-.where__arrow {
-  color: var(--ink-faint);
-  font-size: 1.1rem;
-  /* The pair is laid out left-to-right even in an RTL-heavy card: the arrow
-     means "becomes", and mirroring it would read as the correction going
-     backwards. */
-  transform: translateY(0.35rem);
-}
-
-/* The target, in green. Deliberately unlike the red in the ayah — this is what
-   to aim at, not another mark against them. */
-.card__letter--good {
-  margin-inline-start: 0;
-  font-size: 1.6rem;
-  line-height: 1.4;
-  color: var(--green);
-}
-
-/* What we heard. Muted rather than red: it is a report, not an accusation, and
-   the red in the ayah is already carrying the "here" signal. */
-.card__letter--said {
-  margin-inline-start: 0;
-  font-size: 1.6rem;
-  line-height: 1.4;
-  color: var(--ink-soft);
-}
-
-/* The card the learner is reading, tied to the strengthened letters above. */
-.card--active {
-  border-color: var(--brass);
-}
-
-/* ── SLOT 4: the practice ladder ────────────────────────────────────────── */
-
-/* Four rungs, narrow to wide: the letter alone, the letter under each haraka,
-   the word they misread, then the ayah. Drawn as a climb — a rail down the
-   left with each rung hanging off it — so the progression is visible before a
-   word of it is read. */
-.ladder {
-  margin-top: 1.3rem;
-  padding-top: 1.1rem;
-  border-top: 1px solid var(--rule-soft);
-}
-
-.ladder__title {
-  margin: 0 0 0.9rem;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
-
-.ladder__list {
-  margin: 0;
-  padding: 0 0 0 1.6rem;
-  list-style: none;
-  /* The rail. */
-  border-left: 1px solid var(--rule-soft);
-}
-
-.rung {
-  position: relative;
-  padding-bottom: 1.15rem;
-}
-
-.rung:last-child {
-  padding-bottom: 0;
-}
-
-/* The number, sitting ON the rail. `counter` is not used: the server sends a
-   1-based gapless `level`, and a madd error that skips the syllable rung must
-   still read 1, 2, 3 — which an automatic counter would also do, but only by
-   coincidence rather than because the server said so. */
-.rung::before {
-  content: attr(value);
-  position: absolute;
-  left: -1.6rem;
-  top: 0;
-  transform: translateX(-50%);
-  width: 1.35rem;
-  height: 1.35rem;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  border: 1px solid var(--rule);
-  background: var(--paper);
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: var(--ink-faint);
-}
-
-.rung--live::before {
-  border-color: var(--brass);
-  color: var(--brass);
-}
-
-.rung__name {
-  font-size: 0.82rem;
-  color: var(--ink-soft);
-}
-
-/* The thing to say, at a size you can copy. A letter set at body size teaches
-   nothing about where the tongue goes. */
-.rung__items {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.2rem 1.1rem;
-  margin: 0.3rem 0 0.55rem;
-}
-
-.rung__item {
-  font-family: var(--arabic);
-  font-size: 1.85rem;
-  line-height: 1.75;
-  color: var(--ink);
-}
-
-.rung__btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.9rem;
-  border: 1px solid var(--rule);
-  border-radius: 0.7rem;
-  font-size: 0.84rem;
-  color: var(--green);
-  background: var(--paper-lift);
-}
-
-.rung__btn:disabled {
-  opacity: 0.45;
-}
-
-/* Listening, not recording — a quieter weight, because hearing the letter is
-   the step before saying it, not an assessment. */
-.rung__btn--quiet {
-  color: var(--ink-soft);
-  background: transparent;
-}
-
-/* A rung the engine cannot score. Reads as an instruction rather than as a
-   button that failed to load. */
-.rung__say {
-  font-size: 0.8rem;
-  color: var(--ink-faint);
-}
-
-/* ── the recovery loop ──────────────────────────────────────────────────── */
-
-/* Recording one rung. Breathes, like the main record button, so the state is
-   unmistakable without a second timer on the card. */
-.rung__btn--live {
-  border-color: var(--brass);
-  color: var(--brass);
-  animation: retry-breathe 1.9s var(--ease) infinite;
-}
-
-@keyframes retry-breathe {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(161, 120, 54, 0.22);
-  }
-  50% {
-    box-shadow: 0 0 0 5px rgba(161, 120, 54, 0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .rung__btn--live {
-    animation: none;
-  }
-}
-
-.card__retry-hint {
-  margin: 0.7rem 0 0;
-  font-size: 0.82rem;
-  color: var(--ink-faint);
-}
-
-/* The end of the loop. Warm, brief, and then it stops taking up space —
-   a corrected mistake should not keep occupying the screen. */
-.card--fixed {
-  border-color: rgba(161, 120, 54, 0.4);
-  background: linear-gradient(
-    to bottom,
-    rgba(161, 120, 54, 0.07),
-    transparent 70%
-  );
-  animation: fixed-settle 0.5s var(--ease) both;
-}
-
-.card__fixed-title {
-  margin: 0;
-  font-family: var(--serif);
-  font-size: 1rem;
-  color: var(--green);
-}
-
-@keyframes fixed-settle {
+@keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(-3px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -893,1038 +151,2316 @@ button {
   }
 }
 
-/* A card whose rendering threw. Quiet and out of the way: it is our failure,
-   not the learner's, and it must not look like a finding about their
-   recitation. */
-.card--broken {
-  border-style: dashed;
-  border-color: var(--rule);
-  color: var(--ink-faint);
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-/* ── hearing yourself back ──────────────────────────────────────────────── */
-
-.selfplay {
-  margin: 0 0 1.1rem;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }
 
-.selfplay__btn {
+/* ══ shell ════════════════════════════════════════════════════════════════ */
+
+.app {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 0 var(--pad);
+  /* Room for the floating nav to sit clear of the last card. */
+  padding-bottom: 132px;
+}
+
+.app__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 30px 0 22px;
+}
+
+.wordmark {
+  font-family: var(--serif);
+  font-size: 25px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--green);
+}
+
+.app__main {
+  animation: fade var(--t) var(--ease) both;
+}
+
+.app--tool {
+  max-width: 780px;
+}
+
+.app__tool-tag {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ══ figures ══════════════════════════════════════════════════════════════ */
+
+/* Cormorant defaults to OLD-STYLE figures — 1 with no ascender, 3 and 4
+ * descending below the baseline. In running editorial text that is exactly
+ * right and part of why the face was chosen. In a timer it is not: "0:01"
+ * renders as "0:0I" and reads as a broken glyph rather than as a number.
+ *
+ * So the rule is by MEANING, not by element: anywhere a figure is DATA — a
+ * clock, an ayah reference, a count, a percentage — it gets lining tabular
+ * figures so digits align and none of them dip. Everywhere else the serif
+ * keeps its own.
+ */
+.studio__timer,
+.studio__stat-value,
+.hero__ref,
+.eyebrow__meta,
+.verse__ref,
+.row__num,
+.group__count,
+.progress__text,
+.mushaf__mark,
+.card__count,
+.rung__score,
+.meter__count,
+.meter__count-text,
+.estimate {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* Sura numbers sit inside serif headings, so they need the same treatment
+   without dragging the whole heading out of its own figures. */
+.eyebrow__name,
+.section-head,
+.suggest__name,
+.hero__sura,
+.profile__name {
+  font-variant-numeric: lining-nums;
+}
+
+/* ══ type primitives ══════════════════════════════════════════════════════ */
+
+/* The editorial voice. Serif, generous, never shouting. */
+.display {
+  font-family: var(--serif);
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 1.22;
+  letter-spacing: 0.004em;
+  color: var(--ink);
+}
+
+.section-head {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.28;
+  letter-spacing: 0.01em;
+  margin-bottom: 6px;
+  color: var(--ink);
+}
+
+.section-sub {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  margin-bottom: 28px;
+}
+
+/* The small capitalised label above a block. One weight, one size, everywhere
+   in the app — this is the thing that makes unrelated screens read as one. */
+.eyebrow-label,
+.card__kicker,
+.ladder__title,
+.where__label,
+.meter__label,
+.rung__name--cap,
+.section-label {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.empty {
+  font-size: 15px;
+  color: var(--ink-2);
+  padding: 32px 0;
+}
+
+/* ══ buttons ══════════════════════════════════════════════════════════════ */
+
+.btn-primary {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 0.95rem;
-  border: 1px solid var(--rule);
-  border-radius: 0.7rem;
-  font-size: 0.87rem;
-  color: var(--green);
-  background: var(--paper-lift);
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 17px 24px;
+  border-radius: var(--r-chip);
+  background: var(--green);
+  color: #fbfaf7;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.012em;
+  transition: opacity var(--t) var(--ease);
 }
 
-.waiting__hint {
-  display: block;
-  margin-top: 0.2rem;
-  color: var(--ink-faint);
-  font-size: 0.85rem;
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-primary:disabled {
+  opacity: 0.35;
+}
+
+.btn-quiet {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 15px 24px;
+  border-radius: var(--r-chip);
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 15px;
+  color: var(--ink);
+  transition: background var(--t) var(--ease);
+}
+
+.btn-quiet:hover {
+  background: var(--ivory-lift);
 }
 
 .linkish {
-  display: inline-block;
-  margin-top: 1.4rem;
-  padding: 0;
-  font-size: 0.85rem;
-  color: var(--ink-faint);
+  font-size: 14px;
+  color: var(--green);
+  text-underline-offset: 4px;
   text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration-color: var(--sage);
 }
 
-.linkish:disabled {
-  text-decoration: none;
-  cursor: default;
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 22px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.crumb--change {
+  color: var(--green);
 }
 
 .actions {
   display: flex;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
 }
 
-.btn-quiet {
-  flex: 1;
-  padding: 0.9rem 1rem;
-  border: 1px solid var(--rule);
-  border-radius: 0.9rem;
-  font-size: 0.92rem;
-  font-weight: 500;
-  color: var(--green);
-  background: var(--paper-lift);
-}
-
-/* The affirmative sibling of .btn-quiet. Used by the review tool for the one
-   action that commits something — approving a ruling. */
-.btn-primary {
-  flex: 1;
-  padding: 0.9rem 1rem;
-  border: 1px solid var(--green);
-  border-radius: 0.9rem;
-  font-size: 0.92rem;
-  font-weight: 500;
-  color: var(--paper);
-  background: var(--green);
-}
-
-.btn-primary:disabled,
-.btn-quiet:disabled {
-  opacity: 0.45;
-}
-
-/* ── qori review tool (/review) ─────────────────────────────────────────── */
-
-.app__tool-tag {
-  font-size: 0.7rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--brass);
-  border: 1px solid var(--brass);
-  border-radius: 0.3rem;
-  padding: 0.12rem 0.4rem;
-}
-
-.review {
-  padding-bottom: 3rem;
-}
-
-.review__bar {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.5rem;
-}
-
-.review__progress {
-  font-family: var(--serif);
-  font-size: 1.05rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.review__counts {
-  font-size: 0.78rem;
-  color: var(--ink-faint);
-  font-variant-numeric: tabular-nums;
-}
-
-.review__who {
-  margin-left: auto;
-  min-width: 9rem;
-  padding: 0.35rem 0.55rem;
-  border: 1px solid var(--rule-soft);
-  border-radius: 0.4rem;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: 0.82rem;
-}
-
-.review__meter {
-  height: 3px;
-  border-radius: 2px;
-  background: var(--rule-soft);
-  overflow: hidden;
-  margin-bottom: 1.25rem;
-}
-
-.review__meter-fill {
-  display: block;
-  height: 100%;
-  background: var(--brass);
-  transition: width 0.25s ease;
-}
-
-.review__nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.review__nav button {
-  font-size: 0.82rem;
-  color: var(--ink-faint);
-  background: none;
-  border: none;
-  padding: 0.3rem 0;
-}
-
-.review__nav button:disabled {
-  opacity: 0.35;
-}
-
-.review__pos {
-  font-size: 0.78rem;
-  color: var(--ink-faint);
-  font-variant-numeric: tabular-nums;
-}
-
-.review__reach,
-.review__source {
-  margin: 0 0 0.4rem;
-  font-size: 0.78rem;
-  color: var(--ink-faint);
-}
-
-.review__source--missing {
-  color: var(--brass);
-}
-
-.review__status {
-  margin: 0.6rem 0 0;
-  font-size: 0.8rem;
-  color: var(--ink-faint);
-}
-
-.review__status--ok {
-  color: var(--green);
-}
-
-.review__status--no {
-  color: var(--brass);
-}
-
-.review__preview {
-  margin-top: 1rem;
-}
-
-.review__edited {
-  color: var(--brass);
-  font-weight: 400;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
-.review__actions {
-  display: flex;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  margin-top: 1.5rem;
-}
-
-.review__reject {
-  margin-left: auto;
-}
-
-.review__field {
-  display: block;
-  margin-bottom: 1rem;
-}
-
-.review__field-label {
-  display: block;
-  margin-bottom: 0.3rem;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
-
-.review__field textarea {
-  width: 100%;
-  padding: 0.6rem 0.7rem;
-  border: 1px solid var(--rule-soft);
-  border-radius: 0.5rem;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: 0.92rem;
-  line-height: 1.6;
-  resize: vertical;
-}
-
-.review__field textarea:focus-visible {
-  outline: none;
-  border-color: var(--brass);
-}
-
-.review__error {
-  margin: 1rem 0 0;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid var(--brass);
-  border-radius: 0.5rem;
-  font-size: 0.84rem;
-  color: var(--brass);
-}
-
-.review__warn {
-  margin: 0 0 1rem;
-  font-size: 0.78rem;
-  color: var(--brass);
-}
-
-/* ── picker ─────────────────────────────────────────────────────────────── */
-
-.search {
-  width: 100%;
-  padding: 0.7rem 0.9rem;
-  margin: 0 0 1rem;
-  border: 1px solid var(--rule-soft);
-  border-radius: 0.5rem;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: 0.95rem;
-}
-
-.search:focus-visible {
-  outline: none;
-  border-color: var(--brass);
-}
-
-/* 114 suras and up to 286 ayat: the list scrolls inside the pane so the record
-   button and the tab bar never get pushed off the screen. */
-.list--scroll {
-  max-height: 58vh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.list--scroll > ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.row__num {
-  flex: none;
-  min-width: 2.1rem;
-  font-variant-numeric: tabular-nums;
-  font-size: 0.85rem;
-  color: var(--ink-faint);
-  text-align: right;
-}
-
-.row__alt {
-  color: var(--ink-faint);
-  font-weight: 400;
-}
-
-.row__meta {
-  display: block;
-  margin-top: 0.15rem;
-  font-size: 0.78rem;
-  color: var(--ink-faint);
-  font-variant-numeric: tabular-nums;
-}
-
-/* The sura's own name, set at reading size rather than the wrapped-line size
-   .row__ar uses for ayah text. */
-.row__ar--name {
-  font-size: 1.15rem;
-  line-height: 1.4;
-  margin-top: 0;
-  flex: none;
-  max-width: 40%;
-}
-
-.crumb {
-  display: inline-block;
-  margin: 0 0 0.75rem;
-  padding: 0.25rem 0;
-  font-size: 0.85rem;
-  color: var(--ink-faint);
-  background: none;
-  border: none;
-  text-align: left;
-}
-
-.crumb:hover,
-.crumb:focus-visible {
-  color: var(--brass);
-}
-
-.crumb--change {
-  margin: -0.25rem 0 1rem;
-}
-
-.estimate {
-  margin: 0.35rem 0 1.1rem;
-  text-align: center;
-  font-size: 0.82rem;
-  color: var(--ink-faint);
-  font-variant-numeric: tabular-nums;
-}
-
-/* ── reader ─────────────────────────────────────────────────────────────── */
-
-.reader__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.reader__ar {
-  font-family: var(--arabic);
-  font-size: 1.5rem;
-  line-height: 2;
-  color: var(--ink-soft);
-  white-space: nowrap;
-}
-
-/* Mushaf / verse-by-verse. Two words, so a segmented control rather than a
-   dropdown — the choice should cost one tap and show its alternative. */
-.modes {
-  display: inline-flex;
-  margin: 0.35rem 0 1.1rem;
-  border: 1px solid var(--rule-soft);
-  border-radius: 999px;
-  padding: 0.15rem;
-  background: var(--paper-sunk);
-}
-
-.modes__tab {
-  padding: 0.36rem 0.95rem;
-  border-radius: 999px;
-  font-size: 0.82rem;
-  color: var(--ink-faint);
-}
-
-.modes__tab.is-on {
-  background: var(--paper-lift);
-  color: var(--green);
-  font-weight: 600;
-  box-shadow: 0 1px 2px rgba(21, 36, 29, 0.08);
-}
-
-/* Continuous text, the way a printed page reads. Justified with generous
-   leading because Arabic diacritics need the vertical room, and scrolling its
-   own box so the mode tabs and the tab bar stay put. */
-.mushaf {
-  max-height: 58vh;
-  overflow-y: auto;
-  padding: 0.25rem 0.1rem 1rem;
-  border-top: 1px solid var(--rule-soft);
-  border-bottom: 1px solid var(--rule-soft);
-}
-
-.mushaf__bismillah {
-  font-family: var(--arabic);
-  font-size: 1.35rem;
-  line-height: 2.4;
-  text-align: center;
-  color: var(--ink-soft);
-  margin: 0.6rem 0 0.9rem;
-}
-
-.mushaf__body {
-  font-family: var(--arabic);
-  font-size: 1.6rem;
-  line-height: 2.75;
-  text-align: justify;
-  text-align-last: center;
-  margin: 0;
-}
-
-/* A span, not a button: only inline content reflows into a paragraph. It still
-   has to behave like a control, hence role/tabindex in the markup. */
-.mushaf__aya {
-  cursor: pointer;
-  border-radius: 0.2rem;
-  transition: background-color 0.15s ease;
-}
-
-.mushaf__aya:hover,
-.mushaf__aya:focus-visible {
-  background: var(--brass-wash);
-}
-
-/* Background only. An inset underline looks fine on a short ayah and turns
-   into stripes on a long one — an inline span that wraps gets the border drawn
-   on EVERY line fragment, and Ayat al-Kursi spans eight of them. The wash
-   alone survives wrapping. */
-.mushaf__aya.is-on {
-  background: var(--brass-wash);
-  box-shadow: 0 0 0 2px var(--brass-wash);
-}
-
-/* The ayah number, in the circle the mushaf prints it in. Sized in em so it
-   tracks the body text if that is ever scaled. */
-.mushaf__mark {
-  display: inline-block;
-  min-width: 1.5em;
-  height: 1.5em;
-  line-height: 1.5em;
-  margin: 0 0.25em;
-  font-family: var(--serif);
-  font-size: 0.5em;
-  text-align: center;
-  color: var(--brass);
-  border: 1px solid var(--brass);
-  border-radius: 50%;
-  vertical-align: middle;
-}
-
-/* ── verse by verse ─────────────────────────────────────────────────────── */
-
-.verse {
-  border-top: 1px solid var(--rule-soft);
-  padding-top: 0.9rem;
-}
-
-.verse__nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.verse__arrow {
-  width: 2.6rem;
-  height: 2.6rem;
-  border: 1px solid var(--rule-soft);
-  border-radius: 50%;
-  font-size: 1.4rem;
-  line-height: 1;
-  color: var(--green);
-  background: var(--paper-lift);
-}
-
-.verse__arrow:disabled {
-  opacity: 0.32;
-}
-
-.verse__ref {
-  font-size: 0.82rem;
-  color: var(--ink-faint);
-  font-variant-numeric: tabular-nums;
-}
-
-.verse__ar {
-  font-family: var(--arabic);
-  font-size: 1.75rem;
-  line-height: 2.7;
-  text-align: center;
-  margin: 1.1rem 0 1.3rem;
-}
-
-.verse__tr {
-  font-family: var(--serif);
-  font-size: 1rem;
-  line-height: 1.75;
-  color: var(--ink-soft);
-  margin: 0 0 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--rule-soft);
-}
-
-.verse__tr--none {
-  color: var(--ink-faint);
-  font-style: italic;
-}
-
-.verse__actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.4rem;
-}
-
-.verse__actions .record {
-  flex: 1;
-  margin: 0;
-}
-
-/* ── reciter ────────────────────────────────────────────────────────────── */
-
-.reciter {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin: 0.9rem 0 0.2rem;
-  font-size: 0.8rem;
-  color: var(--ink-faint);
-}
-
-.reciter__label {
-  flex: none;
-}
-
-.reciter__select {
-  flex: 1;
-  min-width: 0;
-  padding: 0.4rem 0.5rem;
-  font: inherit;
-  color: var(--ink);
-  background: var(--paper-lift);
-  border: 1px solid var(--rule-soft);
-  border-radius: 0.4rem;
-}
-
-.reciter__select:disabled {
-  opacity: 0.5;
-}
-
-.estimate--warn {
-  color: var(--brass);
-  margin-top: -0.7rem;
-  max-width: 26rem;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* "Practise part of this ayah" — an option under the text, never a step in
-   front of it. Quiet by default so the whole ayah stays the obvious path. */
-.parts {
-  margin: -0.4rem 0 1.2rem;
-  text-align: center;
-}
-
-.list--parts {
-  margin-top: 0.6rem;
-  text-align: left;
-  max-height: 40vh;
-  overflow-y: auto;
-  border-top: 1px solid var(--rule-soft);
-}
-
-.list--parts .row {
-  padding: 0.85rem 0;
-}
-
-/* ── library ────────────────────────────────────────────────────────────── */
-
-.section-head {
-  font-family: var(--serif);
-  font-size: 1.35rem;
-  font-weight: 500;
-  margin: 0.5rem 0 0.25rem;
-}
-
-.section-sub {
-  margin: 0 0 1.5rem;
-  color: var(--ink-faint);
-  font-size: 0.88rem;
-}
-
-.list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  width: 100%;
-  padding: 1.05rem 0;
-  border-bottom: 1px solid var(--rule-soft);
-  text-align: left;
-}
-
-.row__body {
-  flex: 1;
-  min-width: 0;
-}
-
-.row__name {
-  font-family: var(--serif);
-  font-size: 1rem;
-  font-weight: 500;
-}
-
-.row__ar {
-  font-family: var(--arabic);
-  font-size: 1.35rem;
-  line-height: 2;
-  color: var(--ink-soft);
-  direction: rtl;
-  display: block;
-  margin-top: 0.15rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.row[aria-current="true"] .row__name {
-  color: var(--green);
-}
-
-/* Ayah rows carry a number, not a name — this is what marks the ayah the
-   learner last practised when the picker reopens on it. */
-.row[aria-current="true"] .row__num {
-  color: var(--green);
-  font-weight: 600;
-}
-
-.row__mark {
-  flex: none;
-  width: 0.35rem;
-  height: 0.35rem;
-  border-radius: 50%;
-  background: var(--brass);
-  opacity: 0;
-}
-
-.row[aria-current="true"] .row__mark {
-  opacity: 1;
-}
-
-.level {
-  flex: none;
-  font-size: 0.66rem;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
-
-/* ── history ────────────────────────────────────────────────────────────── */
-
-.log {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-  padding: 0.95rem 0;
-  border-bottom: 1px solid var(--rule-soft);
-}
-
-.log__dot {
-  flex: none;
-  width: 0.45rem;
-  height: 0.45rem;
-  border-radius: 50%;
-  border: 1px solid var(--brass);
-}
-
-.log__dot--clear {
-  background: var(--brass);
-}
-
-.log__text {
-  flex: 1;
-  font-size: 0.92rem;
-}
-
-.log__meta {
-  font-size: 0.75rem;
-  color: var(--ink-faint);
-}
-
-.empty {
-  padding: 3rem 0;
-  text-align: center;
-  color: var(--ink-faint);
-  font-size: 0.92rem;
-}
-
-.consent {
-  margin-top: 2.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--rule);
-}
-
-.consent__row {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  font-size: 0.88rem;
-  color: var(--ink-soft);
-}
+/* ══ card ═════════════════════════════════════════════════════════════════ */
 
-.consent__row input {
-  margin-top: 0.2rem;
-  accent-color: var(--green);
-  width: 1.05rem;
-  height: 1.05rem;
+.card,
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  box-shadow: var(--lift);
+  padding: 26px;
+  margin-bottom: 18px;
+  animation: rise var(--t) var(--ease) both;
 }
 
-/* ── tab bar ────────────────────────────────────────────────────────────── */
+/* ══ floating tab bar ═════════════════════════════════════════════════════ */
 
 .tabbar {
   position: fixed;
-  bottom: 0;
   left: 50%;
+  bottom: 26px;
   transform: translateX(-50%);
-  z-index: 20;
+  z-index: 40;
   display: flex;
-  width: 100%;
-  max-width: var(--shell);
-  height: var(--tabbar-h);
-  padding-bottom: env(safe-area-inset-bottom);
-  background: var(--green-deep);
+  gap: 2px;
+  padding: 7px;
+  border-radius: var(--r-chip);
+  background: #191f24;
+  box-shadow: 0 10px 30px rgba(16, 22, 28, 0.18);
 }
 
 .tab {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 0.3rem;
-  color: rgba(244, 239, 227, 0.62);
-  font-size: 0.68rem;
-  letter-spacing: 0.06em;
-  transition: color 0.24s var(--ease);
+  gap: 3px;
+  padding: 9px 15px 8px;
+  border-radius: var(--r-chip);
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  color: rgba(250, 248, 244, 0.5);
+  transition: color var(--t) var(--ease), background var(--t) var(--ease);
 }
 
 .tab[aria-current="page"] {
-  color: var(--paper);
+  color: #faf8f4;
+  background: rgba(250, 248, 244, 0.11);
 }
 
-.tab {
-  position: relative;
+.tab__glyph {
+  display: block;
+  line-height: 0;
 }
 
-.tab[aria-current="page"]::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 2.25rem;
-  height: 2px;
-  transform: translateX(-50%);
-  background: var(--brass-lift);
-}
+/* ══ onboarding ═══════════════════════════════════════════════════════════ */
 
-/* ── notices ────────────────────────────────────────────────────────────── */
-
-.notice {
-  margin-top: 1.5rem;
-  padding: 1.25rem 1.3rem;
-  background: var(--paper-lift);
-  border: 1px solid var(--rule);
-  border-radius: 1rem;
-}
-
-.notice--warm {
-  border-color: rgba(161, 120, 54, 0.35);
-  background: var(--brass-wash);
-}
-
-.notice__title {
-  font-family: var(--serif);
-  font-size: 1.05rem;
-  font-weight: 500;
-  margin: 0 0 0.35rem;
-}
-
-.notice__body {
-  margin: 0;
-  color: var(--ink-soft);
-  font-size: 0.92rem;
-}
-
-.notice__list {
-  margin: 0.75rem 0 0;
-  padding-left: 1.1rem;
-  color: var(--ink-soft);
-  font-size: 0.9rem;
-}
-
-.notice__list li {
-  margin-top: 0.3rem;
-}
-
-/* ── desktop: the phone stays the design, the page gives it a wall ─────── */
-
-@media (min-width: 48rem) {
-  body {
-    background: #ece5d6;
-  }
-
-  .app {
-    min-height: 100vh;
-    border-left: 1px solid var(--rule-soft);
-    border-right: 1px solid var(--rule-soft);
-  }
-
-  .tabbar {
-    border-left: 1px solid var(--rule-soft);
-    border-right: 1px solid var(--rule-soft);
-  }
-}
-
-/* ── pilot banner ───────────────────────────────────────────────────────── */
-/* Sits in the flow directly under the header rather than floating over the
- * page: it is a statement about the whole app, not a transient alert, and it
- * should feel admitted-to rather than popped-up. */
-
-.pilot {
+.onboard {
+  min-height: 78vh;
   display: flex;
-  align-items: flex-start;
-  gap: 0.7rem;
-  margin: 0 1.5rem 0.25rem;
-  padding: 0.8rem 0.95rem;
-  background: var(--brass-wash);
-  border: 1px solid rgba(161, 120, 54, 0.3);
-  border-radius: 0.85rem;
+  flex-direction: column;
+  animation: fade var(--t) var(--ease) both;
 }
 
-/* The review gate is open (any non-production build). Hatched rather than
-   merely coloured: this must not be mistakable for a shipped state. */
-.pilot--draft {
-  background: repeating-linear-gradient(
-    -45deg,
-    var(--brass-wash),
-    var(--brass-wash) 7px,
-    transparent 7px,
-    transparent 14px
-  );
-  border-style: dashed;
-  border-width: 1.5px;
+.onboard__step {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 8px 0 40px;
 }
 
-.pilot__mark {
-  flex: none;
-  width: 0.45rem;
-  height: 0.45rem;
-  margin-top: 0.4rem;
-  border-radius: 50%;
-  background: var(--brass);
-}
-
-.pilot__title {
-  margin: 0;
+/* The welcome. One sentence, set large, with air above and below it — the
+   only screen in the app that is allowed to be mostly empty. */
+.onboard__display {
   font-family: var(--serif);
-  font-size: 0.95rem;
+  font-size: 38px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 0.004em;
+  margin-bottom: 18px;
+}
+
+.onboard__lede {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--ink-2);
+  margin-bottom: 40px;
+  max-width: 34ch;
+}
+
+.onboard__ornament {
+  width: 46px;
+  height: 46px;
+  margin-bottom: 32px;
+  color: var(--sage);
+}
+
+/* Language as an editorial choice, not a dropdown: two full-width plates,
+   each showing the language in its own script at reading size. */
+.choice {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.choice__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 22px 24px;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: var(--r-soft);
+  background: var(--card);
+  transition: border-color var(--t) var(--ease), background var(--t) var(--ease);
+}
+
+.choice__item[aria-pressed="true"] {
+  border-color: var(--green);
+  background: var(--green-soft);
+}
+
+.choice__name {
+  font-family: var(--serif);
+  font-size: 23px;
   font-weight: 500;
-  color: var(--ink);
+  line-height: 1.2;
+  display: block;
 }
 
-.pilot__body {
-  margin: 0.15rem 0 0;
-  font-size: 0.83rem;
-  line-height: 1.5;
-  color: var(--ink-soft);
+.choice__note {
+  font-size: 13px;
+  color: var(--ink-2);
+  display: block;
+  margin-top: 2px;
 }
 
-/* ── first-run consent gate ─────────────────────────────────────────────── */
-/* Not a modal over a usable app — it IS the screen until answered. Declining
- * is styled as a real choice, not a greyed-out escape hatch. */
+.choice__tick {
+  color: var(--green);
+  opacity: 0;
+  transition: opacity var(--t) var(--ease);
+}
+
+.choice__item[aria-pressed="true"] .choice__tick {
+  opacity: 1;
+}
+
+.onboard__foot {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.onboard__dots {
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+  padding: 22px 0 6px;
+}
+
+.onboard__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.onboard__dot--on {
+  background: var(--sage);
+}
+
+.onboard__skip {
+  align-self: center;
+  font-size: 14px;
+  color: var(--ink-3);
+}
+
+/* ── consent, inside onboarding and in settings ───────────────────────── */
 
 .gate {
-  padding: 0.5rem 1.5rem 3rem;
+  animation: fade var(--t) var(--ease) both;
 }
 
 .gate__panel {
-  padding: 1.5rem 1.4rem 1.4rem;
-  background: var(--paper-lift);
-  border: 1px solid var(--rule);
-  border-radius: 1.1rem;
+  padding: 0;
 }
 
 .gate__title {
-  margin: 0 0 0.5rem;
   font-family: var(--serif);
-  font-size: 1.3rem;
+  font-size: 30px;
   font-weight: 500;
-  color: var(--ink);
+  line-height: 1.25;
+  margin-bottom: 12px;
 }
 
 .gate__intro {
-  margin: 0 0 1.25rem;
-  font-size: 0.92rem;
-  line-height: 1.6;
-  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--ink-2);
+  margin-bottom: 26px;
 }
 
+/* The decline path, given the same visual weight as the accept path. A consent
+   screen that nudges is not consent. */
 .gate__none {
-  padding: 0.9rem 1rem;
-  margin-bottom: 1.35rem;
-  background: var(--paper-sunk);
-  border-radius: 0.8rem;
+  padding: 20px 22px;
+  border-radius: var(--r-soft);
+  background: var(--beige);
+  margin-bottom: 22px;
 }
 
 .gate__none-title {
-  margin: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--green);
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 4px;
 }
 
-.gate__none-body {
-  margin: 0.25rem 0 0;
-  font-size: 0.85rem;
-  line-height: 1.55;
-  color: var(--ink-soft);
+.gate__none-body,
+.gate__footer {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+.gate__footer {
+  margin-top: 22px;
 }
 
 .gate__opt {
   display: flex;
+  gap: 14px;
   align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.85rem 0;
-  border-top: 1px solid var(--rule-soft);
-}
-
-.gate__opt input {
-  margin-top: 0.15rem;
-  flex: none;
-  width: 1.15rem;
-  height: 1.15rem;
-  accent-color: var(--green);
+  padding: 20px 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-soft);
+  background: var(--card);
+  margin-bottom: 12px;
+  cursor: pointer;
 }
 
 .gate__opt--off {
   opacity: 0.45;
 }
 
-.gate__opt-label {
-  display: block;
-  font-size: 0.92rem;
-  color: var(--ink);
+.gate__opt input,
+.consent__row input {
+  margin-top: 3px;
+  width: 17px;
+  height: 17px;
+  accent-color: var(--green);
+  flex: 0 0 auto;
 }
 
-.gate__opt-help {
+.gate__opt-label {
   display: block;
-  margin-top: 0.2rem;
-  font-size: 0.82rem;
-  line-height: 1.5;
-  color: var(--ink-faint);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.gate__opt-help,
+.consent__help {
+  display: block;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  margin-top: 3px;
 }
 
 .gate__actions {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
-  margin-top: 1.4rem;
+  gap: 10px;
+  margin-top: 22px;
 }
 
 .gate__primary {
-  padding: 0.95rem 1rem;
-  border: none;
-  border-radius: 0.9rem;
+  composes: btn-primary;
+}
+
+.gate__primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 17px 24px;
+  border-radius: var(--r-chip);
   background: var(--green);
-  color: var(--paper);
-  font-size: 0.98rem;
+  color: #fbfaf7;
+  font-size: 16px;
   font-weight: 500;
 }
 
 .gate__quiet {
-  padding: 0.9rem 1rem;
-  border: 1px solid var(--rule);
-  border-radius: 0.9rem;
-  background: transparent;
-  color: var(--green);
-  font-size: 0.92rem;
+  padding: 15px 24px;
+  border-radius: var(--r-chip);
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 15px;
+}
+
+/* ══ today ════════════════════════════════════════════════════════════════ */
+
+.today__greet {
+  font-family: var(--serif);
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 1.22;
+  margin-bottom: 4px;
+}
+
+.today__date {
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 30px;
+}
+
+/* The hero. The only card in the app with the ayah set at full reading size —
+   it is the one card that is meant to be read rather than scanned. */
+.hero {
+  padding: 28px 26px 26px;
+}
+
+.hero__label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.hero__sura {
+  font-family: var(--serif);
+  font-size: 21px;
   font-weight: 500;
 }
 
-.gate__footer {
-  margin: 1.2rem 0 0;
-  font-size: 0.79rem;
+.hero__meaning {
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.hero__ar {
+  font-family: var(--arabic);
+  font-size: 27px;
+  line-height: 2.5;
+  text-align: right;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+
+.hero__ref {
+  font-size: 13px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.hero__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 18px 0 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.hero__dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--ink-3);
+}
+
+/* A hairline progress rule, not a bar with a fill colour. */
+.progress {
+  height: 2px;
+  border-radius: 2px;
+  background: var(--beige);
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress__fill {
+  height: 100%;
+  background: var(--sage);
+  transition: width var(--t) var(--ease);
+}
+
+.progress__text {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  margin-bottom: 20px;
+}
+
+.suggest {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  text-align: left;
+}
+
+/* Both are spans inside one button, so they need an explicit block — without
+   it the name and the reason ran together on one line as "Al-Ikhlas 112:4Shu
+   suradagi navbatdagi oyat". */
+.suggest__name {
+  display: block;
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.suggest__why {
+  display: block;
+  font-size: 13.5px;
+  color: var(--ink-2);
+  margin-top: 3px;
+}
+
+.suggest__ar {
+  font-family: var(--arabic);
+  font-size: 22px;
+  line-height: 2.2;
+  color: var(--ink-2);
+  flex: 0 0 auto;
+}
+
+/* ══ lists and rows ═══════════════════════════════════════════════════════ */
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.list--scroll {
+  max-height: 62vh;
+  overflow-y: auto;
+  margin: 0 -6px;
+  padding: 0 6px;
+}
+
+/* A row is a hairline-separated line of type, not a boxed tile. Rows in a
+   luxury list touch nothing and are divided by the thinnest rule that reads. */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 17px 4px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  transition: background var(--t) var(--ease);
+}
+
+.row:hover {
+  background: var(--ivory-lift);
+}
+
+.row__num {
+  flex: 0 0 30px;
+  font-size: 13px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.row__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.row__name {
+  display: block;
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.row__alt {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ink-2);
+}
+
+.row__meta {
+  display: block;
+  font-size: 12.5px;
+  color: var(--ink-3);
+  margin-top: 1px;
+}
+
+.row__ar {
+  font-family: var(--arabic);
+  font-size: 20px;
+  line-height: 2.1;
+  color: var(--ink-2);
+  flex: 0 0 auto;
+}
+
+.row__ar--name {
+  font-size: 22px;
+  color: var(--green);
+}
+
+.row__mark {
+  color: var(--green);
+}
+
+/* A grouped list — the hierarchy the brief asks for instead of a flat index. */
+.group + .group {
+  margin-top: 30px;
+}
+
+.group__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.group__count {
+  font-size: 12px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.search {
+  width: 100%;
+  padding: 15px 20px;
+  margin-bottom: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-chip);
+  background: var(--card);
+  font-size: 15px;
+  color: var(--ink);
+  transition: border-color var(--t) var(--ease);
+}
+
+.search::placeholder {
+  color: var(--ink-3);
+}
+
+.search:focus {
+  outline: none;
+  border-color: var(--sage);
+}
+
+/* ══ reader ═══════════════════════════════════════════════════════════════ */
+
+.reader__head {
+  margin-bottom: 20px;
+}
+
+.reader__ar {
+  font-family: var(--arabic);
+  font-size: 24px;
+  color: var(--green);
+  line-height: 2;
+}
+
+/* The mushaf / verse toggle. A segmented control, hairline, no fill on the
+   inactive side. */
+.modes {
+  display: inline-flex;
+  gap: 3px;
+  padding: 3px;
+  margin-bottom: 26px;
+  border-radius: var(--r-chip);
+  background: var(--beige);
+}
+
+.modes__tab {
+  padding: 9px 20px;
+  border-radius: var(--r-chip);
+  font-size: 13.5px;
+  color: var(--ink-2);
+  transition: background var(--t) var(--ease), color var(--t) var(--ease);
+}
+
+.modes__tab.is-on {
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: var(--lift);
+}
+
+/* Continuous reading. Book-like: one column, justified to the right, with the
+   ayah markers as the only interruption. */
+.mushaf {
+  padding: 30px 26px;
+}
+
+.mushaf__body {
+  font-family: var(--arabic);
+  font-size: 25px;
+  line-height: 2.75;
+  text-align: justify;
+  color: var(--ink);
+}
+
+.mushaf__bismillah {
+  font-family: var(--arabic);
+  font-size: 22px;
+  line-height: 2.4;
+  text-align: center;
+  color: var(--ink-2);
+  margin-bottom: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* The ayah-end marker, in the secondary accent. Not a number in a circle —
+   a small sage ring with the number inside at caption size. */
+.mushaf__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 25px;
+  height: 25px;
+  margin: 0 5px;
+  padding: 0 5px;
+  border: 1px solid var(--sage);
+  border-radius: 50%;
+  font-family: var(--sans);
+  font-size: 11px;
+  line-height: 1;
+  color: var(--green);
+  vertical-align: middle;
+  font-variant-numeric: tabular-nums;
+  transition: background var(--t) var(--ease);
+}
+
+.mushaf__mark:hover {
+  background: var(--sage-soft);
+}
+
+/* Verse-by-verse. One ayah, centred, translation beneath in quieter type. */
+.verse {
+  padding: 26px;
+}
+
+.verse__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 26px;
+}
+
+.verse__arrow {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  color: var(--ink-2);
+  font-size: 17px;
+  line-height: 1;
+  transition: background var(--t) var(--ease);
+}
+
+.verse__arrow:hover:not(:disabled) {
+  background: var(--ivory-lift);
+}
+
+.verse__arrow:disabled {
+  opacity: 0.3;
+}
+
+.verse__ref {
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.verse__ar {
+  font-family: var(--arabic);
+  font-size: 30px;
+  line-height: 2.5;
+  text-align: center;
+  color: var(--ink);
+  margin-bottom: 22px;
+}
+
+.verse__tr {
+  font-size: 15.5px;
+  line-height: 1.7;
+  text-align: center;
+  color: var(--ink-2);
+  max-width: 40ch;
+  margin: 0 auto 6px;
+}
+
+.verse__tr--none {
+  color: var(--ink-3);
+  font-style: italic;
+}
+
+.verse__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+/* One ayah inside the continuous text. No box and no underline — a tappable
+   ayah in a mushaf must still read as part of the paragraph, so the only
+   affordance is a faint warm wash on the ayah currently in focus. */
+.mushaf__aya {
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background var(--t) var(--ease);
+}
+
+.mushaf__aya:hover,
+.mushaf__aya.is-on {
+  background: var(--sage-soft);
+}
+
+.mushaf__aya:focus-visible {
+  outline: 1px solid var(--sage);
+  outline-offset: 3px;
+}
+
+/* "Practise this ayah" — the primary action wherever an ayah is on screen.
+   Same shape as .btn-primary; the dot is the only thing that marks it as the
+   one that starts a recording. */
+.record {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 17px 24px;
+  border-radius: var(--r-chip);
+  background: var(--green);
+  color: #fbfaf7;
+  font-size: 16px;
+  font-weight: 500;
+  transition: opacity var(--t) var(--ease);
+}
+
+.record:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.record:disabled {
+  opacity: 0.35;
+}
+
+.record__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--amber);
+}
+
+/* A card whose content IS reviewed. No extra treatment: reviewed is the
+   expected state, and decorating it would make the draft marker read as the
+   normal one. Declared so the class is never silently unstyled. */
+.card--lit {
+  /* intentionally empty */
+}
+
+/* ══ practice: selection ══════════════════════════════════════════════════ */
+
+.eyebrow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.eyebrow__name {
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 500;
+}
+
+.eyebrow__meta {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.estimate {
+  font-size: 13px;
+  color: var(--ink-3);
+  text-align: center;
+  margin: 16px 0 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.estimate--warn {
+  color: var(--terra);
+}
+
+.parts {
+  margin-bottom: 20px;
+}
+
+.list--parts {
+  margin-top: 12px;
+}
+
+.listen {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 15px 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-chip);
+  background: var(--card);
+  font-size: 15px;
+  color: var(--ink);
+  transition: background var(--t) var(--ease);
+}
+
+.listen:hover:not(:disabled) {
+  background: var(--ivory-lift);
+}
+
+.listen:disabled {
+  opacity: 0.4;
+}
+
+.listen__glyph {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.reciter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0 4px;
+}
+
+.reciter__label {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  flex: 0 0 auto;
+}
+
+.reciter__select {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-soft);
+  background: var(--card);
+  font-size: 14px;
+  color: var(--ink);
+}
+
+/* ══ the ayah, with its marks ═════════════════════════════════════════════ */
+
+.ayah {
+  position: relative;
+  padding: 34px 26px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--card);
+  box-shadow: var(--lift);
+  margin-bottom: 18px;
+}
+
+.ayah__text {
+  display: block;
+  font-family: var(--arabic);
+  font-size: 28px;
+  line-height: 2.45;
+  text-align: center;
+  color: var(--ink);
+}
+
+/* THE MARK IS ON THE GLYPH, NOT BEHIND IT. The ayah is painted a second time
+   in terracotta and clipped to the letters that were misread — identical
+   shaping, so the cursive joins are the original's and only the marked letters
+   show through. A background block would break the word visually and read as
+   a strike-through. */
+.ayah__mark {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  color: var(--terra);
+  opacity: 0.85;
+  animation: fade 400ms var(--ease) both;
+}
+
+.ayah__mark .ayah__text {
+  color: inherit;
+}
+
+.ayah__mark--active {
+  opacity: 1;
+  color: var(--terra-lift);
+}
+
+/* The requirement, pinned under the mark it is about. */
+.ayah__note {
+  position: absolute;
+  z-index: 3;
+  transform: translate(-50%, -2px);
+  pointer-events: none;
+  white-space: nowrap;
+  padding: 1px 7px;
+  border-radius: var(--r-chip);
+  background: var(--ivory);
+  border: 1px solid var(--border);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+}
+
+.ayah__note--active {
+  color: var(--terra);
+  border-color: var(--terra-soft);
+}
+
+.ayah__hit {
+  position: absolute;
+  z-index: 4;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+}
+
+/* ══ THE DARK MOMENT — recording and analysing only ═══════════════════════ */
+
+.studio {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r-card);
+  padding: 30px 26px 26px;
+  margin-bottom: 18px;
+  background: linear-gradient(168deg, var(--night-2) 0%, var(--night) 78%);
+  box-shadow: 0 14px 40px rgba(16, 22, 28, 0.22);
+  color: #f2efe9;
+  animation: rise var(--t) var(--ease) both;
+}
+
+.studio__head {
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(242, 239, 233, 0.42);
+  margin-bottom: 22px;
+}
+
+/* The waveform. Amber bars of varying height, centred on a baseline. Live
+   while recording, held still otherwise — it is a level meter, not decoration,
+   so it must not animate when nothing is being heard. */
+.wave {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 62px;
+  margin-bottom: 24px;
+}
+
+.wave__bar {
+  width: 3px;
+  min-height: 3px;
+  border-radius: 2px;
+  background: var(--amber);
+  opacity: 0.85;
+  transition: height 90ms linear;
+}
+
+.wave__bar--idle {
+  background: rgba(217, 164, 65, 0.32);
+}
+
+.studio__rule {
+  height: 1px;
+  background: rgba(242, 239, 233, 0.1);
+  margin-bottom: 18px;
+}
+
+.studio__stats {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 26px;
+}
+
+.studio__stat-label {
+  display: block;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(242, 239, 233, 0.38);
+}
+
+.studio__stat-value {
+  display: block;
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 500;
+  color: #f2efe9;
+  font-variant-numeric: tabular-nums;
+}
+
+.studio__control {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Cream fill, deep green mic, soft green glow. Never turns red — the app does
+   not signal "danger" at someone reciting the Quran. */
+.mic {
+  position: relative;
+  flex: 0 0 auto;
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #f7f4ee;
+  color: var(--green);
+  box-shadow: 0 0 0 1px rgba(169, 185, 157, 0.35),
+    0 0 28px rgba(169, 185, 157, 0.24);
+  transition: transform var(--t) var(--ease);
+}
+
+.mic:disabled {
+  opacity: 0.5;
+}
+
+.mic__ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1px solid rgba(169, 185, 157, 0.5);
+  opacity: 0;
+}
+
+.mic--live .mic__ring {
+  animation: pulse 2.4s var(--ease) infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  70% {
+    opacity: 0;
+    transform: scale(1.28);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.28);
+  }
+}
+
+/* Analysing. A slow sweep round the button rather than a spinner: this wait
+   runs past fifteen seconds and a spinner at that length reads as a hang. */
+.mic--thinking {
+  animation: breathe 3.4s var(--ease) infinite;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px rgba(169, 185, 157, 0.35),
+      0 0 22px rgba(169, 185, 157, 0.18);
+  }
+  50% {
+    box-shadow: 0 0 0 1px rgba(169, 185, 157, 0.55),
+      0 0 40px rgba(169, 185, 157, 0.34);
+  }
+}
+
+.studio__copy {
+  min-width: 0;
+}
+
+.studio__primary {
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: #f7f4ee;
+}
+
+.studio__secondary {
+  font-size: 13.5px;
   line-height: 1.55;
-  color: var(--ink-faint);
+  color: rgba(242, 239, 233, 0.5);
+  margin-top: 3px;
+}
+
+.studio__timer {
+  font-variant-numeric: tabular-nums;
+  color: var(--amber);
+}
+
+/* ══ results ══════════════════════════════════════════════════════════════ */
+
+.verdict {
+  padding: 30px 26px;
+  text-align: left;
+}
+
+.verdict__title {
+  font-family: var(--serif);
+  font-size: 27px;
+  font-weight: 500;
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+
+.verdict__body {
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--ink-2);
+}
+
+.clear {
+  padding: 34px 26px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--card);
+  box-shadow: var(--lift);
+  margin-bottom: 18px;
+}
+
+.clear__mark {
+  width: 34px;
+  height: 34px;
+  margin-bottom: 16px;
+  color: var(--sage);
+}
+
+.clear__flame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+}
+
+.clear__title {
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.clear__body {
+  font-size: 15px;
+  color: var(--ink-2);
+}
+
+/* ── the correction card ─────────────────────────────────────────────── */
+
+.card--broken,
+.card--fixed {
+  background: var(--ivory-lift);
+}
+
+.card--active {
+  border-color: var(--sage);
+}
+
+.card__kicker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.card__rule {
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--green);
+  margin-bottom: 14px;
+}
+
+.card__headline {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.38;
+  margin: 16px 0 12px;
+}
+
+.card__body {
+  font-size: 15px;
+  line-height: 1.68;
+  color: var(--ink);
+}
+
+.card__body--fix {
+  color: var(--ink);
+}
+
+.card__body--how {
+  margin-top: 14px;
+  padding: 18px 20px;
+  border-radius: var(--r-soft);
+  background: var(--ivory-sunk);
+  color: var(--ink-2);
+  font-size: 14.5px;
+}
+
+.card__sifa {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--sage);
+}
+
+.card__letter {
+  font-family: var(--arabic);
+  margin-inline-start: 4px;
+  font-size: 19px;
+  color: var(--terra);
+}
+
+.card__letter--small {
+  font-size: 16px;
+}
+
+.card__letter--said {
+  font-size: 27px;
+  color: var(--terra);
+}
+
+.card__letter--good {
+  font-size: 27px;
+  color: var(--green);
+  margin-inline-start: 0;
+}
+
+.card__word {
+  font-family: var(--arabic);
+  font-size: 21px;
+  line-height: 2.1;
+  margin-left: 6px;
+  color: var(--ink);
+}
+
+.card__count {
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+.where {
+  margin-bottom: 4px;
+}
+
+.where__words {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+}
+
+.where__which {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  margin-top: 6px;
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+.where__pair {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 16px;
+  padding: 16px 20px;
+  border-radius: var(--r-soft);
+  background: var(--ivory-sunk);
+}
+
+.where__side {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.where__arrow {
+  color: var(--ink-3);
+  transform: translateY(7px);
+}
+
+.card__draft {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-3);
+}
+
+/* Transparency, not an error state. Sage outline, no warning colour. */
+.card__draft-chip {
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  border: 1px solid var(--sage);
+  border-radius: var(--r-chip);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+
+.card__teacher,
+.card__retry-hint {
+  display: block;
+  margin-top: 14px;
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+.card__fixed-title {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--green);
+}
+
+.card__label,
+.card__said {
+  font-size: 15px;
+  color: var(--ink);
+}
+
+/* ── the practice ladder ─────────────────────────────────────────────── */
+
+.ladder {
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+}
+
+.ladder__title {
+  margin-bottom: 18px;
+}
+
+.ladder__list {
+  padding-left: 26px;
+  border-left: 1px solid var(--border);
+}
+
+.rung {
+  position: relative;
+  padding-bottom: 22px;
+}
+
+.rung:last-child {
+  padding-bottom: 0;
+}
+
+.rung::before {
+  content: attr(value);
+  position: absolute;
+  left: -26px;
+  top: 0;
+  transform: translateX(-50%);
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 11px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.rung--live::before {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.rung--done::before {
+  border-color: var(--green);
+  background: var(--green);
+  color: #f7f4ee;
+}
+
+.rung--locked {
+  opacity: 0.4;
+}
+
+.rung__head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.rung__name {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.rung__tick {
+  font-size: 12px;
+  color: var(--green);
+}
+
+.rung__items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin: 8px 0 12px;
+  direction: rtl;
+}
+
+.rung__item {
+  font-family: var(--arabic);
+  font-size: 30px;
+  line-height: 1.9;
+  color: var(--ink);
+}
+
+.rung__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.rung__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 17px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-chip);
+  background: var(--card);
+  font-size: 13.5px;
+  color: var(--green);
+  transition: background var(--t) var(--ease);
+}
+
+.rung__btn:hover:not(:disabled) {
+  background: var(--ivory-lift);
+}
+
+.rung__btn:disabled {
+  opacity: 0.4;
+}
+
+.rung__btn--quiet,
+.rung__btn--self {
+  color: var(--ink-2);
+}
+
+.rung__btn--live {
+  border-color: var(--green);
+  color: var(--green);
+  background: var(--green-soft);
+}
+
+.rung__say,
+.rung__say--locked {
+  font-size: 13.5px;
+  color: var(--ink-3);
+}
+
+.rung__verdict {
+  margin-top: 10px;
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+.rung__score {
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── the duration meter ──────────────────────────────────────────────── */
+
+.meter {
+  margin: 16px 0;
+  padding: 18px 20px;
+  border-radius: var(--r-soft);
+  background: var(--ivory-sunk);
+}
+
+.meter__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+
+.meter__label {
+  flex: 0 0 54px;
+}
+
+.meter__letter {
+  font-family: var(--arabic);
+  font-size: 20px;
+  line-height: 1.5;
+}
+
+.meter__track {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 3px;
+  min-width: 0;
+}
+
+.meter__tick {
+  flex: 1 1 0;
+  height: 4px;
+  border-radius: 2px;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--border);
+  transition: background var(--t) var(--ease);
+}
+
+.meter__tick--good.meter__tick--lit {
+  background: var(--sage);
+  box-shadow: none;
+}
+
+.meter__tick--said.meter__tick--lit {
+  background: var(--terra);
+  box-shadow: none;
+}
+
+.meter__count-text {
+  flex: 0 0 auto;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.meter__count {
+  margin-top: 6px;
+  padding: 8px 15px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-chip);
+  background: var(--card);
+  font-size: 12.5px;
+  color: var(--green);
+  font-variant-numeric: tabular-nums;
+}
+
+.selfplay {
+  margin-bottom: 18px;
+}
+
+.selfplay__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-chip);
+  background: var(--card);
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+/* ══ notices, loading, empty, error ═══════════════════════════════════════ */
+
+.notice {
+  padding: 26px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--card);
+  box-shadow: var(--lift);
+  margin-bottom: 18px;
+  animation: rise var(--t) var(--ease) both;
+}
+
+.notice--warm {
+  background: var(--beige);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.notice--stale {
+  background: var(--terra-soft);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.notice__title {
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1.32;
+  margin-bottom: 7px;
+}
+
+.notice__body {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--ink-2);
+}
+
+.notice__body + .notice__body {
+  margin-top: 8px;
+}
+
+.notice__body code {
+  font-family: ui-monospace, monospace;
+  font-size: 12.5px;
+}
+
+.notice__list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.notice__list li {
+  position: relative;
+  padding-left: 18px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.notice__list li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 10px;
+  width: 4px;
+  height: 1px;
+  background: var(--sage);
+}
+
+/* The long wait. A calm line of type and a slow sage pulse — never a spinner,
+   which at fifteen seconds reads as a hang rather than as work. */
+.waiting {
+  padding: 40px 26px;
+  text-align: center;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+
+.waiting__hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+/* Skeleton lines for a loading list. Shaped like the content they replace, so
+   the layout does not jump when the real thing arrives. */
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 8px 0;
+}
+
+.skeleton__line {
+  height: 13px;
+  border-radius: 7px;
+  background: linear-gradient(
+    90deg,
+    var(--beige) 0%,
+    var(--ivory-lift) 50%,
+    var(--beige) 100%
+  );
+  background-size: 220% 100%;
+  animation: shimmer 1.8s var(--ease) infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+
+/* An empty state with the same care as a full one: an ornament, a line of
+   serif, a quiet sentence, and the one action that resolves it. */
+.blank {
+  padding: 46px 26px;
+  text-align: center;
+}
+
+.blank__ornament {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 20px;
+  color: var(--sage);
+}
+
+.blank__title {
+  font-family: var(--serif);
+  font-size: 23px;
+  font-weight: 500;
+  line-height: 1.35;
+  margin-bottom: 8px;
+}
+
+.blank__body {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--ink-2);
+  max-width: 34ch;
+  margin: 0 auto 22px;
+}
+
+.blank__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+/* ══ profile ══════════════════════════════════════════════════════════════ */
+
+.profile__head {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+/* NO PHOTOGRAPH, EVER. Initials in serif inside a sage ring. A Quran app must
+   not put a face beside a person's recitation, real or generated. */
+.avatar {
+  flex: 0 0 auto;
+  width: 66px;
+  height: 66px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--sage);
+  background: var(--card);
+  font-family: var(--serif);
+  font-size: 25px;
+  font-weight: 500;
+  color: var(--green);
+  letter-spacing: 0.04em;
+}
+
+.profile__name {
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.profile__sub {
+  font-size: 13.5px;
+  color: var(--ink-2);
+  margin-top: 2px;
+}
+
+.setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 18px 0;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.setting:last-child {
+  border-bottom: none;
+}
+
+.setting__label {
+  font-size: 15px;
+}
+
+.setting__help {
+  display: block;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-2);
+  margin-top: 2px;
+  max-width: 40ch;
+}
+
+.setting__value {
+  flex: 0 0 auto;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.setting__danger {
+  color: var(--terra);
+}
+
+.disclosure {
+  border-bottom: 1px solid var(--border);
+}
+
+.disclosure__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 0;
+  font-size: 15px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.disclosure__summary::-webkit-details-marker {
+  display: none;
+}
+
+.disclosure__body {
+  padding-bottom: 20px;
+}
+
+.consent {
+  margin-top: 8px;
+}
+
+.consent__row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  font-size: 15px;
 }
 
 .consent__row--off {
   opacity: 0.45;
 }
 
-.consent__help {
-  display: block;
-  margin-top: 0.2rem;
-  font-size: 0.8rem;
-  line-height: 1.5;
-  color: var(--ink-faint);
+.log {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 2px;
+  border-bottom: 1px solid var(--border);
+}
+
+.log__dot {
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--terra);
+  opacity: 0.55;
+}
+
+.log__dot--clear {
+  background: var(--sage);
+  opacity: 1;
+}
+
+.log__text {
+  flex: 1 1 auto;
+  font-size: 15px;
+}
+
+.log__meta {
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
+/* ══ learn / memorize — honest, not a placeholder ═════════════════════════ */
+
+.soon {
+  padding: 52px 30px;
+  text-align: center;
+}
+
+.soon__ornament {
+  width: 54px;
+  height: 54px;
+  margin: 0 auto 26px;
+  color: var(--sage);
+}
+
+.soon__title {
+  font-family: var(--serif);
+  font-size: 29px;
+  font-weight: 400;
+  line-height: 1.28;
+  margin-bottom: 12px;
+}
+
+.soon__body {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ink-2);
+  max-width: 32ch;
+  margin: 0 auto 24px;
+}
+
+.soon__note {
+  font-size: 13px;
+  color: var(--ink-3);
+  max-width: 34ch;
+  margin: 0 auto;
+}
+
+/* ══ pilot banner ═════════════════════════════════════════════════════════ */
+
+/* Transparency, in the system's own voice. Beige rather than a warning colour:
+   this says the corrections are not fully reviewed yet, which is a fact about
+   the product's maturity, not an error the learner has hit. */
+.pilot {
+  display: flex;
+  gap: 13px;
+  align-items: flex-start;
+  padding: 18px 20px;
+  margin-bottom: 26px;
+  border-radius: var(--r-soft);
+  background: var(--beige);
+}
+
+.pilot__mark {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  margin-top: 7px;
+  border-radius: 50%;
+  border: 1px solid var(--sage);
+}
+
+.pilot--draft .pilot__mark {
+  background: var(--sage);
+}
+
+.pilot__title {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.pilot__body {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+.pilot__mark {
+  color: var(--sage);
+}
+
+/* ══ language toggle ══════════════════════════════════════════════════════ */
+
+.lang {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--r-chip);
+  background: var(--beige);
+}
+
+.lang__btn {
+  padding: 6px 13px;
+  border-radius: var(--r-chip);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  transition: background var(--t) var(--ease), color var(--t) var(--ease);
+}
+
+.lang__btn[aria-current="true"],
+.lang__chip {
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: var(--lift);
+}
+
+.level {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+/* ══ qori review tool — operator-facing, same system, plainer ═════════════ */
+
+.review {
+  padding-bottom: 40px;
+}
+
+.review__progress,
+.review__bar {
+  height: 2px;
+  border-radius: 2px;
+  background: var(--beige);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.review__meter,
+.review__meter-fill {
+  height: 100%;
+  background: var(--sage);
+}
+
+.review__counts,
+.review__pos,
+.review__reach,
+.review__who,
+.review__source,
+.review__status,
+.review__edited {
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.review__source--missing,
+.review__warn,
+.review__error {
+  color: var(--terra);
+}
+
+.review__field {
+  margin-bottom: 16px;
+}
+
+.review__field-label {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 5px;
+}
+
+.review__preview {
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--card);
+  margin-bottom: 20px;
+}
+
+.review__actions,
+.review__nav {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.review__edit {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-soft);
+  background: var(--card);
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.review__reject {
+  color: var(--terra);
 }

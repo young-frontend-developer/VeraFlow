@@ -58,6 +58,23 @@ class Settings:
     # engine degrades to a clean retry rather than a 500 if it is set too high.
     max_audio_seconds: float = float(os.getenv("TILAWAH_MAX_AUDIO_SECONDS", 90))
 
+    # THE PRACTICE PASS MARK - the score a re-read must reach before the next
+    # rung of the ladder unlocks.
+    #
+    # A CONFIG VALUE AND NOT A CONSTANT, deliberately, because nobody knows what
+    # it should be yet. The score is the fraction of the range's sounds that
+    # produced no error (see pipeline.accuracy), so 0.9 means "at most one
+    # sound in ten". That number is a guess made before any learner has used
+    # the ladder: set too high it locks a beginner out of their own practice,
+    # set too low it waves through the mistake they are drilling. Tune it from
+    # real attempts once there are some - the data is already being logged.
+    #
+    # It is NOT the whole gate. Passing also requires the specific error the
+    # card is about to be absent from the re-read; see the recovery loop in
+    # Recite.tsx. A learner can score 0.95 while still making exactly the
+    # mistake they were sent to fix, and that must not unlock anything.
+    practice_pass: float = float(os.getenv("TILAWAH_PRACTICE_PASS", 0.9))
+
     # Learner voice is never retained unless the learner asked for it to be.
     # This flag only permits the offer to be made; the per-user consent in
     # User.audio_consented is what actually authorises a write. Turning it off

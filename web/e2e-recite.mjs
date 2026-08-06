@@ -11,6 +11,7 @@
  * TypeError in <Correction> would have tripped.
  *
  *   node e2e-recite.mjs [--url http://localhost:5199] [--wav <path>]
+ *                       [--sura 112] [--aya 3]
  */
 import { chromium } from "playwright";
 import path from "node:path";
@@ -25,11 +26,38 @@ const URL = arg("url", "http://localhost:5199");
 const WAV = path.resolve(
   arg("wav", "../api/debug_audio/20260731-121116-112_003-4cb1a6.16k.wav"),
 );
+const SURA = Number(arg("sura", 112));
+const AYA = Number(arg("aya", 3));
 const SHOTS = path.resolve(arg("out", "./e2e-shots"));
 
 if (!fs.existsSync(WAV)) {
   console.error(`no such wav: ${WAV}`);
   process.exit(2);
+}
+
+/**
+ * How long the clip actually runs, from its own header.
+ *
+ * THE RECORDING WINDOW HAS TO MATCH THE CLIP, and missing in EITHER direction
+ * ruins the run in a way that looks like a product fault:
+ *
+ *   too short   the read is truncated, and every letter past the cut comes back
+ *               as a dropped letter. A 6-second window on a 20-second ayah
+ *               produced 32 cards of entirely correct feedback about a
+ *               recitation the harness had chopped up.
+ *   too long    the fake device goes silent once the file ends, and the trailing
+ *               silence trips the collapse gate — "we could not hear that
+ *               clearly", with no cards at all.
+ *
+ * So it is read rather than guessed. Canonical 44-byte PCM WAV, which is what
+ * debug_capture writes; anything else falls back to the caller's estimate.
+ */
+function wavSeconds(path) {
+  const b = fs.readFileSync(path, { start: 0, end: 44 });
+  if (b.length < 44 || b.toString("ascii", 0, 4) !== "RIFF") return 0;
+  const byteRate = b.readUInt32LE(28);
+  const bytes = fs.statSync(path).size - 44;
+  return byteRate > 0 ? bytes / byteRate : 0;
 }
 fs.mkdirSync(SHOTS, { recursive: true });
 
@@ -50,6 +78,29 @@ const browser = await chromium.launch({
 });
 
 const ctx = await browser.newContext({ permissions: ["microphone"] });
+
+// SEED THE APP'S OWN PERSISTENCE INSTEAD OF CLICKING THROUGH TO THE AYAH.
+// The picker restores `tilawah_place` on mount, so writing it lands the reader
+// directly on the ayah under test. The previous version searched for the sura
+// and then stepped with the arrows, which does the wrong thing the moment any
+// state survives — a restored place hides the search box, the search branch is
+// skipped, and the arrows then step relative to whatever ayah was restored. One
+// run ended up reciting into sura 108 in Russian for exactly that reason.
+await ctx.addInitScript(
+  ([sura, aya]) => {
+    localStorage.setItem("tilawah_place", `${sura}:${aya}`);
+    localStorage.setItem("tilawah_read_mode", "verse");
+    localStorage.setItem("tilawah_lang", "uz");
+    // Consent is answered, and answered the stingy way: seen, but nothing
+    // stored. That is the path a learner who consents to nothing takes, and the
+    // one that must keep working.
+    localStorage.setItem("tilawah_consent_seen", "1");
+    localStorage.setItem("tilawah_consent", "0");
+    localStorage.setItem("tilawah_consent_audio", "0");
+  },
+  [SURA, AYA],
+);
+
 const page = await ctx.newPage();
 
 // Any console error or uncaught exception is a failure. The crash we are
@@ -96,39 +147,63 @@ try {
   }
   await shot(page, "01-home");
 
-  // Pick sura 112, ayah 3 — the clip is a recitation of al-Ikhlas 3.
-  const search = page.getByPlaceholder(/Sura nomi|Название/);
-  if (await search.isVisible().catch(() => false)) {
-    await search.fill("112");
-    await page.waitForTimeout(500);
-    await page.locator(".row").first().click();
-    // The picker hands off to <Reader>, which has no .row — wait for its own
-    // chrome instead of guessing a timeout.
-    await page.locator(".modes").waitFor({ timeout: 20000 });
+  // The app opens on TODAY now, not on the picker. Practice is a tab, so get
+  // there first — the seeded place then restores inside it.
+  const practiceTab = page.locator(".tab", { hasText: /Mashq|Практика/ });
+  if (await practiceTab.count()) {
+    await practiceTab.click();
+    await page.waitForTimeout(900);
   }
 
-  // Verse-by-verse mode, then step to ayah 3 and start practising it.
+  // The seeded place has already opened the sura in verse-by-verse mode. Only
+  // fall back to searching if that restore did not happen.
+  if (!(await page.locator(".modes").count())) {
+    console.log("no restore — falling back to the search box");
+    const search = page.getByPlaceholder(/Sura nomi|Название/);
+    await search.fill(String(SURA));
+    await page.waitForTimeout(500);
+    await page.locator(".row").first().click();
+    await page.locator(".modes").waitFor({ timeout: 20000 });
+  }
   await page.getByRole("tab", { name: /Oyatma-oyat|По аятам/ }).click();
   await page.locator(".verse").waitFor({ timeout: 20000 });
-  for (let i = 0; i < 2; i++) {
-    await page.locator(".verse__arrow").last().click();
-    await page.waitForTimeout(400);
+
+  // Step to the ayah under test. Seeding lands it there already, so this is a
+  // correction, not the route — and if it cannot get there, that is a failure
+  // rather than "recite whatever is on screen", which is how a previous run
+  // silently recited into the wrong sura.
+  const currentAya = async () =>
+    Number((await page.locator(".verse__ref").textContent())?.match(/(\d+)\s*$/)?.[1] ?? 0);
+  for (let i = 0; i < 40 && (await currentAya()) !== AYA; i++) {
+    const at = await currentAya();
+    await page.locator(".verse__arrow").nth(at < AYA ? 1 : 0).click();
+    await page.waitForTimeout(250);
   }
   const ref = await page.locator(".verse__ref").textContent();
-  console.log(`on verse: ${ref?.trim()}`);
+  console.log(`on verse: ${ref?.trim()}  (want ${SURA}:${AYA})`);
+  if ((await currentAya()) !== AYA) {
+    throw new Error(`could not reach ayah ${AYA}; stuck on "${ref?.trim()}"`);
+  }
   await shot(page, "02-verse");
 
   await page.locator(".verse__actions .record").click();
   await page.locator(".ayah__text").first().waitFor({ timeout: 20000 });
   await shot(page, "02-selected");
 
-  // Record. The fake device plays the WAV into getUserMedia in real time, so
-  // this has to wait roughly the clip's length.
+  // Record. The fake device plays the WAV into getUserMedia in REAL TIME, so
+  // this must wait at least as long as the clip.
+  //
+  // Timed from the CLIP, not from the ayah's estimate — see wavSeconds(). A
+  // small tail lets the last phoneme land without adding enough silence to
+  // trip the collapse gate.
+  const clip = wavSeconds(WAV);
+  const waitMs = Math.round((clip > 0 ? clip : 6) * 1000) + 600;
+
   const rec = page.getByRole("button", { name: /Oʻqishni boshlash|Начать чтение/ });
   await rec.waitFor({ timeout: 15000 });
-  console.log("recording…");
+  console.log(`recording… (clip ${clip.toFixed(1)}s, waiting ${waitMs}ms)`);
   await rec.click();
-  await page.waitForTimeout(6000);
+  await page.waitForTimeout(waitMs);
 
   const stop = page.getByRole("button", { name: /^Toʻxtatish|^Остановить/ });
   await stop.first().click();
@@ -154,7 +229,12 @@ try {
     return {
       rootChildren: document.getElementById("root")?.childElementCount ?? 0,
       bodyChars: document.body.innerText.trim().length,
-      cards: document.querySelectorAll(".card").length,
+      // CORRECTION cards specifically. The results screen also opens with a
+      // verdict card — one sentence saying how many places to look at — which
+      // is a `section`, not an `article`, and has no headline, no fix and no
+      // ladder by design. Counting it as a correction made the first-card
+      // checks below fail on a screen that was rendering perfectly.
+      cards: document.querySelectorAll("article.card").length,
       brokenCards: document.querySelectorAll(".card--broken").length,
       redLetters: document.querySelectorAll(".ayah__mark").length,
       hitTargets: document.querySelectorAll(".ayah__hit").length,
@@ -163,7 +243,11 @@ try {
       // and the single "re-record this word" button.
       ladders: document.querySelectorAll(".ladder").length,
       rungs: document.querySelectorAll(".rung").length,
-      recordableRungs: document.querySelectorAll(".rung__btn").length,
+      // The quiet button plays the isolated-letter audio and carries the same
+      // base class, so it has to be excluded — it is not a record control.
+      recordableRungs: document.querySelectorAll(
+        ".rung__btn:not(.rung__btn--quiet)",
+      ).length,
       letterAudioButtons: document.querySelectorAll(".rung__btn--quiet").length,
       // Must be ZERO: the collapsed "Why" and "Practice" disclosures are gone.
       disclosures: document.querySelectorAll(".card__more").length,
@@ -183,16 +267,16 @@ try {
   // THE ACTUAL SENTENCES A LEARNER READS. The point of driving a browser is to
   // see this, not to count elements.
   const cardText = await page.evaluate(() =>
-    [...document.querySelectorAll(".card")].slice(0, 6).map((c) => ({
+    [...document.querySelectorAll("article.card")].slice(0, 6).map((c) => ({
       kicker: c.querySelector(".card__kicker")?.innerText.trim() ?? "",
       headline: c.querySelector(".card__headline")?.innerText.trim() ?? "",
       where: c.querySelector(".where__words")?.innerText.trim() ?? "",
-      correct: c.querySelector(".where__pair")?.innerText.replace(/
-/g, " ").trim() ?? "",
+      correct:
+        c.querySelector(".where__pair")?.innerText.replace(/\s+/g, " ").trim() ??
+        "",
       fix: c.querySelector(".card__body--fix")?.innerText.trim() ?? "",
       ladder: [...c.querySelectorAll(".rung")].map((r) =>
-        r.innerText.replace(/
-/g, " ").trim(),
+        r.innerText.replace(/\s+/g, " ").trim(),
       ),
       broken: c.classList.contains("card--broken"),
     })),
@@ -255,15 +339,42 @@ try {
     problems.push("cards rendered but no red letters marked in the ayah");
   }
 
-  // The per-word retry control has to exist and be clickable.
-  if (state.retryButtons > 0) {
-    console.log("starting a per-word retry…");
-    await page.locator(".card__retry-btn").first().click();
+  // THE UNLOCK CHAIN. The ladder is an order, so the word rung starts locked
+  // and the only live control is the self-check on rung 1. Clearing the narrow
+  // rungs in turn is what opens the recorded one — which is the behaviour to
+  // verify, not a step to skip past.
+  // Always the first rung NOT yet cleared. A cleared rung keeps its self-check
+  // button (relabelled "yana aytdim"), so taking `.rung__btn--self` first()
+  // clicks rung 1 over and over and rung 2 never opens — which reads exactly
+  // like the unlock chain being broken.
+  const nextSelf = () =>
+    page
+      .locator("article.card")
+      .first()
+      .locator(".rung:not(.rung--done) .rung__btn--self");
+  for (let i = 0; i < 4; i++) {
+    if ((await nextSelf().count()) === 0) break;
+    console.log("  clearing a self-check rung…");
+    await nextSelf().first().click();
+    await page.waitForTimeout(350);
+  }
+  await shot(page, "05-unlocked");
+
+  const recBtn = page
+    .locator("article.card")
+    .first()
+    .locator(".rung__btn:not(.rung__btn--quiet):not(.rung__btn--self)");
+  if ((await recBtn.count()) > 0) {
+    console.log("starting a rung recording…");
+    await recBtn.first().click();
     await page.waitForTimeout(1500);
-    await shot(page, "05-retry-recording");
-    const live = await page.locator(".card__retry-btn--live").count();
-    console.log(`  retry button live: ${live > 0}`);
-    if (live === 0) problems.push("retry button did not enter the recording state");
+    await shot(page, "06-rung-recording");
+    const live = await page.locator(".rung__btn--live").count();
+    console.log(`  rung record button live: ${live > 0}`);
+    if (live === 0)
+      problems.push("rung record button did not enter the recording state");
+  } else {
+    problems.push("no recordable rung ever unlocked on the first card");
   }
 } catch (err) {
   problems.push(`driver: ${err.message}`);

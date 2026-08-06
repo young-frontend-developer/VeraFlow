@@ -138,31 +138,40 @@ def test_dev_marks_everything_draft_as_things_actually_stand(env):
 
 
 def test_unauthored_code_gets_a_body_without_invented_rulings(env):
-    """GHUNNA_LONG has no entry in rules.json or either coaching registry. It
-    still has to render, so it gets a stand-in — and decision 4 holds even
-    here: no headline, no correction, nothing invented.
+    """A code with no entry anywhere still has to render, so it gets a stand-in
+    — and decision 4 holds even here: no headline, no correction, nothing
+    invented.
 
-    The learner is not left with nothing, and now gets rather more than a
-    location. `kind` gives the card a real title, `word`/`letter` travel on the
-    error itself, and the PRACTICE LADDER is derived rather than authored — so
-    an error nobody has written a word about still comes with the letter to
-    drill, the syllables to drill it under, and the word to put it back into.
-    That is a location and an exercise, neither of which is a ruling.
+    The learner is not left with nothing, and gets rather more than a location.
+    `kind` gives the card a real title, `word`/`letter` travel on the error
+    itself, and the PRACTICE LADDER is derived rather than authored — so an
+    error nobody has written a word about still comes with the letter to drill,
+    the syllables to drill it under, and the word to put it back into. That is a
+    location and an exercise, neither of which is a ruling.
 
     THE STAND-IN NO LONGER CARRIES THE CODE. `label` is rendered as the card's
-    kicker, so putting GHUNNA_LONG there printed an internal identifier on a
+    kicker, so putting the code there printed an internal identifier on a
     learner's screen.
+
+    THE EXAMPLE USED TO BE GHUNNA_LONG, and it is no longer available: v6
+    authored it, along with SHADDA_SHORT, SHADDA_LONG and SUB_HA_HEH — the four
+    codes the engine could always emit and nobody had ever written words for.
+    Every emitted code now resolves, so this path is reached only by a code that
+    does not exist at all. That is worth keeping tested: the stand-in is what
+    stops a future code from rendering as a blank card or a crash, and it must
+    stay honest when it does.
     """
     env("dev")
-    shown, _ = pipeline.present(sample(), "uz")
-    card = next(s for s in shown if s["code"] == "GHUNNA_LONG")
+    errs = sample() + [TypedError(code="NOT_A_REAL_CODE", at=9, letter="ن")]
+    shown, _ = pipeline.present(errs, "uz")
+    card = next(s for s in shown if s["code"] == "NOT_A_REAL_CODE")
     body = card["content"]
     assert body["unauthored"] is True
     assert body["label"] == ""
     assert body["headline"] == "" and body["fix"] == ""
     assert body["reviewed"] is False
     # It still has a learner-facing title to render under.
-    assert card["kind"] == "ghunna"
+    assert card["kind"] == "pronunciation"
     # ...and a ladder, because none of it needed authoring. This fixture's
     # error was never located in a word, so there is no word rung to build —
     # which is the point: the ladder gives what it can and omits what it

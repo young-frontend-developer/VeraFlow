@@ -11,6 +11,22 @@ export type Mark = {
   cardId: string;
   /** The letter itself, for the tap target's accessible name. */
   letter: string;
+  /**
+   * EXACT Uthmani character range for this sound, when the server could derive
+   * one. Preferred over the segment because a segment is a letter-GROUP: for a
+   * madd it is the consonant plus its lengthening mark, so marking it lit up
+   * «صَـٰ» entire while the card said "2 harakat kerak" about the ـٰ alone.
+   *
+   * Falls back to the segment when absent, which is how attempts recorded
+   * before this existed still mark anything at all.
+   */
+  span?: [number, number];
+  /**
+   * A short note pinned to this mark — "2 harakat kerak". Attached to the
+   * highlight rather than left in the card, so the instruction and the thing
+   * it is about are in the same place.
+   */
+  note?: string;
 };
 
 type Props = {
@@ -43,6 +59,7 @@ type Box = { left: number; top: number; width: number; height: number };
 type Hit = Box & {
   cardId: string;
   letter: string;
+  note?: string;
   clipLeft: number;
   clipTop: number;
 };
@@ -123,12 +140,17 @@ export default function AyahText({
     const seen = new Set<string>();
 
     for (const mark of marks) {
+      // THE SPAN WINS WHERE THERE IS ONE. It is the sound; the segment is the
+      // letter-group the sound sits in, which for a madd is one character too
+      // wide and marks the consonant the instruction is not about.
       const seg = segments.find((s) => s.units.includes(mark.at));
-      if (!seg) continue;
+      const from = mark.span?.[0] ?? seg?.start;
+      const to = mark.span?.[1] ?? seg?.end;
+      if (from === undefined || to === undefined || to <= from) continue;
       const range = document.createRange();
       try {
-        range.setStart(node, seg.start);
-        range.setEnd(node, seg.end);
+        range.setStart(node, from);
+        range.setEnd(node, to);
       } catch {
         continue; // offsets outside the node; nothing to point at
       }
@@ -144,6 +166,7 @@ export default function AyahText({
         next.push({
           cardId: mark.cardId,
           letter: mark.letter,
+          note: mark.note,
           left,
           top,
           width: r.width,
@@ -251,6 +274,33 @@ export default function AyahText({
             </span>
           </button>
         ))}
+
+      {/*
+        RULE 2's other half: the requirement is not only that the right glyph
+        turns red, but that the instruction is attached TO it. "2 harakat
+        kerak" sitting in a card three inches below the word is a fact the
+        learner has to carry; sitting on the mark, it is a label.
+
+        Rendered only for marks that carry a note — duration errors — so an
+        ordinary substitution stays a clean red letter with nothing hanging
+        off it.
+      */}
+      {hits.map((b, i) =>
+        b.note ? (
+          <span
+            key={`note-${b.cardId}-${i}`}
+            className={
+              activeCardId === b.cardId
+                ? "ayah__note ayah__note--active"
+                : "ayah__note"
+            }
+            aria-hidden="true"
+            style={{ left: b.left + b.width / 2, top: b.top + b.height }}
+          >
+            {b.note}
+          </span>
+        ) : null,
+      )}
 
       {mode !== "still" && (
         <span

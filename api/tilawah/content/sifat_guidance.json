@@ -1,0 +1,268 @@
+{
+  "_meta": {
+    "version": "1.0",
+    "purpose": "Every ṣifa gets a NAME and a PHYSICAL INSTRUCTION. 'Harfning sifati to'g'ri chiqmadi' tells a learner nothing they can act on, and it was the most-shown sentence in the app.",
+    "why_a_separate_file": "The error registries are keyed by error CODE. A ṣifa is a different axis: one property can be wrong under several codes, and one code can be about a property nobody has an entry for. Keying this by the model's own ṣifa field name means a card gets its named sifat whether or not a specific entry exists.",
+    "vocabulary": "Field names are quran_transcript's - see quran_transcript/phonetics/sifa.py, SifaOutput. The classical names are carried in `also_known_as` so a reader can join the two.",
+    "authored_by": "generated, UNREVIEWED",
+    "review_required": true,
+    "review_note": "These are mechanical descriptions of where the tongue, lips, throat and air go. They are not rulings and they decide nothing - but they are learner-facing sentences about tajweed, and Decision 4 puts those with a qori. Everything here ships marked draft and is withheld in production until reviewed.",
+    "budget": "name: a few words. how: at most two short sentences - it sits inside a card with a word budget.",
+    "detector_coverage": "Only tafkheem_or_taqeeq, hams_or_jahr, shidda_or_rakhawa, ghonna, qalqla and itbaq are actually compared today. The rest are authored ahead of a detector so that adding one is a routing change and not a content project; tools/audit_cards.py lists which are which."
+  },
+  "sifat": {
+    "hams_or_jahr": {
+      "also_known_as": "hams / jahr",
+      "detected": true,
+      "uz": {
+        "name": "Nafas yoki ovoz (hams / jahr)",
+        "wrong": "Bu harfda nafas va ovoz nisbati noto'g'ri chiqdi.",
+        "how": "Barmog'ingizni tomog'ingizga qo'ying. Mahmus harfda titrash bo'lmaydi — faqat nafas o'tadi; majhur harfda titrash aniq sezilishi kerak."
+      },
+      "ru": {
+        "name": "Выдох или голос (хамс / джахр)",
+        "wrong": "У этой буквы неверно вышло соотношение выдоха и голоса.",
+        "how": "Положите палец на горло. При глухой букве вибрации нет — проходит только выдох; при звонкой вибрация должна ясно чувствоваться."
+      }
+    },
+    "shidda_or_rakhawa": {
+      "also_known_as": "shidda / rakhawa",
+      "detected": true,
+      "uz": {
+        "name": "To'siq yoki oqim (shiddat / raxovat)",
+        "wrong": "Bu harfda havo oqimi kerakli tarzda to'xtamadi.",
+        "how": "Harfni cho'zishga urinib ko'ring. Shiddat harfi cho'zilmaydi — maxraj to'liq yopiladi, havo to'xtaydi, keyin birdan ochiladi; raxovat harfi esa cho'ziladi."
+      },
+      "ru": {
+        "name": "Преграда или поток (шиддат / раховат)",
+        "wrong": "Воздух при этой букве остановлен не так, как нужно.",
+        "how": "Попробуйте протянуть букву. Шиддат не тянется — махрадж смыкается полностью, воздух останавливается и резко раскрывается; раховат тянется."
+      }
+    },
+    "tafkheem_or_taqeeq": {
+      "also_known_as": "isti'la / istifal (tafkheem / tarqiq)",
+      "detected": true,
+      "uz": {
+        "name": "Yo'g'on yoki ingichka (tafxim / tarqiq)",
+        "wrong": "Bu harfning yo'g'on-ingichkaligi noto'g'ri chiqdi.",
+        "how": "Tilning orqa qismini yumshoq tanglay tomon ko'taring — og'iz ichi kengayadi va tovush yo'g'onlashadi. Tilni tushirsangiz tovush ingichka chiqadi."
+      },
+      "ru": {
+        "name": "Тяжело или легко (тафхим / таркик)",
+        "wrong": "Тяжесть этой буквы вышла неверно.",
+        "how": "Поднимите заднюю часть языка к мягкому нёбу — полость рта расширяется и звук становится тяжёлым. Опустите язык — звук выйдет лёгким."
+      }
+    },
+    "itbaq": {
+      "also_known_as": "itbaq / infitah",
+      "detected": true,
+      "uz": {
+        "name": "Tanglayga yopishish (itboq / infitoh)",
+        "wrong": "Til tanglayga kerakli darajada yopishmadi.",
+        "how": "Til o'rtasini yuqori tanglayga yopishtiring, ular orasida yopiq bo'shliq qolsin. Yopishmasa tovush ochiq va yengil chiqadi."
+      },
+      "ru": {
+        "name": "Прилегание к нёбу (итбак / инфитах)",
+        "wrong": "Язык прилёг к нёбу не так, как нужно.",
+        "how": "Прижмите середину языка к верхнему нёбу так, чтобы между ними осталась замкнутая полость. Без прилегания звук выходит открытым и лёгким."
+      }
+    },
+    "qalqla": {
+      "also_known_as": "qalqala",
+      "detected": true,
+      "uz": {
+        "name": "Sakrash (qalqala)",
+        "wrong": "Bu harfda sakrash to'g'ri chiqmadi.",
+        "how": "Harfni sukun bilan to'liq to'xtating, so'ng maxrajni birdan qo'yib yuboring — yengil sakrash eshitiladi. Unli qo'shmang: «da», «di» yoki «du» emas."
+      },
+      "ru": {
+        "name": "Отскок (калькаля)",
+        "wrong": "Отскок у этой буквы вышел неверно.",
+        "how": "Полностью остановите букву на сукуне, затем резко раскройте махрадж — слышен лёгкий отскок. Не добавляйте гласную: не «да», не «ди», не «ду»."
+      }
+    },
+    "ghonna": {
+      "also_known_as": "ghunna",
+      "detected": true,
+      "uz": {
+        "name": "Burun tovushi (g'unna)",
+        "wrong": "Bu harfda burun tovushi kutilganidek chiqmadi.",
+        "how": "Tovush burun bo'shlig'idan chiqsin va ikki harakat ushlansin — ichingizda 1-2 deb sanang. Burun qanotini barmoq bilan ushlasangiz titrash sezilishi kerak."
+      },
+      "ru": {
+        "name": "Носовой звук (гунна)",
+        "wrong": "Носовой звук у этой буквы вышел не так, как ожидалось.",
+        "how": "Звук должен идти через нос и удерживаться две хараки — сосчитайте про себя 1-2. Если положить палец на крыло носа, должна чувствоваться вибрация."
+      }
+    },
+    "safeer": {
+      "also_known_as": "safeer",
+      "detected": false,
+      "uz": {
+        "name": "Hushtak (safir)",
+        "wrong": "Bu harfda hushtak tovushi kutilganidek chiqmadi.",
+        "how": "Til uchi va oldingi tishlar orasidan o'tkir, hushtaksimon tovush chiqsin. «ص» «س» «ز» da bu tovush aniq eshitilishi kerak."
+      },
+      "ru": {
+        "name": "Свист (сафир)",
+        "wrong": "Свистящий призвук вышел не так, как ожидалось.",
+        "how": "Между кончиком языка и передними зубами должен выходить острый свистящий звук. При «ص» «س» «ز» он обязан быть отчётливым."
+      }
+    },
+    "leen": {
+      "also_known_as": "leen",
+      "detected": false,
+      "uz": {
+        "name": "Yumshoqlik (iyn)",
+        "wrong": "Bu harf yumshoq o'tmadi.",
+        "how": "Fatha ustidan kelgan sukunli «و» yoki «ي» — og'izni keskin yopmasdan yumshoq o'ting. Cho'zmang, lekin to'xtatib ham qo'ymang."
+      },
+      "ru": {
+        "name": "Мягкость (лин)",
+        "wrong": "Эта буква прошла не мягко.",
+        "how": "Сукунные «و» и «ي» после фатхи проходятся мягко, без резкого смыкания рта. Не растягивайте, но и не обрывайте."
+      }
+    },
+    "tafashie": {
+      "also_known_as": "tafashshi",
+      "detected": false,
+      "uz": {
+        "name": "Yoyilish (tafashshiy)",
+        "wrong": "Bu harfda havo kerakli darajada yoyilmadi.",
+        "how": "«ش» ni aytganda havo og'iz ichida keng yoyilsin, til yassi tursin. Tovush bir nuqtaga to'planmaydi."
+      },
+      "ru": {
+        "name": "Растекание (тафашши)",
+        "wrong": "Воздух при этой букве растёкся недостаточно.",
+        "how": "При «ش» воздух широко растекается во рту, язык остаётся плоским. Звук не собирается в одну точку."
+      }
+    },
+    "tikraar": {
+      "also_known_as": "takrir",
+      "detected": false,
+      "uz": {
+        "name": "Bir marta urish (takrir)",
+        "wrong": "Bu harfda til urishi noto'g'ri chiqdi.",
+        "how": "Til uchi tanglay do'ngligiga bir marta tegib darrov uzilsin. Ushlab turmang — ushlasangiz tovush «rrr» bo'lib takrorlanadi."
+      },
+      "ru": {
+        "name": "Одиночный удар (такрир)",
+        "wrong": "Удар языка у этой буквы вышел неверно.",
+        "how": "Кончик языка касается альвеол один раз и сразу отрывается. Не удерживайте — при удержании звук превращается в «ррр»."
+      }
+    },
+    "inhiraf": {
+      "also_known_as": "inhiraf",
+      "detected": false,
+      "uz": {
+        "name": "Burilish (inhirof)",
+        "wrong": "Bu harfda tovush kerakli tomonga burilmadi.",
+        "how": "«ل» da havo tilning yon tomonlaridan, «ر» da til uchi ustidan o'tadi. Tovush to'g'ridan-to'g'ri emas, chetga burilib chiqadi."
+      },
+      "ru": {
+        "name": "Отклонение (инхираф)",
+        "wrong": "Звук у этой буквы отклонился не туда.",
+        "how": "При «ل» воздух идёт по бокам языка, при «ر» — поверх кончика. Звук выходит не прямо, а отклоняясь в сторону."
+      }
+    },
+    "istitala": {
+      "also_known_as": "istitala",
+      "detected": false,
+      "uz": {
+        "name": "Cho'zilib borish (istitola)",
+        "wrong": "Bu harfda tovush kerakli darajada cho'zilmadi.",
+        "how": "«ض» da tovush tilning yon tomoni bo'ylab oziq tishlar tomon cho'ziladi. Bu «د» emas — maxraj kengroq va uzunroq."
+      },
+      "ru": {
+        "name": "Протяжённость (иститаля)",
+        "wrong": "Звук у этой буквы протянулся недостаточно.",
+        "how": "При «ض» звук тянется вдоль боковой части языка к коренным зубам. Это не «د» — махрадж шире и длиннее."
+      }
+    }
+  },
+  "letters": {
+    "_note": "Letter-specific instructions OVERRIDE the general one for that ṣifa. A general rule is right for most letters and wrong for the few that have their own ruling, and the general text is what a learner would otherwise be handed.",
+    "ر": {
+      "tafkheem_or_taqeeq": {
+        "uz": {
+          "name": "«ر» ning yo'g'on-ingichkaligi",
+          "wrong": "«ر» ning yo'g'on-ingichkaligi harakatiga mos kelmadi.",
+          "how": "«ر» ning harakatiga qarang: kasra — ingichka; fatha va zamma — yo'g'on. Tovush harakatga ergashadi, o'zi tanlanmaydi."
+        },
+        "ru": {
+          "name": "Тяжесть «ر»",
+          "wrong": "Тяжесть «ر» не совпала с её огласовкой.",
+          "how": "Смотрите на огласовку «ر»: кясра — лёгкая; фатха и дамма — тяжёлая. Звук следует за огласовкой, а не выбирается отдельно."
+        }
+      },
+      "tikraar": {
+        "uz": {
+          "name": "«ر» bir marta uriladi",
+          "wrong": "«ر» bir marta emas, takrorlanib chiqdi.",
+          "how": "Til uchi tanglay do'ngligiga BIR marta tegsin va darrov uzilsin. Ushlab tursangiz «rrr» bo'lib takrorlanadi."
+        },
+        "ru": {
+          "name": "«ر» бьётся один раз",
+          "wrong": "«ر» вышла раскатистой, а не одиночной.",
+          "how": "Кончик языка касается альвеол ОДИН раз и сразу отрывается. При удержании получается раскатистое «ррр»."
+        }
+      }
+    },
+    "ه": {
+      "hams_or_jahr": {
+        "uz": {
+          "name": "«ه» — bo'sh tomoq",
+          "wrong": "«ه» tomoq siqilib chiqdi.",
+          "how": "Tomoqni bo'sh qo'ying, havo yengil o'tsin. Tomoqni siqmang — siqsangiz tovush «ح» ga aylanadi."
+        },
+        "ru": {
+          "name": "«ه» — свободное горло",
+          "wrong": "«ه» вышла со сжатым горлом.",
+          "how": "Держите горло свободным, воздух проходит легко. Не сжимайте — при сжатии звук превращается в «ح»."
+        }
+      }
+    },
+    "غ": {
+      "hams_or_jahr": {
+        "uz": {
+          "name": "«غ» — titrash bo'lishi shart",
+          "wrong": "«غ» da tomoq titrashi sezilmadi.",
+          "how": "Barmoqlaringizni tomog'ingizga qo'ying: «غ» da titrash sezilishi shart. Titrash bo'lmasa, tovush noto'g'ri chiqqan."
+        },
+        "ru": {
+          "name": "«غ» — вибрация обязательна",
+          "wrong": "При «غ» не почувствовалась вибрация горла.",
+          "how": "Положите пальцы на горло: при «غ» вибрация обязана чувствоваться. Нет вибрации — звук произнесён неверно."
+        }
+      }
+    },
+    "م": {
+      "ghonna": {
+        "uz": {
+          "name": "«م» g'unnasi",
+          "wrong": "«م» da burun tovushi kutilganidek chiqmadi.",
+          "how": "Lablarni to'liq yoping va tovushni burundan chiqaring. Ikki harakat ushlang — ichingizda 1-2 deb sanang."
+        },
+        "ru": {
+          "name": "Гунна «م»",
+          "wrong": "Носовой звук при «م» вышел не так, как ожидалось.",
+          "how": "Полностью сомкните губы и направьте звук в нос. Удерживайте две хараки — сосчитайте про себя 1-2."
+        }
+      }
+    },
+    "ن": {
+      "ghonna": {
+        "uz": {
+          "name": "«ن» g'unnasi",
+          "wrong": "«ن» da burun tovushi kutilganidek chiqmadi.",
+          "how": "Til uchini yuqori tishlar ortidagi do'ngga qo'ying va tovushni burundan chiqaring. Ikki harakat ushlang."
+        },
+        "ru": {
+          "name": "Гунна «ن»",
+          "wrong": "Носовой звук при «ن» вышел не так, как ожидалось.",
+          "how": "Поставьте кончик языка на бугорок за верхними зубами и направьте звук в нос. Удерживайте две хараки."
+        }
+      }
+    }
+  }
+}

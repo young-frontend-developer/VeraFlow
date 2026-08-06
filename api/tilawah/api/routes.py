@@ -197,6 +197,7 @@ async def create_attempt(
         status=fb.status, reason=fb.reason, clean=fb.clean,
         suppressed=fb.suppressed, analysable=fb.analysable,
         errors=fb.errors, snr_db=row.snr_db, duration_s=row.duration_s,
+        score=fb.score, pass_score=fb.pass_score,
     )
 
 

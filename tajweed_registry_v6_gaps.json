@@ -1,0 +1,87 @@
+{
+  "_meta": {
+    "version": "0.6-emitted-code-gaps",
+    "purpose": "The four codes the engine has always been able to emit and no registry generation ever had words for. Every one of them rendered the unauthored stand-in: a card with a location, a letter and nothing to say.",
+    "how_this_was_found": "tests/test_code_mapping.py::test_every_emitted_code_resolves has failed on exactly these four for the life of the file. It was a known-failing test rather than a gap anybody closed, so the gap became permanent.",
+    "authored_by": "generated, UNREVIEWED",
+    "review_required": true,
+    "review_note": "Every entry here is status='draft' and must be read by a qori before production. The articulation instructions are mechanical descriptions of where the tongue, lips and air go - they are not rulings - but they are still learner-facing sentences about tajweed, and Decision 4 puts those with a qori.",
+    "placeholders": "{word} {letter} {expected} {actual} {n_expected} {n_actual} - see content.substitution_context"
+  },
+  "entries": {
+    "SHADDA_SHORT": {
+      "group": "shadda",
+      "severity": "medium",
+      "status": "draft",
+      "detection_signal": "run length on a shadda letter shorter than the reference",
+      "note": "Distinct from madd. Madd lengthens a VOWEL on ا و ي; shadda holds a doubled CONSONANT. Routing this to a madd card sent the learner to the wrong ruling - see cards.SHADDA.",
+      "uz": {
+        "headline": "«{word}» — «{letter}» yetarlicha ushlanmadi.",
+        "fix": "Tashdidli harf ikki harf o'rnida turadi: birinchisi sukunli, ikkinchisi harakatli. Maxrajni yoping, bir sanab ushlang, keyin ochib harakatni ayting.",
+        "rule": "Tashdid — bir harfning ikki marta kelishi. Uni qisqartirish harfni bittaga aylantiradi va so'z ma'nosi o'zgarishi mumkin.",
+        "drill": "«{letter}» ni ikki marta ketma-ket ayting, keyin ularni birlashtirib bir tovushda ushlang."
+      },
+      "ru": {
+        "headline": "«{word}» — «{letter}» удержана недостаточно.",
+        "fix": "Ташдидная буква стоит вместо двух: первая с сукуном, вторая с огласовкой. Сомкните махрадж, удержите на один счёт, затем раскройте и произнесите огласовку.",
+        "rule": "Ташдид — двойное произнесение буквы. Сокращение превращает её в одну и может изменить смысл слова.",
+        "drill": "Произнесите «{letter}» дважды подряд, затем слейте в один удерживаемый звук."
+      }
+    },
+    "SHADDA_LONG": {
+      "group": "shadda",
+      "severity": "low",
+      "status": "draft",
+      "detection_signal": "run length on a shadda letter longer than the reference",
+      "uz": {
+        "headline": "«{word}» — «{letter}» keragidan uzoq ushlandi.",
+        "fix": "Tashdid bir sanoq — undan ortig'i cho'zish bo'lib qoladi. Ushlashni qisqartiring va darrov keyingi harakatga o'ting.",
+        "rule": "Tashdidning uzunligi bir harakat atrofida. Uni cho'zish madd emas, lekin o'qishning me'yorini buzadi.",
+        "drill": "So'zni sekin, keyin oddiy tezlikda o'qing va ushlash uzunligini taqqoslang."
+      },
+      "ru": {
+        "headline": "«{word}» — «{letter}» удержана дольше нужного.",
+        "fix": "Ташдид — один счёт; всё сверх него превращается в растягивание. Сократите удержание и сразу переходите к следующей огласовке.",
+        "rule": "Длительность ташдида — около одной хараки. Растягивание не является маддом, но нарушает меру чтения.",
+        "drill": "Прочитайте слово медленно, затем в обычном темпе и сравните длительность удержания."
+      }
+    },
+    "GHUNNA_LONG": {
+      "group": "ghunna",
+      "severity": "low",
+      "status": "draft",
+      "detection_signal": "ghonna: 'maghnoon' detected, phoneme run longer than the reference",
+      "uz": {
+        "headline": "«{word}» — burun tovushi keragidan uzoq cho'zildi.",
+        "fix": "G'unna ikki harakat: ichingizda 1-2 deb sanang va to'xtang. Uzoq ushlash o'qishni sekinlashtiradi va me'yordan chiqaradi.",
+        "rule": "G'unnaning o'lchovi ikki harakat. Undan ortiq ushlash ham, kam ushlash ham me'yorni buzadi.",
+        "drill": "Barmoqni burun qanotiga qo'yib «نّ» ni ayting va ikki sanoqda uzing."
+      },
+      "ru": {
+        "headline": "«{word}» — носовой звук растянут дольше нужного.",
+        "fix": "Гунна — две хараки: сосчитайте про себя 1-2 и остановитесь. Более долгое удержание замедляет чтение и выходит за меру.",
+        "rule": "Мера гунны — две хараки. И превышение, и недобор одинаково нарушают меру.",
+        "drill": "Положите палец на крыло носа, произнесите «نّ» и оборвите на счёт два."
+      }
+    },
+    "SUB_HA_HEH": {
+      "group": "makharij",
+      "severity": "high",
+      "status": "draft",
+      "detection_signal": "phoneme substitution: ح -> ه",
+      "note": "An Uzbek/Russian L1 prior with no entry in any earlier generation. _substitution_code deliberately yielded to the generic while this was missing, so the confusion was described but never named.",
+      "uz": {
+        "headline": "«{word}» — «ح» o'rniga «ه» aytdingiz.",
+        "fix": "Ikkalasi ham tomoqdan chiqadi, lekin bir joydan emas: «ه» tomoqning eng chuqur qismidan, bo'sh holatda; «ح» tomoq o'rtasidan, siqilish bilan. «ح» da tomoqni yengil siqing va issiq nafas chiqarayotgandek qiling.",
+        "rule": "«ه» va «ح» qo'shni maxrajlar. Ularni almashtirish ochiq xato (lahn jaliy) va so'z ma'nosini o'zgartirishi mumkin.",
+        "drill": "«هَ» va «حَ» ni ketma-ket ayting. Kaftingizni og'zingiz oldiga tuting: «ه» da havo yengil, «ح» da issiqroq va siqiqroq keladi."
+      },
+      "ru": {
+        "headline": "«{word}» — вместо «ح» вы сказали «ه».",
+        "fix": "Обе из горла, но не из одного места: «ه» — из самой глубокой части, в свободном положении; «ح» — из середины горла, со сжатием. При «ح» слегка сожмите горло, как при тёплом выдохе.",
+        "rule": "«ه» и «ح» — соседние махраджи. Их замена — явная ошибка (лахн джалий) и может изменить смысл слова.",
+        "drill": "Произнесите «هَ» и «حَ» подряд. Поднесите ладонь ко рту: при «ه» воздух лёгкий, при «ح» — теплее и плотнее."
+      }
+    }
+  }
+}

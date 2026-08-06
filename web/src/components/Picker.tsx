@@ -11,6 +11,7 @@ import {
   suraAyat,
 } from "../lib/api";
 import { Lang, t } from "../lib/i18n";
+import { Blank, Failure, Loading } from "./States";
 
 /**
  * Sura -> read -> practise, against the real catalogue: all 114 suras and all
@@ -28,6 +29,24 @@ import { Lang, t } from "../lib/i18n";
  * question nobody asked for, imposed on the majority of ayat. Practising part
  * of a long ayah is still available, but from inside Recite, as a choice.
  */
+
+/**
+ * How the browse list is grouped.
+ *
+ * BY LENGTH, because that is the question a learner is actually asking when
+ * they open this screen: is this a sura I can read in one sitting? A flat index
+ * of 114 answers nothing, and grouping by revelation place (Meccan/Medinan) is
+ * scholarship rather than navigation — true, and no help at all in choosing
+ * what to practise now.
+ *
+ * The bands are stated here rather than computed so they stay stable: a
+ * threshold derived from the data would move as the list is filtered.
+ */
+const GROUPS = [
+  { key: "group_short" as const, min: 1, max: 20 },
+  { key: "group_medium" as const, min: 21, max: 75 },
+  { key: "group_long" as const, min: 76, max: 10000 },
+];
 
 export type Selection = {
   sura: Sura;
@@ -156,6 +175,7 @@ export default function Picker({
     return (
       <>
         <h2 className="section-head">{t(lang, "pick_sura")}</h2>
+        <p className="section-sub">{t(lang, "pick_sura_sub")}</p>
         <input
           className="search"
           type="search"
@@ -166,29 +186,52 @@ export default function Picker({
           onChange={(e) => setQuery(e.target.value)}
         />
         {filtered.length === 0 ? (
-          <p className="empty">{t(lang, "no_matches")}</p>
-        ) : (
-          <ul className="list list--scroll">
+          // NOT a line of grey text. The learner typed something and got
+          // nothing, so this says what they searched, what was searched, and
+          // gives them the one control that recovers — clearing the query.
+          <Blank
+            title={t(lang, "no_matches")}
+            body={t(lang, "no_matches_body").replace("{q}", query.trim())}
+            action={t(lang, "no_matches_clear")}
+            onAction={() => setQuery("")}
+          />
+        ) : query ? (
+          // A search result is a flat ranked list on purpose: grouping results
+          // by length would bury the match the learner is looking straight at.
+          <ul className="list">
             {filtered.map((s) => (
-              <li key={s.number}>
-                <button className="row" onClick={() => openSura(s)}>
-                  <span className="row__num">{s.number}</span>
-                  <span className="row__body">
-                    <span className="row__name">
-                      {s.translit}
-                      <span className="row__alt"> · {s.uz}</span>
-                    </span>
-                    <span className="row__meta">
-                      {s.n_ayat} {t(lang, "ayat_count")}
-                    </span>
-                  </span>
-                  <span className="row__ar row__ar--name" dir="rtl" lang="ar">
-                    {s.name_ar}
-                  </span>
-                </button>
-              </li>
+              <SuraRow key={s.number} lang={lang} sura={s} onOpen={openSura} />
             ))}
           </ul>
+        ) : (
+          // THE HIERARCHY THE BROWSE VIEW NEEDS. 114 suras as one flat column
+          // is a system index, not a reading list — and the grouping that
+          // actually matches how people navigate the Quran is length, because
+          // it is what decides whether a sura is a single sitting.
+          GROUPS.map((g) => {
+            const rows = filtered.filter(
+              (s) => s.n_ayat >= g.min && s.n_ayat <= g.max,
+            );
+            if (rows.length === 0) return null;
+            return (
+              <section className="group" key={g.key}>
+                <div className="group__head">
+                  <span className="section-label">{t(lang, g.key)}</span>
+                  <span className="group__count">{rows.length}</span>
+                </div>
+                <ul className="list">
+                  {rows.map((s) => (
+                    <SuraRow
+                      key={s.number}
+                      lang={lang}
+                      sura={s}
+                      onOpen={openSura}
+                    />
+                  ))}
+                </ul>
+              </section>
+            );
+          })
         )}
       </>
     );
@@ -203,7 +246,12 @@ export default function Picker({
         <button className="crumb" onClick={() => setSura(null)}>
           ← {t(lang, "pick_sura")}
         </button>
-        <p className="empty">{t(lang, "error_generic")}</p>
+        <Failure
+          lang={lang}
+          title={t(lang, "sura_failed_title")}
+          body={t(lang, "sura_failed_body")}
+          onRetry={() => openSura(sura, focusAya ?? undefined)}
+        />
       </>
     );
   }
@@ -214,7 +262,7 @@ export default function Picker({
         <button className="crumb" onClick={() => setSura(null)}>
           ← {t(lang, "pick_sura")}
         </button>
-        <p className="empty">{t(lang, "loading")}</p>
+        <Loading rows={7} />
       </>
     );
   }
@@ -237,5 +285,37 @@ export default function Picker({
       reciter={reciter}
       onReciter={onReciter}
     />
+  );
+}
+
+/** One sura. Arabic name, transliteration, local name and length — the four
+ *  things that identify a sura to someone choosing one. */
+function SuraRow({
+  lang,
+  sura,
+  onOpen,
+}: {
+  lang: Lang;
+  sura: Sura;
+  onOpen: (s: Sura) => void;
+}) {
+  return (
+    <li>
+      <button className="row" onClick={() => onOpen(sura)}>
+        <span className="row__num">{sura.number}</span>
+        <span className="row__body">
+          <span className="row__name">
+            {sura.translit}
+            <span className="row__alt"> · {sura.uz}</span>
+          </span>
+          <span className="row__meta">
+            {sura.n_ayat} {t(lang, "ayat_count")}
+          </span>
+        </span>
+        <span className="row__ar row__ar--name" dir="rtl" lang="ar">
+          {sura.name_ar}
+        </span>
+      </button>
+    </li>
   );
 }

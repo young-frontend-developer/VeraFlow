@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 
 from .. import content
 from ..config import settings
-from ..content import coaching
+from ..content import coaching, sifat
 from .audio import DecodeInfo, check_quality, decode
 from . import cards
 from .collapse import looks_collapsed
@@ -27,8 +27,8 @@ from .model import transcribe
 from . import practice
 from .ranges import Range, is_legal_range, n_words, reference
 from .runlength import MARKS, MARK_SOUND
-from .segments import (segments_for_range, unit_letters, unit_word_indices,
-                       unit_words)
+from .segments import (segments_for_range, unit_char_spans, unit_letters,
+                       unit_spans_for_range, unit_word_indices, unit_words)
 from .target import Target
 from .tolerances import apply as apply_tolerances
 from .typed_errors import TypedError, typed_diff
@@ -68,6 +68,12 @@ class Feedback:
     snr_db: float = 0.0
     duration_s: float = 0.0
     mean_prob: float = 0.0
+    # Fraction of the recited range's sounds with no error against them, and
+    # the mark a practice rung has to clear to unlock the next one. Both travel
+    # so the client never has to hard-code the threshold it is comparing to -
+    # see config.practice_pass and RULE 9.
+    score: float = 0.0
+    pass_score: float = 0.0
 
 
 def _is_allocation_failure(exc: BaseException) -> bool:
@@ -115,18 +121,55 @@ def _sifat_errors(phonetized, pred) -> list[TypedError]:
     if not ref or not got:
         return []
     to_unit = _group_to_unit(phonetized.phonemes, ref)
+    keys = [_group_letter(g) for g in ref]
     out = []
     for d in compare(ref, got):
-        code = code_for(d.field, d.letter, d.expected, d.heard)
+        at, letter = _reanchor_tafkheem(d.field, d.at, d.letter, keys)
+        code = code_for(d.field, letter, d.expected, d.heard)
         if code is None:
-            # Not an error - a difference in degree between two values that are
-            # both correct enough that no entry exists to correct it. Dropped
-            # here rather than shown as a generic.
+            # Not an error. Either a difference in degree between two values
+            # that are both correct enough that no entry exists to correct it,
+            # or - see sifat_codes.applies - a ṣifa this letter does not have,
+            # which cannot be a mistake at all. Dropped here rather than shown
+            # as a generic.
             continue
-        out.append(TypedError(code=code, at=to_unit.get(d.at, d.at),
-                              letter=d.letter, expected=d.expected,
+        out.append(TypedError(code=code, at=to_unit.get(at, at),
+                              letter=letter, expected=d.expected,
                               heard=d.heard, sifa=d.field))
     return out
+
+
+def _group_letter(group: dict) -> str:
+    from .sifa_compare import _base
+    return _base(group.get("phonemes") or "")
+
+
+def _reanchor_tafkheem(field: str, at: int, letter: str,
+                       keys: list[str]) -> tuple[int, str]:
+    """Move a heaviness error off a madd letter and onto the consonant it
+    lengthens. Returns the (position, letter) the card should be about.
+
+    RULE 5. ا has no tafkheem or tarqiq ruling of its own - it is a lengthening,
+    and it comes out heavy or light entirely because the consonant in front of
+    it did. «طَا» is heavy because of the ط. So a card saying "the alif came out
+    light" names a letter with no such property, and the learner has nothing to
+    change about the alif that would fix it.
+
+    RE-ANCHORED RATHER THAN DROPPED, because the observation is real: something
+    did come out light, and it was the consonant. Walking back to it turns an
+    unactionable card into the correct one. If there is no consonant to walk
+    back to - a madd letter opening the range - the position is returned
+    unchanged and sifat_codes.applies() then refuses it, because at that point
+    there is genuinely nothing to say.
+    """
+    from .sifat_codes import BORROWS_TAFKHEEM
+
+    if field != "tafkheem_or_taqeeq" or letter not in BORROWS_TAFKHEEM:
+        return at, letter
+    for back in range(at - 1, -1, -1):
+        if keys[back] and keys[back] not in BORROWS_TAFKHEEM:
+            return back, keys[back]
+    return at, letter
 
 
 def _group_to_unit(phonemes: str, ref_groups: list[dict]) -> dict[int, int]:
@@ -254,7 +297,67 @@ def _unauthored_body(code: str) -> dict:
             "reviewed": False, "unauthored": True}
 
 
-def present(raw: list[TypedError], lang: str) -> tuple[list[dict], list[dict]]:
+# Codes whose authored text describes the ERROR CLASS rather than the error:
+# "the letter's ṣifa did not come out right", which is true of every ṣifa fault
+# ever detected and useful for none of them.
+_GENERIC_SIFAT = "GENERIC_SIFAT_MISMATCH"
+
+
+def _name_the_sifat(e: TypedError, body: dict | None,
+                    guide: dict | None) -> dict | None:
+    """Replace generic ṣifa language with the named property, where we have it.
+
+    RULES 3 AND 4. "Harfning sifati to'g'ri chiqmadi" is banned outright, and it
+    was the most-shown sentence in the app: every ṣifa disagreement with no
+    specific entry rendered it, over a detector that had already said which of
+    hams, shidda, tafkheem, itbaq, qalqala or ghunna was the one that flipped.
+
+    ONLY THE GENERIC IS OVERWRITTEN. A specific entry - TAFKHEEM_LOST,
+    RAA_TAFKHEEM_MISSING, GHUNNA_MISSING - is authored about exactly this fault
+    in exactly this direction, and is better than anything keyed on the ṣifa
+    alone could be. Those keep their own headline and instruction and merely
+    gain the articulation note beside it.
+
+    With no guidance authored for the ṣifa, the card is left as it was rather
+    than blanked: a vague sentence about a located letter still beats an empty
+    slot, and sifat.missing_guidance() is what makes that gap countable.
+    """
+    if body is None or guide is None:
+        return body
+    if coaching.resolve(e.code) != _GENERIC_SIFAT:
+        return body
+    out = dict(body)
+    out["headline"] = guide["wrong"]
+    out["fix"] = guide["how"]
+    return out
+
+
+def _distinct(text: str, already_shown: str) -> str:
+    """`text`, unless the card is already saying exactly that."""
+    return "" if text.strip() == already_shown.strip() else text
+
+
+def accuracy(n_units: int, errors: list[TypedError]) -> float:
+    """Fraction of this range's sounds that came out with no error against them.
+
+    THE SCORE RULE 9 GATES ON. Deliberately the simplest thing that is actually
+    measured rather than a weighted composite: how many of the units the learner
+    was asked to produce came back clean. One error on a five-unit word is 0.8;
+    the same error inside a forty-unit ayah is 0.975, which is the right
+    behaviour - it is a smaller share of a longer read.
+
+    Distinct occurrences are counted, not cards, so a letter missed four times
+    costs four units rather than one. Clamped at zero because a range can pick
+    up more errors than it has units when insertions pile up.
+    """
+    if n_units <= 0:
+        return 0.0
+    return max(0.0, 1.0 - len({e.at for e in errors}) / n_units)
+
+
+def present(raw: list[TypedError], lang: str, *, uthmani: str = "",
+            spans: dict[int, tuple[int, int]] | None = None
+            ) -> tuple[list[dict], list[dict]]:
     """Detected errors -> (shown to the learner, logged only).
 
     Split out of analyze() so the gate is testable without the 2.42 GB model.
@@ -299,6 +402,15 @@ def present(raw: list[TypedError], lang: str) -> tuple[list[dict], list[dict]]:
         if coaching.has(e.code):
             status = "draft"
         reviewed = status != "collect" and bool(body) and body.get("reviewed", False)
+
+        # RULES 3 AND 4. The detector said WHICH ṣifa flipped and the card never
+        # asked. `guide` carries that property's name and the physical
+        # instruction for producing it - where the tongue, throat or lips go -
+        # and where it exists it REPLACES the generic sentence rather than
+        # sitting under it. See _name_the_sifat().
+        guide = sifat.guidance(e.sifa, e.letter, lang)
+        body = _name_the_sifat(e, body, guide)
+
         record = {
             **e.dict(), "status": status, "content": body,
             "draft": False, "needs_teacher": status == "teacher",
@@ -306,17 +418,39 @@ def present(raw: list[TypedError], lang: str) -> tuple[list[dict], list[dict]]:
             # `code` - see cards.py. `group` comes from the registry entry so a
             # code filed under makharij reads as "wrong letter" without the
             # engine needing a row for every entry.
-            "kind": cards.kind_of(e.code, (body or {}).get("group", "")),
+            "kind": cards.kind_of(e.code, (body or {}).get("group", ""),
+                                  e.sifa),
             # Every occurrence of this (code, letter), so the ayah can mark all
             # of them red while the learner reads a single card.
-            "occurrences": cards.occurrences(group),
+            "occurrences": cards.occurrences(group, spans, uthmani),
             "count": len(group),
             "words": cards.distinct_words(group),
             # The practice ladder - letter, syllables, the word they misread,
             # the ayah. DERIVED, not authored, so it is present on every card
             # including the ones with no coaching text at all: a learner whose
             # error we cannot explain can still be shown what to drill.
-            "practice": practice.ladder(e.letter, e.word, e.word_index),
+            "practice": practice.ladder(
+                e.letter, e.word, e.word_index,
+                letter_audio=(body or {}).get("audio_pair", "")),
+            # RULE 12 gives the card a "rule name" slot. Taken from what is
+            # already authored - the registry entry's own short title, or the
+            # ṣifa's name - and left EMPTY rather than invented when neither
+            # exists. The client falls back to the `kind` title, which is a real
+            # name too; what it must never fall back to is the code.
+            "rule_name": (body or {}).get("label", "") or (
+                guide or {}).get("name", ""),
+            "sifa_name": (guide or {}).get("name", ""),
+            # The physical instruction. Separate from `fix` because they answer
+            # different questions: `fix` is what to do about THIS mistake,
+            # articulation is how the sound is made at all.
+            #
+            # OMITTED WHEN IT IS ALREADY THE FIX. On a generic ṣifa card the two
+            # are the same sentence by construction - _name_the_sifat puts the
+            # articulation INTO the fix slot, because there was nothing better
+            # to put there - and rendering both printed it twice under its own
+            # heading.
+            "articulation": _distinct(
+                (guide or {}).get("how", ""), (body or {}).get("fix", "")),
         }
 
         if reviewed:
@@ -456,7 +590,12 @@ def analyze(audio: bytes, sura: int, aya: int, lang: str = "uz", *,
     # behaviour) until that calibration has actually been run.
     raw, within_tolerance = apply_tolerances(detected, pred.mean_prob)
 
-    shown, silent = present(raw, lang)
+    spans = unit_spans_for_range(sura, aya, rng.start_word, rng.num_words)
+    shown, silent = present(raw, lang, uthmani=uthmani, spans=spans)
+    # RULE 9's gate. Measured over the RANGE that was actually recited, so a
+    # word-rung re-read is scored against that word and not against the ayah it
+    # came from.
+    score = accuracy(len(unit_char_spans(target.phonemes)), raw)
 
     # Within-tolerance deviations are logged in full, never just counted. They
     # are the raw material tools/calibrate.py turns into thresholds, and once a
@@ -492,4 +631,5 @@ def analyze(audio: bytes, sura: int, aya: int, lang: str = "uz", *,
         clean=not raw, suppressed=bool(raw) and not shown,
         errors=shown, silent_errors=silent, within_tolerance=tolerated,
         snr_db=q.snr_db, duration_s=q.duration_s, mean_prob=pred.mean_prob,
+        score=round(score, 3), pass_score=settings.practice_pass,
     )

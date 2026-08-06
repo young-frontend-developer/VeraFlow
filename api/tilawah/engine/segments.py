@@ -207,9 +207,20 @@ def unit_words(uthmani: str, segments: list[dict]) -> dict[int, str]:
     return out
 
 
-# Alef wasla carries no sound of its own and is never the letter a mistake is
-# "on", so it is skipped when reading a letter out of a segment.
-_SKIP = "ٱ"
+# Characters that appear in a segment but can never be "the letter the mistake
+# happened on", so they are skipped when reading a letter out of one.
+#
+#   ٱ  U+0671  alef wasla   carries no sound of its own
+#   ـ  U+0640  TATWEEL      not a letter at all - it is the elongation stroke a
+#                           superscript alef is drawn on, as in «صَـٰ»
+#
+# TATWEEL IS THE ONE THAT WAS LEAKING. It is not a combining mark, so it
+# survived the filter, and it sits inside the codepoint range is_letter() tests
+# (U+0640 is between ء and ي). A dagger-alif madd therefore resolved to «ـ» and
+# the practice ladder told the learner to say a kashida, with a syllable rung
+# offering «ـَ ـُ ـِ». Found by replaying a real 2:7 recitation, where segment
+# «ـٰ» of «أَبْصَـٰرِهِمْ» resolved exactly that way.
+_SKIP = "ٱـ"
 
 
 def _base_letters(text: str) -> str:
@@ -272,6 +283,116 @@ def unit_letters(uthmani: str, segments: list[dict]) -> dict[int, str]:
         for u in seg["units"]:
             out.setdefault(u, letters[-1] if letters else "")
     return out
+
+
+@lru_cache(maxsize=1024)
+def unit_spans_for_range(sura: int, aya: int, start_word: int,
+                         num_words: int) -> dict[int, tuple[int, int]]:
+    """unit index -> the Uthmani character span that unit ALONE occupies.
+
+    RULE 2: HIGHLIGHT THE SOUND, NOT THE LETTER-GROUP. A segment groups the
+    characters that share units, so marking one painted the whole group - and
+    for a madd that group is the CONSONANT plus its lengthening mark. A learner
+    told "madd — 2 harakat needed" saw «صَـٰ» lit up entire and had no way to
+    know the instruction was about the ـٰ rather than about the ص.
+
+    Derived from the same phonetizer mappings the segments are, so it can only
+    ever narrow a segment, never point outside it. A character contributes to
+    whichever unit its own mapping names; the marks sitting on it come along.
+
+    Segments carrying ONE unit answer with the whole segment, which is both
+    correct and the overwhelmingly common case. This narrows only where a group
+    really does hold several sounds - which is exactly the madd case.
+    """
+    from .ranges import Range, reference
+
+    uthmani, out = reference(Range(sura, aya, start_word, num_words))
+    spans = unit_char_spans(out.phonemes)
+    char_to_unit: dict[int, int] = {}
+    for unit, (a, b) in enumerate(spans):
+        for c in range(a, b):
+            char_to_unit[c] = unit
+
+    # Uthmani character -> the first unit it generates. A combining mark
+    # generates nothing of its own and joins the character it sits on.
+    bounds: dict[int, list[int]] = {}
+    owner: int | None = None
+    for i, ch in enumerate(uthmani):
+        if ch.isspace():
+            owner = None
+            continue
+        unit = None
+        if i < len(out.mappings):
+            mp = out.mappings[i]
+            if not mp.deleted:
+                for c in range(mp.pos[0], mp.pos[1]):
+                    if c in char_to_unit:
+                        unit = char_to_unit[c]
+                        break
+        if unit is None:
+            if unicodedata.combining(ch) and owner is not None:
+                unit = owner          # the mark belongs to its base letter
+            else:
+                continue
+        else:
+            owner = unit
+        got = bounds.setdefault(unit, [i, i + 1])
+        got[0] = min(got[0], i)
+        got[1] = max(got[1], i + 1)
+
+    # UNITS NO CHARACTER GENERATES. The qalqalah ڇ is derived from the sukun on
+    # a qalqalah letter rather than written, so nothing in the mushaf maps to
+    # it and it would come back with no span at all - no highlight on the very
+    # error the learner is being asked to fix. It borrows the span of the
+    # letter it is an echo of, which is the unit before it: the same backward
+    # walk, and for the same reason, as unit_letters.
+    total = len(unit_char_spans(out.phonemes))
+    for unit in range(total):
+        if unit in bounds:
+            continue
+        for back in range(unit - 1, -1, -1):
+            if back in bounds:
+                bounds[unit] = list(bounds[back])
+                break
+    return {u: (a, b) for u, (a, b) in bounds.items()}
+
+
+def occurrence_ordinal(uthmani: str, span: tuple[int, int],
+                       letter: str) -> tuple[int, int]:
+    """(which occurrence of `letter` in its word this span is, how many there are).
+
+    RULE 10. «أَبْصَـٰرِهِمْ» has two ه-shaped letters and «ٱلرَّحْمَـٰنِ» has two ن. A
+    card saying only "the letter ه was wrong" leaves the learner scanning the
+    word to find which one, and the red mark is on only one of them - so the
+    words and the highlight disagree about how many mistakes there were.
+
+    COUNTED OVER CHARACTERS, NOT UNITS, and that distinction is the whole
+    correctness of it. Several units can resolve to the same letter without
+    there being two of that letter written down: a madd unit walks back to the
+    consonant it lengthens, and a qalqalah unit walks back to the letter it
+    echoes. Counting units therefore reported «صَـٰ» as "the 2nd ص" in a word
+    containing exactly one. Characters are also what the LEARNER counts, since
+    they are what is on the page.
+
+    Returns (1, 1) when the letter occurs once - the ordinary case - so a caller
+    can render an ordinal only where there is genuinely something to
+    disambiguate.
+    """
+    if not letter:
+        return (1, 1)
+    start, end = 0, len(uthmani)
+    for a, b in word_spans(uthmani):
+        if span[0] < b and span[1] > a:
+            start, end = a, b
+            break
+    word = uthmani[start:end]
+    total = word.count(letter)
+    if total <= 1:
+        return (1, max(total, 1))
+    # How many of them lie at or before this span. `min` guards the walked-back
+    # case, where the span can start after the last written instance.
+    before = word.count(letter, 0, max(span[0] - start, 0))
+    return (min(before + 1, total), total)
 
 
 def unit_word_indices(uthmani: str, segments: list[dict]) -> dict[int, int]:

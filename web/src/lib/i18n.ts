@@ -6,12 +6,149 @@
 // Both are first drafts by a developer and want a native pass before launch.
 export type Lang = "uz" | "ru";
 
+/**
+ * Month names, written out rather than left to Intl.
+ *
+ * Chrome ships no CLDR month data for `uz-UZ`, so Intl.DateTimeFormat falls
+ * back and renders the dateline as "M08 6, THU" — a placeholder month, in
+ * English, in caps. Russian resolves fine, but formatting the two languages by
+ * different mechanisms is how one of them silently regresses later, so both are
+ * spelled out here.
+ */
+export const MONTHS: Record<Lang, string[]> = {
+  uz: ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul",
+       "avgust", "sentabr", "oktabr", "noyabr", "dekabr"],
+  ru: ["января", "февраля", "марта", "апреля", "мая", "июня", "июля",
+       "августа", "сентября", "октября", "ноября", "декабря"],
+};
+
+/** Today, as a dateline. No weekday, no clock — this is a date, not a timer. */
+export function dateline(lang: Lang, d = new Date()): string {
+  return `${d.getDate()} ${MONTHS[lang][d.getMonth()]}`;
+}
+
 const STRINGS = {
   uz: {
     // navigation
+    nav_label: "Asosiy boʻlimlar",
+    nav_today: "Bugun",
     nav_practice: "Mashq",
+    nav_learn: "Oʻrganish",
+    nav_memorize: "Yodlash",
+    nav_profile: "Profil",
     nav_library: "Oyatlar",
     nav_log: "Yozuvlar",
+
+    // ── onboarding. No sign up, no log in: there are no accounts, and the
+    // consent step is the real decision being made here.
+    onboard_welcome: "Tilawahga xush kelibsiz",
+    onboard_welcome_body:
+      "Qurʼonni ovoz chiqarib oʻqing, tajvid boʻyicha tinch va aniq izoh oling. Baho ham, reyting ham yoʻq — faqat siz va matn.",
+    onboard_begin: "Boshlash",
+    onboard_next: "Davom etish",
+    onboard_skip: "Hozircha oʻtkazib yuborish",
+    onboard_lang: "Qaysi tilda oʻqiymiz?",
+    onboard_lang_body: "Izohlar va tarjimalar shu tilda koʻrsatiladi.",
+    onboard_level: "Qurʼon oʻqishda tajribangiz qanday?",
+    onboard_level_body:
+      "Bu javob faqat bitta narsani belgilaydi: sizga qaysi qori ovozi taklif qilinishini. Istalgan vaqtda oʻzgartirasiz.",
+    onboard_level_new: "Endi boshlayapman",
+    onboard_level_new_note: "Har bir jumlani takrorlaydigan muallim qorisi",
+    onboard_level_some: "Biroz oʻqiganman",
+    onboard_level_some_note: "Odatdagi murattal oʻqish",
+    onboard_level_fluent: "Erkin oʻqiyman",
+    onboard_level_fluent_note: "Odatdagi murattal oʻqish",
+
+    // ── today
+    today_greeting: "Assalomu alaykum",
+    today_continue: "Kaldirgan joyingiz",
+    today_resume: "Shu oyatni oʻqish",
+    today_progress: "{of} oyatdan {n}-si",
+    today_recent: "Soʻnggi mashqlar",
+    today_recent_none: "Hali mashq qilinmagan.",
+    today_recent_off:
+      "Yozuvlar saqlanmayapti. Profilda yoqsangiz, shu yerda koʻrinadi.",
+    today_next: "Keyingisi",
+    today_next_why: "Shu suradagi navbatdagi oyat",
+    today_first_title: "Qaysi oyatdan boshlaymiz?",
+    today_first_body:
+      "Surani tanlang, oyatni oʻqing — keyingi safar aynan shu yerdan davom etasiz.",
+    today_first_action: "Sura tanlash",
+
+    // ── the dark recording card
+    studio_ready: "Yozishga tayyor",
+    studio_live: "Yozilmoqda",
+    studio_thinking: "Tahlil qilinmoqda",
+    studio_idle_primary: "Tugmani bosing",
+    studio_idle_secondary: "Shoshilmang — vaqtingiz yetarli.",
+    studio_live_secondary: "Tinch va sekin oʻqing. Tugatgach, toʻxtating.",
+    studio_thinking_primary: "Oʻqishingiz tinglanmoqda",
+    studio_thinking_secondary:
+      "Bu 15–30 soniya davom etishi mumkin. Ilova qotib qolgani yoʻq.",
+    studio_last: "Oxirgi mashq",
+    studio_accuracy: "Aniqlik",
+
+    // ── the two failures that are not the learner's fault
+    // ── picker
+    pick_sura_sub: "Surani tanlang, keyin oyatni.",
+    group_short: "Qisqa suralar",
+    group_medium: "Oʻrtacha suralar",
+    group_long: "Uzun suralar",
+    no_matches_body: "«{q}» boʻyicha hech narsa topilmadi. Sura nomini, raqamini yoki arabcha nomini yozib koʻring.",
+    no_matches_clear: "Qidiruvni tozalash",
+    sura_failed_title: "Surani yuklab boʻlmadi",
+    sura_failed_body: "Aloqa uzildi shekilli. Internetni tekshirib, qayta urinib koʻring.",
+
+    mic_denied_title: "Mikrofonga ruxsat berilmagan",
+    mic_denied_body:
+      "Brauzer mikrofonga kirishga ruxsat bermadi. Manzil satridagi qulf belgisini bosib, mikrofonni yoqing — soʻng qaytadan urinib koʻring.",
+    // The recording survives the failure, so the retry costs the learner
+    // nothing. That is the whole point of separating this from a generic error.
+    net_failed_title: "Yuborib boʻlmadi",
+    net_failed_body_kept:
+      "Aloqa uzildi, lekin oʻqishingiz saqlanib qoldi. Qaytadan oʻqishingiz shart emas — shunchaki yana yuboring.",
+    net_failed_body:
+      "Aloqa uzildi va yozuv saqlanmadi. Internetni tekshirib, qaytadan oʻqing.",
+    net_failed_resend: "Yozuvni qayta yuborish",
+
+    // ── learn / memorize. Nothing is invented: no courses, no instructors,
+    // no zeroed progress rings.
+    learn_title: "Darslar hali tayyor emas",
+    learn_body:
+      "Tajvid darslari ustida ishlanmoqda. Tayyor boʻlmaguncha bu yerda hech narsa koʻrsatmaymiz.",
+    learn_note:
+      "Har bir dars matni qori tomonidan tekshirilgandan keyingina qoʻshiladi.",
+    memorize_title: "Yodlash rejasi hali tayyor emas",
+    memorize_body:
+      "Takrorlash jadvali va yodlash rejasi ustida ishlanmoqda. Soxta jadval koʻrsatgandan koʻra, boʻsh qoldirganimiz maʼqul.",
+    memorize_note:
+      "Tayyor boʻlgach, u sizning haqiqiy mashqlaringizga asoslanadi.",
+
+    // ── profile
+    profile_initials: "﷽",
+    profile_name: "Sizning mashqlaringiz",
+    profile_sub: "Hisob yoʻq — hammasi shu qurilmada saqlanadi.",
+    profile_history: "Tarix",
+    profile_all: "Barchasi",
+    profile_settings: "Sozlamalar",
+    profile_lang: "Til",
+    profile_reciter_help: "Tinglash uchun ovoz",
+    profile_script: "Mushaf turi",
+    profile_script_help:
+      "Baholash Usmoniy yozuvga asoslanadi. Boshqa yozuv turlari hali qoʻshilmagan.",
+    profile_script_value: "Madina (Usmoniy)",
+    profile_advanced: "Qoʻshimcha tajvid sozlamalari",
+    profile_advanced_body:
+      "Hozircha sozlanadigan narsa yoʻq. Aniqlik chegaralari haqiqiy oʻqishlar toʻplangandan keyin ochiladi.",
+    profile_data: "Maʼlumotlaringiz",
+    profile_delete: "Barcha maʼlumotlarimni oʻchirish",
+    profile_delete_help:
+      "Yozuvlaringiz serverdan butunlay oʻchiriladi. Buni qaytarib boʻlmaydi.",
+    profile_off_title: "Yozuvlar saqlanmayapti",
+    profile_off_body:
+      "Siz tarixni saqlashga rozilik bermagansiz. Bu toʻliq oʻz ixtiyoringiz — quyidan istalgan vaqtda yoqishingiz mumkin.",
+    profile_empty_title: "Hali yozuv yoʻq",
+    profile_empty_body: "Birinchi oyatni oʻqing — u shu yerda paydo boʻladi.",
 
     // recitation
     listen: "Qori oʻqishini tinglang",
@@ -20,6 +157,14 @@ const STRINGS = {
     recording_hint: "Shoshilmang. Tinch va sekin oʻqing.",
     waiting: "Tinglanmoqda",
     waiting_hint: "Bir necha soniya kutib turing.",
+
+    // ── the outcome statement. One sentence, no score, no badge.
+    verdict_title: "Koʻrib chiqadigan {n} ta joy bor",
+    verdict_body:
+      "Har biri uchun nima boʻlgani va qanday tuzatish kerakligi quyida yozilgan. Shoshilmang — bittadan.",
+    verdict_all_fixed: "Hammasi tuzatildi",
+    verdict_all_fixed_body: "Endi oyatni boshidan bir marta oʻqib koʻring.",
+    verdict_again: "Oyatni qaytadan oʻqish",
 
     // all clear
     clear_title: "Barakalla",
@@ -76,13 +221,16 @@ const STRINGS = {
     kind_madd: "Mad",
     kind_ghunna: "Gʻunna",
     kind_haraka: "Harakat",
+    // Length on a DOUBLED CONSONANT, not on a madd letter. Its own title
+    // because it is its own ruling — see cards.SHADDA.
+    kind_shadda: "Tashdid",
 
     // correction card
     label_heard: "Nimani eshitdik",
     label_fix: "Qanday tuzatish kerak",
-    // The FOUR card slots, in reading order: what happened (the kind title),
-    // where, how to fix it, what to practise. `card_why` and the prose drill
-    // are gone — a correction is not a tajweed lesson.
+    // The EIGHT card slots, in reading order: the error, the rule name, where
+    // it happened, what happened, how to fix it, then listen / practise /
+    // re-check inside the ladder.
     card_where: "Qayerda",
     card_you_said: "Siz aytdingiz",
     card_correct: "Toʻgʻrisi",
@@ -90,9 +238,24 @@ const STRINGS = {
     card_practice: "Endi mashq qilamiz",
     // Repeats are merged into one card; this says how many and where.
     card_times: "marta uchradi",
-    // Practice audio is the LETTER, not the ayah.
+    // WHICH instance of the letter, when the word holds more than one.
+    // {n} of {of}: "soʻzdagi 2-chi" — shown only when there is a choice.
+    which_letter: "Soʻzdagi {n}-chi (jami {of}):",
+
+    // ── listening. Every rung that HAS a recording offers both speeds; a rung
+    // with none offers no button at all rather than one that plays nothing.
     listen_letter: "Harf tovushini eshitish",
     listen_ayah: "Oyatni qori oʻqishida eshitish",
+    listen_normal: "Eshitish",
+    listen_slow: "Sekin eshitish",
+
+    // ── the duration meter. Length drawn as length, because "2 oʻrniga 6" is a
+    // number the learner has to convert into a duration — and duration is the
+    // thing they got wrong.
+    harakat: "harakat",
+    meter_needed: "Kerak",
+    meter_yours: "Siz",
+    meter_count_with_me: "Men bilan sanang:",
 
     // ── the practice ladder. Narrow to wide: the letter alone, the letter
     // with each haraka, the word they misread, then back to the ayah.
@@ -101,9 +264,20 @@ const STRINGS = {
     rung_word: "Shu soʻz",
     rung_ayah: "Endi oyatni oʻqing",
     rung_record: "Oʻqib koʻrish",
+    rung_again: "Yana bir bor",
     // Rungs the engine cannot score. Says what to do instead of leaving the
     // rung looking as though its button failed to load.
     rung_say: "Ovoz chiqarib ayting",
+    // A rung the learner confirms themselves. Phrased as a statement they make,
+    // NOT as a result we measured — the engine has no target for a bare letter
+    // and must not imply it judged one.
+    rung_said: "Aytdim",
+    rung_said_again: "Yana aytdim",
+    rung_done: "Bajarildi",
+    // Rungs above the one in play. The ladder is an order, and jumping to the
+    // ayah is doing the test again rather than the practice.
+    rung_locked: "Avvalgi bosqichni bajaring",
+    rung_need: "kerak:",
 
     // ── the recovery loop
     retry_word: "Qayta urinish",
@@ -235,9 +409,114 @@ const STRINGS = {
   },
 
   ru: {
+    nav_label: "Основные разделы",
+    nav_today: "Сегодня",
     nav_practice: "Практика",
+    nav_learn: "Обучение",
+    nav_memorize: "Заучивание",
+    nav_profile: "Профиль",
     nav_library: "Аяты",
     nav_log: "Записи",
+
+    onboard_welcome: "Добро пожаловать в Tilawah",
+    onboard_welcome_body:
+      "Читайте Коран вслух и получайте спокойный, точный разбор по таджвиду. Ни оценок, ни рейтингов — только вы и текст.",
+    onboard_begin: "Начать",
+    onboard_next: "Далее",
+    onboard_skip: "Пропустить пока",
+    onboard_lang: "На каком языке читаем?",
+    onboard_lang_body: "На нём будут показаны пояснения и переводы.",
+    onboard_level: "Каков ваш опыт чтения Корана?",
+    onboard_level_body:
+      "Ответ определяет ровно одно: какой чтец предлагается по умолчанию. Изменить можно в любой момент.",
+    onboard_level_new: "Только начинаю",
+    onboard_level_new_note: "Муаллим — повторяет каждую фразу",
+    onboard_level_some: "Немного читал",
+    onboard_level_some_note: "Обычное чтение мураттал",
+    onboard_level_fluent: "Читаю свободно",
+    onboard_level_fluent_note: "Обычное чтение мураттал",
+
+    today_greeting: "Ассаламу алайкум",
+    today_continue: "Вы остановились здесь",
+    today_resume: "Читать этот аят",
+    today_progress: "{n}-й из {of} аятов",
+    today_recent: "Недавняя практика",
+    today_recent_none: "Пока ничего не прочитано.",
+    today_recent_off:
+      "Записи не сохраняются. Включите в профиле — и они появятся здесь.",
+    today_next: "Следующее",
+    today_next_why: "Следующий аят этой суры",
+    today_first_title: "С какого аята начнём?",
+    today_first_body:
+      "Выберите суру и прочитайте аят — в следующий раз продолжите отсюда.",
+    today_first_action: "Выбрать суру",
+
+    studio_ready: "Готово к записи",
+    studio_live: "Идёт запись",
+    studio_thinking: "Идёт разбор",
+    studio_idle_primary: "Нажмите кнопку",
+    studio_idle_secondary: "Не торопитесь — времени достаточно.",
+    studio_live_secondary: "Читайте спокойно. Закончив, остановите запись.",
+    studio_thinking_primary: "Слушаем ваше чтение",
+    studio_thinking_secondary:
+      "Это может занять 15–30 секунд. Приложение не зависло.",
+    studio_last: "Прошлая практика",
+    studio_accuracy: "Точность",
+
+    pick_sura_sub: "Выберите суру, затем аят.",
+    group_short: "Короткие суры",
+    group_medium: "Средние суры",
+    group_long: "Длинные суры",
+    no_matches_body: "По запросу «{q}» ничего не найдено. Попробуйте название суры, её номер или арабское имя.",
+    no_matches_clear: "Очистить поиск",
+    sura_failed_title: "Не удалось загрузить суру",
+    sura_failed_body: "Похоже, связь прервалась. Проверьте интернет и попробуйте снова.",
+
+    mic_denied_title: "Нет доступа к микрофону",
+    mic_denied_body:
+      "Браузер не дал доступ к микрофону. Нажмите значок замка в адресной строке, включите микрофон и попробуйте снова.",
+    net_failed_title: "Не удалось отправить",
+    net_failed_body_kept:
+      "Связь прервалась, но ваше чтение сохранилось. Перечитывать не нужно — просто отправьте ещё раз.",
+    net_failed_body:
+      "Связь прервалась, и запись не сохранилась. Проверьте интернет и прочитайте заново.",
+    net_failed_resend: "Отправить запись снова",
+
+    learn_title: "Уроки ещё не готовы",
+    learn_body:
+      "Уроки по таджвиду в работе. Пока они не готовы, мы не показываем здесь ничего.",
+    learn_note:
+      "Каждый урок появится только после проверки текста чтецом-кари.",
+    memorize_title: "План заучивания ещё не готов",
+    memorize_body:
+      "График повторений в работе. Лучше оставить раздел пустым, чем показать выдуманное расписание.",
+    memorize_note:
+      "Когда он появится, он будет опираться на вашу реальную практику.",
+
+    profile_initials: "﷽",
+    profile_name: "Ваша практика",
+    profile_sub: "Аккаунта нет — всё хранится на этом устройстве.",
+    profile_history: "История",
+    profile_all: "Все",
+    profile_settings: "Настройки",
+    profile_lang: "Язык",
+    profile_reciter_help: "Голос для прослушивания",
+    profile_script: "Тип мусхафа",
+    profile_script_help:
+      "Разбор опирается на османское письмо. Другие начертания пока не добавлены.",
+    profile_script_value: "Медина (Османский)",
+    profile_advanced: "Дополнительные настройки таджвида",
+    profile_advanced_body:
+      "Настраивать пока нечего. Пороги точности откроются после сбора реальных чтений.",
+    profile_data: "Ваши данные",
+    profile_delete: "Удалить все мои данные",
+    profile_delete_help:
+      "Ваши записи будут полностью удалены с сервера. Это необратимо.",
+    profile_off_title: "Записи не сохраняются",
+    profile_off_body:
+      "Вы не давали согласия на хранение истории. Это ваш выбор — включить можно ниже в любой момент.",
+    profile_empty_title: "Записей пока нет",
+    profile_empty_body: "Прочитайте первый аят — он появится здесь.",
 
     listen: "Послушайте чтеца",
     record: "Начать чтение",
@@ -245,6 +524,13 @@ const STRINGS = {
     recording_hint: "Не торопитесь. Читайте спокойно.",
     waiting: "Слушаем",
     waiting_hint: "Это займёт несколько секунд.",
+
+    verdict_title: "Есть {n} мест(а) для разбора",
+    verdict_body:
+      "Ниже для каждого написано, что произошло и как это исправить. Не торопитесь — по одному.",
+    verdict_all_fixed: "Всё исправлено",
+    verdict_all_fixed_body: "Теперь прочитайте аят целиком ещё раз.",
+    verdict_again: "Прочитать аят снова",
 
     clear_title: "Прекрасно",
     clear_body: "В этом чтении ошибок не найдено.",
@@ -290,6 +576,7 @@ const STRINGS = {
     kind_madd: "Мадд",
     kind_ghunna: "Гунна",
     kind_haraka: "Огласовка",
+    kind_shadda: "Ташдид",
 
     label_heard: "Что мы услышали",
     label_fix: "Как исправить",
@@ -299,15 +586,30 @@ const STRINGS = {
     card_fix: "Исправление",
     card_practice: "Теперь потренируемся",
     card_times: "раза встретилось",
+    which_letter: "{n}-я в слове (всего {of}):",
+
     listen_letter: "Послушать звук буквы",
     listen_ayah: "Послушать аят у чтеца",
+    listen_normal: "Послушать",
+    listen_slow: "Медленно",
+
+    harakat: "хараки",
+    meter_needed: "Нужно",
+    meter_yours: "У вас",
+    meter_count_with_me: "Считайте со мной:",
 
     rung_letter: "Только эта буква",
     rung_syllables: "С огласовками",
     rung_word: "Это слово",
     rung_ayah: "Теперь весь аят",
     rung_record: "Прочитать",
+    rung_again: "Ещё раз",
     rung_say: "Скажите вслух",
+    rung_said: "Сказал",
+    rung_said_again: "Сказал ещё раз",
+    rung_done: "Выполнено",
+    rung_locked: "Сначала пройдите предыдущий шаг",
+    rung_need: "нужно:",
 
     retry_word: "Попробовать снова",
     retry_word_hint: "Прочитайте только это слово.",
