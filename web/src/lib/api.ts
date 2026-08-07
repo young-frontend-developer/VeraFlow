@@ -81,15 +81,44 @@ export type ErrorKind =
 /**
  * One rung of the practice ladder — see engine/practice.py, which builds them.
  *
- * The ladder goes narrow to wide: the letter alone, the letter under each
- * haraka, the word the learner actually misread, then the ayah. Every rung is
- * derived from the error, so one exists even for codes with no coaching text.
+ * THE SHAPE DEPENDS ON THE ERROR. There are four ladders, not one, and the
+ * server picks between them:
+ *
+ *   articulation  letter → syllables → word → ayah
+ *   omission      word_include → word → ayah
+ *   insertion     word_omit → word → ayah
+ *   duration      word_hold → word → ayah
+ *
+ * The isolated-letter opening belongs only to the first. A letter that was
+ * DROPPED was never mispronounced, a letter that was ADDED needs un-saying
+ * rather than saying, and a bare letter has no duration at all — so for those
+ * three the ladder opens on the word, said slowly with the thing to attend to
+ * named. Every rung is still derived from the error, so one exists even for
+ * codes with no coaching text.
  */
 export type PracticeRung = {
   /** Position on the ladder, 1-based and gapless. */
   level: number;
-  /** What this rung is. `ayah` carries no items — it is already on screen. */
-  focus: "letter" | "syllables" | "word" | "ayah";
+  /**
+   * What this rung is, and therefore what the learner is being asked to do.
+   * `ayah` carries no items — it is already on screen.
+   *
+   *   letter        the sound alone
+   *   syllables     that sound under each haraka
+   *   word_include  the word, slowly, sounding the letter that went missing
+   *   word_omit     the word, slowly, without the sound that was added
+   *   word_hold     the word, holding the letter for `hold` harakat
+   *   word          the word at normal pace
+   *   ayah          back to the test
+   */
+  focus:
+    | "letter"
+    | "syllables"
+    | "word_include"
+    | "word_omit"
+    | "word_hold"
+    | "word"
+    | "ayah";
   items: string[];
   /**
    * Whether this rung can be RECORDED AND SCORED. False for the letter and
@@ -124,6 +153,14 @@ export type PracticeRung = {
    * everyayah serves whole-ayah files with no word timings to clip.
    */
   audio_source: "letter" | "ayah" | "";
+  /**
+   * Harakat to hold for on a `word_hold` rung, 0 on every other rung.
+   *
+   * It is the reference's own expected count, and when the reference does not
+   * supply one the server omits the rung rather than sending 0 with a rung that
+   * needs a number — so a `word_hold` rung always has a real count to count to.
+   */
+  hold: number;
 };
 
 /** One place this error happened. A merged card has several. */
@@ -191,6 +228,30 @@ export type TajweedError = {
    * saying only "the ṣifa was wrong" could never answer.
    */
   articulation?: string;
+  /**
+   * WHERE THE CORRECT LETTER COMES FROM, and what it is like — one sentence,
+   * rendered above the fix instruction.
+   *
+   * Always about the TARGET letter, never the one that was heard: the card
+   * exists to move the learner toward the right sound, and describing the
+   * wrong one describes the mistake. Empty on cards that are not about
+   * producing a letter — a skipped letter was never mispronounced, and a madd
+   * error is about a length rather than a place — which is the same scope rule
+   * the isolated-letter practice rung uses.
+   */
+  makhraj?: string;
+  /**
+   * Teaching tier: 1 wrong letter, 2 articulation, 3 ruling, 4 timing. The
+   * server ranks by this, so the client does not re-sort — it renders in the
+   * order it was sent.
+   */
+  tier?: number;
+  /**
+   * Position in the reveal chain, dense from 0. The client opens the lowest
+   * unresolved one and unlocks forward, so the learner meets one correction at
+   * a time while the engine still reports everything it found.
+   */
+  reveal_order?: number;
   /** Which ṣifa field the detector compared. Internal; never rendered raw. */
   sifa?: string;
   /** Reference and heard length, in harakat. 0 when not a duration error. */
@@ -246,6 +307,16 @@ export type Attempt = {
    */
   score?: number;
   pass_score?: number;
+  /**
+   * ISO timestamp of when this attempt was recorded, or null on rows written
+   * before the server sent it.
+   *
+   * It is the only reason the Today screen's week strip and its "last
+   * practiced" line can exist: without a real date the alternatives were to
+   * draw a week of invented days or to drop the section. A null leaves that
+   * day unmarked — never guessed.
+   */
+  created_at?: string | null;
 };
 
 // Anonymous until there is a reason to have accounts. Stored locally so the
@@ -607,3 +678,28 @@ export function expertAudioUrl(
   const a = String(aya).padStart(3, "0");
   return `https://everyayah.com/data/${reciter}/${s}${a}.mp3`;
 }
+
+
+/**
+ * The day's hadith, or null.
+ *
+ * NULL IS A REAL ANSWER — in production only qori-reviewed entries are
+ * eligible, and none are yet, so the card is simply not drawn there. Never
+ * substitute a fallback: a fallback is where an unreviewed attribution would
+ * end up. See api/tilawah/content/hadith.py.
+ */
+export type Hadith = {
+  id: string;
+  /** The Arabic text of the hadith. */
+  ar: string;
+  /** A rendering of the meaning — labelled as such on the card, never as the hadith. */
+  text: string;
+  collection: string;
+  ref: string;
+  grading: string;
+  /** No qori has checked the wording OR the citation. The client must mark it. */
+  draft: boolean;
+};
+
+export const hadithToday = (lang: string) =>
+  fetch(`${BASE}/api/hadith/today?lang=${lang}`).then(json<Hadith | null>);

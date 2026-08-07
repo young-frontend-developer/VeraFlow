@@ -52,12 +52,11 @@ def loose_codes(phonemes: str, sifat) -> set[str]:
                 found.add("RAA_TARQIQ_MISSING")
     if any(f["qalqla"] == "moqalqal" for _, f in groups):
         found.update({"QALQALAH_MISSING", "QALQALAH_EXCESSIVE"})
-    if any(f["hams_or_jahr"] == "hams" for _, f in groups):
-        found.add("HAMS_LOST")
-    if any(f["hams_or_jahr"] == "jahr" for _, f in groups):
-        found.add("JAHR_LOST")
-    if any(f["shidda_or_rakhawa"] == "shadeed" for _, f in groups):
-        found.add("SHIDDA_LOST")
+    # The loose HAMS_LOST / JAHR_LOST / SHIDDA_LOST stand-ins were here. Their
+    # codes were deleted from the registry on 2026-08-07 as a scope decision, so
+    # in_scope() would filter them out of this comparison anyway and the rows
+    # would print as empty. The narrowings they measured are recorded in
+    # engine/coverage.py's docstring, which is where the evidence belongs.
     if any(f["ghonna"] == "maghnoon" for _, f in groups):
         found.update({"GHUNNA_MISSING", "GHUNNA_TOO_SHORT"})
     if any(f["ghonna"] == "not_maghnoon" for _, f in groups):

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Rank the 34 registry error types by how much of the catalogue they unlock.
+"""Rank the in-scope registry error types by how much of the catalogue they unlock.
 
 Purpose: Rahmatulloh reviews entries by hand, and review time is the scarce
 resource. An entry that is structurally possible in 4000 segments buys far more

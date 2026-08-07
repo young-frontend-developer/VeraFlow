@@ -125,18 +125,26 @@ def test_tafkheem_added_needs_a_mutbaq_neighbour():
     assert "TAFKHEEM_ADDED" not in codes(112, 1)
 
 
-def test_jahr_lost_excludes_the_qalqalah_letters():
-    """A devoiced sakin ق or ب is reported as a qalqalah problem. 112:1 ends on
-    a qalqalah dal and has no ذ ز ض ظ غ, so JAHR_LOST must stay silent while the
-    qalqalah checks do not."""
+def test_the_out_of_scope_sifa_checks_have_no_preconditions_left():
+    """SCOPE DECISION 2026-08-07, not a defect - see
+    engine/sifat_codes.OUT_OF_SCOPE and the amendments file.
+
+    These three used to be pinned here for a narrower property: that JAHR_LOST
+    and SHIDDA_LOST excluded the qalqalah letters, so a devoiced sakin ق or ب
+    was reported once, as a qalqalah problem, rather than twice. That property
+    no longer has anything to hold - the checks are gone from the registry and
+    from possible_codes - so what is pinned instead is the absence itself, on an
+    ayah where all three would previously have been live.
+
+    112:1 قُلْ هُوَ ٱللَّهُ أَحَدٌ still raises the qalqalah checks, which is the control:
+    it proves the ṣifa preconditions are being evaluated at all and that these
+    three are absent by decision rather than because the ayah reaches nothing.
+    """
     c = codes(112, 1)
     assert "QALQALAH_MISSING" in c
-    assert "JAHR_LOST" not in c
-
-
-def test_shidda_lost_excludes_the_qalqalah_letters():
-    c = codes(112, 1)
-    assert "QALQALAH_MISSING" in c and "SHIDDA_LOST" not in c
+    for code in ("HAMS_LOST", "JAHR_LOST", "SHIDDA_LOST"):
+        assert code not in c
+        assert code not in registry()
 
 
 # ──────────────────────────────────── qalqala: the shadda exception (2-dars)
@@ -264,11 +272,19 @@ def test_universal_codes_are_excluded_from_the_coverage_score():
 def test_narrowed_codes_are_not_universal_any_more():
     """REGRESSION. These four sat at 100.0% and took the top four review slots.
     Sampling a handful of short suras is enough to prove they no longer fire
-    everywhere; tools/audit_preconditions.py has the exhaustive numbers."""
+    everywhere; tools/audit_preconditions.py has the exhaustive numbers.
+
+    Three of the original four - JAHR_LOST, SHIDDA_LOST and GHUNNA_ADDED - have
+    since been deleted, so "does not fire everywhere" would now pass on them for
+    the wrong reason. They are asserted absent instead, which is the stronger
+    claim, and TAFKHEEM_ADDED carries the original test.
+    """
     sample = [(112, 1), (112, 4), (110, 2), (114, 4), (103, 1), (108, 1)]
-    for code in ("TAFKHEEM_ADDED", "JAHR_LOST", "GHUNNA_ADDED", "SHIDDA_LOST"):
-        hits = sum(code in codes(s, a) for s, a in sample)
-        assert hits < len(sample), f"{code} still fires on every segment"
+    hits = sum("TAFKHEEM_ADDED" in codes(s, a) for s, a in sample)
+    assert 0 < hits < len(sample), "TAFKHEEM_ADDED fires everywhere or nowhere"
+    for code in ("JAHR_LOST", "SHIDDA_LOST", "GHUNNA_ADDED"):
+        assert not any(code in codes(s, a) for s, a in sample), \
+            f"{code} was deleted and is firing again"
 
 
 def test_every_precondition_names_a_real_registry_code():

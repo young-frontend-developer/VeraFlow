@@ -29,7 +29,18 @@ const LABEL: Record<Tab, Parameters<typeof t>[1]> = {
   profile: "nav_profile",
 };
 
-const ORDER: Tab[] = ["today", "practice", "learn", "memorize", "profile"];
+/**
+ * THE ORDER IS THE DESIGN, not an implementation detail.
+ *
+ * Practice sits in the MIDDLE — third of five — because it is the thing the app
+ * is for, and a floating pill puts its primary action under the thumb at the
+ * centre. It was previously second, which put Learn and Memorize to one side of
+ * it and made the row read as a list rather than as a shape with a centre.
+ */
+const ORDER: Tab[] = ["today", "learn", "practice", "memorize", "profile"];
+
+/** The centre item, rendered as the pill's primary action. */
+const CENTER: Tab = "practice";
 
 export default function TabBar({
   tab,
@@ -45,7 +56,7 @@ export default function TabBar({
       {ORDER.map((key) => (
         <button
           key={key}
-          className="tab"
+          className={key === CENTER ? "tab tab--center" : "tab"}
           aria-current={tab === key ? "page" : undefined}
           onClick={() => onChange(key)}
         >

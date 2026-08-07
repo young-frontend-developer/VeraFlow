@@ -217,7 +217,24 @@
       "Bash(grep -n \"setRetry\\({ cardId: null, level: null, phase: null, fixed: \\\\[\\\\]\" src/components/Recite.tsx)",
       "PowerShell(Get-Process *)",
       "Bash(npm install *)",
-      "Bash(grep -v '^$')"
+      "Bash(grep -v '^$')",
+      "Bash(PYTHONIOENCODING=utf-8 py -3.13 -m pytest -q)",
+      "Bash(PYTHONIOENCODING=utf-8 py -3.13 tools/apply_v3_patch.py)",
+      "Bash(PYTHONIOENCODING=utf-8 py -3.13 -m pytest tests/test_code_mapping.py tests/test_preconditions.py tests/test_card_completeness.py tests/test_coaching.py -q)",
+      "Bash(PYTHONIOENCODING=utf-8 py -3.13 tools/rank_error_frequency.py)",
+      "Bash(PYTHONIOENCODING=utf-8 py -3.13 -m pytest tests/test_practice.py -q)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(PYTHONIOENCODING=utf-8 py -3.13 \"C:/Users/RAHMAT~1/AppData/Local/Temp/claude/C--Users-Rahmatulloh-Desktop-Tilawah/fe8208e6-1027-45a8-98f6-9fdb3c8b68b7/scratchpad/ladder_capture.py\")",
+      "Bash(echo \"TSC EXIT: $?\")",
+      "Bash(PYTHONIOENCODING=utf-8 py -3.13 -m pytest tests/test_wire_shape.py tests/test_practice.py tests/test_engine.py -q)",
+      "Bash(PYTHONIOENCODING=utf-8 py -3.13 -m pytest tests/test_teaching.py -q)",
+      "Bash(PYTHONIOENCODING=utf-8 py -3.13 -m pytest tests/test_makharij.py -q)",
+      "Bash(echo \"TSC: $?\")",
+      "Bash(node -e \"const{chromium}=require\\('playwright'\\);chromium.executablePath&&console.log\\('exe:',chromium.executablePath\\(\\)\\)\")",
+      "Bash(python3 -)",
+      "Bash(echo \"--- exit: $? ---\")",
+      "Bash(node \"C:/Users/RAHMAT~1/AppData/Local/Temp/claude/C--Users-Rahmatulloh-Desktop-Tilawah/fe8208e6-1027-45a8-98f6-9fdb3c8b68b7/scratchpad/verify.mjs\")",
+      "Bash(python3 \"C:/Users/RAHMAT~1/AppData/Local/Temp/claude/C--Users-Rahmatulloh-Desktop-Tilawah/fe8208e6-1027-45a8-98f6-9fdb3c8b68b7/scratchpad/keys.py\")"
     ]
   }
 }

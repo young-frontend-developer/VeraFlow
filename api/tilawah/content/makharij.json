@@ -1,0 +1,129 @@
+{
+  "_meta": {
+    "version": "0.1",
+    "purpose": "One sentence per Arabic letter: WHERE it comes from (maxraj) and its basic QUALITY (sifat). Attached automatically to every card about a specific letter, so a learner is told what the correct letter IS before being told how to fix it.",
+    "why_a_table_and_not_per_entry": "There are 28 letters and far more error pairs. Authoring the maxraj into each pair would restate the same sentence dozens of times, drift between copies, and leave GENERIC_LETTER_SUBSTITUTED and GENERIC_SIFAT_MISMATCH - the two entries that catch every UNLISTED confusion, and so the two most likely to be shown - with no maxraj at all. Keyed by letter, every card gets one for free, including codes nobody has authored a word for.",
+    "which_letter_it_describes": "ALWAYS THE TARGET, never what the learner produced. The card exists to move them toward the correct letter, and a description of the wrong one is a description of the mistake.",
+    "authored_by": "generated, UNREVIEWED",
+    "review_required": true,
+    "PROVENANCE_WARNING": "These sentences are NOT extracted from «Тажвид қоидалари». The book is in the repo only as a scanned PDF (Tajvid qoidalari.pdf) and no text layer could be decoded here, so this table was generated from standard makharij doctrine and is pending verification against the book lesson by lesson. Treat every sentence as a claim awaiting a source, not as sourced material. Whoever verifies should add source_ref per letter as the v3 patch entries do.",
+    "review_note": "These are mechanical descriptions of where the tongue, lips and throat go, plus the letter's classical qualities. They are not rulings and they decide nothing - but they are learner-facing sentences about tajweed, and Decision 4 puts those with a qori. Everything here ships marked draft and is withheld in production until reviewed.",
+    "terminology": "Follows the v3 patch's global_terminology: heavy letters are yo'g'on, light ingichka, and the technical pair is iste'lo/istifola - not qalin/mufaxxam. Classical terms are given in parentheses so a reader can join this to the book.",
+    "budget": "One sentence. It sits above the fix instruction inside a card with a word budget, and a paragraph here pushes the correction off the screen.",
+    "letters": 28
+  },
+  "letters": {
+    "ء": {
+      "uz": "«ء» tomoqning eng chuqur joyidan chiqadi; havo butunlay to'xtab, birdan ochiladi (shiddat).",
+      "ru": "«ء» выходит из самой глубокой части горла; воздух полностью останавливается и резко раскрывается (шиддат)."
+    },
+    "ب": {
+      "uz": "«ب» ikki lab bir-biriga yopilib chiqadi; ovozli, havo to'xtaydi va sukunda yengil sakraydi (qalqala).",
+      "ru": "«ب» выходит смыканием обеих губ; звонкая, воздух останавливается, а в сукуне даёт лёгкий отскок (калькаля)."
+    },
+    "ت": {
+      "uz": "«ت» til uchi yuqori old tishlarning tagiga tegib chiqadi; ingichka va jarangsiz (mahmus), havo to'xtaydi.",
+      "ru": "«ت» выходит касанием кончика языка основания верхних передних зубов; тонкая и глухая (махмус), воздух останавливается."
+    },
+    "ث": {
+      "uz": "«ث» til uchi yuqori va pastki old tishlar orasidan biroz chiqib turib talaffuz qilinadi; ingichka, jarangsiz va sirg'aluvchi (raxovat).",
+      "ru": "«ث» произносится с кончиком языка, слегка выходящим между верхними и нижними передними зубами; тонкая, глухая и скользящая (раховат)."
+    },
+    "ج": {
+      "uz": "«ج» tilning o'rtasi qattiq tanglayga tegib chiqadi; ovozli, havo to'xtaydi va sukunda yengil sakraydi (qalqala).",
+      "ru": "«ج» выходит прижатием середины языка к твёрдому нёбу; звонкая, воздух останавливается, а в сукуне даёт лёгкий отскок (калькаля)."
+    },
+    "ح": {
+      "uz": "«ح» tomoqning o'rtasidan chiqadi; ingichka, jarangsiz va sof nafas bilan cho'ziladi — bo'g'iz qisilmaydi.",
+      "ru": "«ح» выходит из середины горла; тонкая, глухая, тянется чистым выдохом — горло не сжимается."
+    },
+    "خ": {
+      "uz": "«خ» tomoqning og'izga eng yaqin qismidan chiqadi; yo'g'on (iste'lo), jarangsiz va sirg'aluvchi.",
+      "ru": "«خ» выходит из ближней ко рту части горла; толстая (исти'ля), глухая и скользящая."
+    },
+    "د": {
+      "uz": "«د» til uchi yuqori old tishlarning tagiga tegib chiqadi; ovozli, havo to'xtaydi va sukunda yengil sakraydi (qalqala).",
+      "ru": "«د» выходит касанием кончика языка основания верхних передних зубов; звонкая, воздух останавливается, а в сукуне даёт лёгкий отскок (калькаля)."
+    },
+    "ذ": {
+      "uz": "«ذ» til uchi old tishlar orasidan biroz chiqib turib talaffuz qilinadi; ingichka, ovozli va sirg'aluvchi.",
+      "ru": "«ذ» произносится с кончиком языка, слегка выходящим между передними зубами; тонкая, звонкая и скользящая."
+    },
+    "ر": {
+      "uz": "«ر» til uchi yuqori milk do'ngiga tegib, yengil titrab chiqadi (takrir); yo'g'on yoki ingichka bo'lishi harakatiga qarab o'zgaradi.",
+      "ru": "«ر» выходит касанием кончика языка бугорка верхней десны с лёгкой вибрацией (такрир); толстой или тонкой становится в зависимости от огласовки."
+    },
+    "ز": {
+      "uz": "«ز» til uchi pastki old tishlarga yaqinlashib chiqadi; ingichka, ovozli va hushtaksimon (safir).",
+      "ru": "«ز» выходит при сближении кончика языка с нижними передними зубами; тонкая, звонкая, со свистом (сафир)."
+    },
+    "س": {
+      "uz": "«س» til uchi pastki old tishlarga yaqinlashib chiqadi; ingichka, jarangsiz va hushtaksimon (safir).",
+      "ru": "«س» выходит при сближении кончика языка с нижними передними зубами; тонкая, глухая, со свистом (сафир)."
+    },
+    "ش": {
+      "uz": "«ش» tilning o'rtasi qattiq tanglayga yaqinlashib chiqadi; ingichka, jarangsiz va havo og'izda yoyiladi (tafashshi).",
+      "ru": "«ش» выходит при сближении середины языка с твёрдым нёбом; тонкая, глухая, воздух расходится во рту (тафашши)."
+    },
+    "ص": {
+      "uz": "«ص» «س» bilan bir maxrajdan chiqadi, lekin tilning orqasi tanglayga ko'tariladi: yo'g'on (itboq), jarangsiz va hushtaksimon.",
+      "ru": "«ص» выходит из того же махраджа, что и «س», но спинка языка поднимается к нёбу: толстая (итбак), глухая, со свистом."
+    },
+    "ض": {
+      "uz": "«ض» tilning yon tomoni yuqori oziq tishlarga tegib chiqadi; yo'g'on va tovush til bo'ylab cho'ziladi (istitola) — «د» dan kengroq.",
+      "ru": "«ض» выходит касанием боковой части языка верхних коренных зубов; толстая, звук тянется вдоль языка (иститаля) — шире, чем «د»."
+    },
+    "ط": {
+      "uz": "«ط» «ت» bilan bir maxrajdan chiqadi, lekin tilning orqasi ko'tariladi: yo'g'on, ovozli, havo to'xtaydi va sukunda sakraydi (qalqala).",
+      "ru": "«ط» выходит из того же махраджа, что и «ت», но спинка языка поднимается: толстая, звонкая, воздух останавливается, в сукуне даёт отскок (калькаля)."
+    },
+    "ظ": {
+      "uz": "«ظ» «ذ» kabi til uchi tishlar orasidan chiqadi, lekin tilning orqasi ko'tariladi: yo'g'on, ovozli va sirg'aluvchi.",
+      "ru": "«ظ» выходит, как «ذ», кончиком языка между зубами, но спинка языка поднимается: толстая, звонкая и скользящая."
+    },
+    "ع": {
+      "uz": "«ع» tomoqning o'rtasidan chiqadi; ingichka va ovozli — «ء» kabi to'liq to'xtamaydi, «ح» kabi sof nafas ham emas.",
+      "ru": "«ع» выходит из середины горла; тонкая и звонкая — не останавливается полностью, как «ء», и не чистый выдох, как «ح»."
+    },
+    "غ": {
+      "uz": "«غ» tomoqning og'izga eng yaqin qismidan chiqadi; yo'g'on, ovozli va sirg'aluvchi — «خ» ning ovozli jufti.",
+      "ru": "«غ» выходит из ближней ко рту части горла; толстая, звонкая и скользящая — звонкая пара к «خ»."
+    },
+    "ف": {
+      "uz": "«ف» pastki lab yuqori old tishlarga tegib chiqadi; ingichka, jarangsiz va sirg'aluvchi.",
+      "ru": "«ف» выходит касанием нижней губы верхних передних зубов; тонкая, глухая и скользящая."
+    },
+    "ق": {
+      "uz": "«ق» tilning eng orqa qismi yumshoq tanglayga tegib chiqadi; yo'g'on, havo to'xtaydi va sukunda sakraydi (qalqala).",
+      "ru": "«ق» выходит прижатием самой задней части языка к мягкому нёбу; толстая, воздух останавливается, в сукуне даёт отскок (калькаля)."
+    },
+    "ك": {
+      "uz": "«ك» tilning orqa qismi «ق» dan bir oz oldinroqda tanglayga tegib chiqadi; ingichka, jarangsiz va havo to'xtaydi.",
+      "ru": "«ك» выходит прижатием задней части языка к нёбу чуть впереди «ق»; тонкая, глухая, воздух останавливается."
+    },
+    "ل": {
+      "uz": "«ل» til uchi yuqori milk do'ngiga tegib, havo tilning yon tomonidan o'tadi; ovozli va ingichka — faqat Alloh ismida yo'g'on o'qiladi.",
+      "ru": "«ل» выходит касанием кончика языка бугорка верхней десны, воздух проходит сбоку языка; звонкая и тонкая — толстой читается только в имени Аллах."
+    },
+    "م": {
+      "uz": "«م» ikki lab yopilib chiqadi va tovush burun bo'shlig'idan o'tadi (g'unna); ovozli.",
+      "ru": "«م» выходит смыканием обеих губ, звук проходит через нос (гунна); звонкая."
+    },
+    "ن": {
+      "uz": "«ن» til uchi yuqori milk do'ngiga tegib chiqadi va tovush burun bo'shlig'idan o'tadi (g'unna); ovozli.",
+      "ru": "«ن» выходит касанием кончика языка бугорка верхней десны, звук проходит через нос (гунна); звонкая."
+    },
+    "ه": {
+      "uz": "«ه» tomoqning eng chuqur joyidan chiqadi; ingichka, jarangsiz va yengil nafas bilan — bo'g'iz qisilmaydi.",
+      "ru": "«ه» выходит из самой глубокой части горла; тонкая, глухая, лёгким выдохом — горло не сжимается."
+    },
+    "و": {
+      "uz": "«و» undosh bo'lganda ikki lab doira shaklida cho'chchayib chiqadi; ovozli — sukunli holda esa cho'zilish harfi bo'ladi.",
+      "ru": "«و» как согласная выходит округлением и вытягиванием обеих губ; звонкая — в сукуне становится буквой протяжения."
+    },
+    "ي": {
+      "uz": "«ي» undosh bo'lganda tilning o'rtasi tanglayga yaqinlashib chiqadi; ovozli — sukunli holda esa cho'zilish harfi bo'ladi.",
+      "ru": "«ي» как согласная выходит при сближении середины языка с нёбом; звонкая — в сукуне становится буквой протяжения."
+    }
+  }
+}

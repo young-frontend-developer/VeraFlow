@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Attempt, Reciter, Sura, history, setConsent } from "../lib/api";
 import { Lang, t } from "../lib/i18n";
+import { LEVEL_LABEL, Level, storeLevel, storedLevel } from "../lib/level";
+import Achievements from "./Achievements";
+import { award, signalsFrom } from "../lib/achievements";
+import { hasJourney, storedJourney } from "../lib/journey";
 import { Blank, Loading } from "./States";
 import { StarOrnament } from "./Ornament";
 
@@ -48,6 +52,7 @@ export default function Profile({
   onLang: (l: Lang) => void;
 }) {
   const [rows, setRows] = useState<Attempt[] | null>(null);
+  const [level, setLevel] = useState<Level | null>(() => storedLevel());
   const [filter, setFilter] = useState<number | "all">("all");
   const [deleted, setDeleted] = useState(false);
 
@@ -80,6 +85,51 @@ export default function Profile({
           <p className="profile__name">{t(lang, "profile_name")}</p>
           <p className="profile__sub">{t(lang, "profile_sub")}</p>
         </div>
+      </div>
+
+      {/* ── the full achievement wall ────────────────────────────────────
+             HOME ONLY EVER GETS A PREVIEW. The complete set lives here, where
+             looking at it is a thing the learner chose to do rather than
+             something waiting on the screen they open every day. */}
+      <div style={{ marginBottom: 34 }}>
+        <Achievements
+          lang={lang}
+          items={award(
+            signalsFrom(
+              rows ?? [],
+              Object.fromEntries(suras.map((s) => [s.number, s.n_ayat])),
+              { hasJourney: hasJourney(storedJourney()) },
+            ),
+          )}
+        />
+      </div>
+
+      {/* ── knowledge level ──────────────────────────────────────────────
+             Asked once during onboarding and living here afterwards. It is a
+             SETTING, not a status: it appears on this screen and nowhere else
+             in the app. A learner told daily that they are a "beginner" is
+             being handed an identity by software that has heard them recite
+             once. See lib/level.ts. */}
+      <p className="section-label" style={{ margin: "0 0 4px" }}>
+        {t(lang, "level_setting")}
+      </p>
+      <p className="profile__note" style={{ marginBottom: 12 }}>
+        {t(lang, "level_setting_note")}
+      </p>
+      <div className="lang" style={{ marginBottom: 30, flexWrap: "wrap" }}>
+        {(["beginner", "intermediate", "advanced"] as Level[]).map((lv) => (
+          <button
+            key={lv}
+            className="lang__btn"
+            aria-current={level === lv}
+            onClick={() => {
+              storeLevel(lv);
+              setLevel(lv);
+            }}
+          >
+            {t(lang, LEVEL_LABEL[lv] as never)}
+          </button>
+        ))}
       </div>
 
       {/* ── history ──────────────────────────────────────────────────── */}

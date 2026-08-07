@@ -30,6 +30,7 @@ from .runlength import MARKS, MARK_SOUND
 from .segments import (segments_for_range, unit_char_spans, unit_letters,
                        unit_spans_for_range, unit_word_indices, unit_words)
 from .target import Target
+from . import teaching
 from .tolerances import apply as apply_tolerances
 from .typed_errors import TypedError, typed_diff
 
@@ -39,8 +40,14 @@ log = logging.getLogger(__name__)
 # actionable errors beat ten true ones. In practice it meant a learner who made
 # five mistakes was told about two of them and never learned the rest existed,
 # and combined with the content gate below it was usually a cap on nothing -
-# the gate had already emptied the list. If the engine found five, show five;
-# ranking by severity already puts the most important one first.
+# the gate had already emptied the list. If the engine found five, show five.
+#
+# WHAT REPLACED IT IS NOT A CAP. Every card is still sent, ranked into teaching
+# tiers (see engine/teaching.py), and each carries `reveal_order`. The CLIENT
+# opens one at a time and unlocks the next when the current one is fixed - so
+# the learner meets one correction at a time while the engine still reports
+# everything it found, and "hali N ta bor" can be honest about the rest because
+# the rest is actually there.
 
 SEVERITY_RANK = {"high": 0, "medium": 1, "low": 2}
 
@@ -114,7 +121,7 @@ def _sifat_errors(phonetized, pred) -> list[TypedError]:
     the headline, on the wrong letter exactly where the text is unusual.
     """
     from .sifa_compare import compare, reference_groups
-    from .sifat_codes import code_for
+    from .sifat_codes import OUT_OF_SCOPE, code_for
 
     ref = reference_groups(phonetized.sifat)
     got = pred.sifat or []
@@ -124,6 +131,14 @@ def _sifat_errors(phonetized, pred) -> list[TypedError]:
     keys = [_group_letter(g) for g in ref]
     out = []
     for d in compare(ref, got):
+        # THE SCOPE GATE, and it is here rather than only inside code_for so the
+        # pipeline says out loud which comparisons it declines to act on.
+        # compare() still measures hams/jahr and shidda/rakhawa - that is the
+        # calibration surface, and sifa_compare is observation-only by design -
+        # but nothing downstream of this line ever sees one. See
+        # sifat_codes.OUT_OF_SCOPE for why the two ṣifāt are excluded.
+        if d.field in OUT_OF_SCOPE:
+            continue
         at, letter = _reanchor_tafkheem(d.field, d.at, d.letter, keys)
         code = code_for(d.field, letter, d.expected, d.heard)
         if code is None:
@@ -265,9 +280,31 @@ def locate(detected: list[TypedError], uthmani: str, sura: int, aya: int,
     return detected
 
 
+def _kind_of(e: TypedError) -> str:
+    """One error's card kind, without rendering the card.
+
+    Ranking has to know the kind BEFORE the body is rendered, because the kind
+    is what the tier is keyed on. The registry group is read directly rather
+    than taken from a rendered body, which is the same lookup cards.kind_of()
+    would get one step later.
+    """
+    entry = coaching.entry(e.code) or {}
+    return cards.kind_of(e.code, entry.get("group", ""), e.sifa)
+
+
 def _rank(e: TypedError) -> tuple:
+    """Teaching order: tier first, then severity, then position.
+
+    THE TIER OUTRANKS SEVERITY, and that is the change. `severity` is a
+    property of the registry ENTRY - how bad this class of mistake is in
+    general - so ranking by it alone put a high-severity madd card above a
+    substituted letter in the same word, and told the learner to fix the length
+    of a sound that was itself wrong. See engine/teaching.py for why the four
+    tiers are ordered as they are.
+    """
     rule = content.rules().get(e.code, {})
-    return (SEVERITY_RANK.get(rule.get("severity", "medium"), 1), e.at)
+    return (teaching.tier(_kind_of(e)),
+            SEVERITY_RANK.get(rule.get("severity", "medium"), 1), e.at)
 
 
 def _unauthored_body(code: str) -> dict:
@@ -373,6 +410,22 @@ def present(raw: list[TypedError], lang: str, *, uthmani: str = "",
     the trust failure this project is arranged to avoid.
     """
     shown, silent = [], []
+
+    # ── contradictions are withheld before anything else ──────────────────
+    # Two high-confidence detectors saying incompatible things about one unit
+    # is a detection bug, not a correction. Neither card is shown and the pair
+    # is logged for review - see engine/teaching.py for why guessing between
+    # them is worse than showing nothing. This runs BEFORE ranking so a
+    # conflicting error cannot take the first slot and stall the whole reveal
+    # chain behind a card the learner cannot act on.
+    conflicted, conflict_log = teaching.conflicts(raw, _kind_of)
+    if conflicted:
+        for e in raw:
+            if e.at in conflicted:
+                silent.append({**e.dict(), "status": "conflict",
+                               "content": None, "draft": True})
+        raw = [e for e in raw if e.at not in conflicted]
+
     # Rank FIRST, then merge. Merging preserves the order buckets first appear
     # in, so ranking here puts the most serious card first and the merge keeps
     # it there; merging first would rank buckets by whichever member happened
@@ -425,12 +478,21 @@ def present(raw: list[TypedError], lang: str, *, uthmani: str = "",
             "occurrences": cards.occurrences(group, spans, uthmani),
             "count": len(group),
             "words": cards.distinct_words(group),
-            # The practice ladder - letter, syllables, the word they misread,
-            # the ayah. DERIVED, not authored, so it is present on every card
-            # including the ones with no coaching text at all: a learner whose
-            # error we cannot explain can still be shown what to drill.
+            # The practice ladder. DERIVED, not authored, so it is present on
+            # every card including the ones with no coaching text at all: a
+            # learner whose error we cannot explain can still be shown what to
+            # drill.
+            #
+            # `code` and `expected_count` are what pick the ladder SHAPE - an
+            # omission, an insertion and a duration error each need a different
+            # first rung, and the bare-letter opening belongs only to
+            # articulation errors. See practice.category(). The ENGINE code is
+            # passed, not the resolved registry one, because LETTER_DROPPED and
+            # LETTER_ADDED exist only in the engine vocabulary; practice.py
+            # classifies both vocabularies.
             "practice": practice.ladder(
-                e.letter, e.word, e.word_index,
+                e.letter, e.word, e.word_index, code=e.code,
+                expected_count=e.expected_count,
                 letter_audio=(body or {}).get("audio_pair", "")),
             # RULE 12 gives the card a "rule name" slot. Taken from what is
             # already authored - the registry entry's own short title, or the
@@ -451,6 +513,14 @@ def present(raw: list[TypedError], lang: str, *, uthmani: str = "",
             # heading.
             "articulation": _distinct(
                 (guide or {}).get("how", ""), (body or {}).get("fix", "")),
+            # WHERE THE CORRECT LETTER COMES FROM, above the fix instruction.
+            # A card could previously say "you read ص as س" and how to correct
+            # it without ever saying what ص is - and the two GENERIC entries,
+            # which catch every unlisted confusion and are therefore the
+            # most-shown cards in the app, described no letter at all. Keyed by
+            # letter in content/makharij.json, so every card gets one without
+            # anybody authoring it per error pair. Draft like all content.
+            "makhraj": cards.makhraj_line(e.code, e.expected, e.letter, lang),
         }
 
         if reviewed:
@@ -464,6 +534,16 @@ def present(raw: list[TypedError], lang: str, *, uthmani: str = "",
             # Production only. Flip `reviewed` in rules.json once a qualified
             # qori has signed the string off.
             silent.append(record)
+
+    # ── the reveal chain ──────────────────────────────────────────────────
+    # Stamped AFTER the content gate, not before, so the numbering counts cards
+    # the learner will actually meet. Numbering before the gate would promise
+    # "hali 4 ta bor" and then reveal two, which is a worse lie than saying
+    # nothing - the count exists precisely so the learner can trust that the
+    # rest is really there.
+    for i, record in enumerate(shown):
+        record["reveal_order"] = i
+        record["tier"] = teaching.tier(record["kind"])
     return shown, silent
 
 

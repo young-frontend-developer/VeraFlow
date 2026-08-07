@@ -5,7 +5,7 @@ WHERE IT COMES FROM
 -------------------
 Three hand-authored registries at the repo root, merged in order:
 
-    tajweed_error_registry_v3.json      39 entries - the makharij, madd, ghunna
+    tajweed_error_registry_v3.json      36 entries - the makharij, madd, ghunna
                                         and ṣifāt corrections. Authored in an
                                         EARLIER SHAPE (name/short/nima_xato/
                                         qoida/nega_muhim/tuzatish/mashq), which
@@ -19,7 +19,7 @@ Three hand-authored registries at the repo root, merged in order:
                                         fallbacks and the harakat category
 
 v3 WAS NEVER LOADED. This module read v4 and v5 only, and v4 does not exist, so
-39 authored entries - every specific makharij and ṣifa correction in the
+39 authored entries at the time - every specific makharij and ṣifa correction in the
 project - sat on disk unreachable while the pipeline showed generic fallbacks in
 their place. That is half the reason "almost everything falls through to
 generic"; the other half is ALIAS below.
@@ -210,7 +210,7 @@ def registry() -> dict:
     """code -> entry, v5 over v4 over v3.
 
     Later generations win on a collision: each was authored to improve on the
-    one before it. v3 supplies breadth (39 specific corrections), v4 rewrites
+    one before it. v3 supplies breadth (36 specific corrections), v4 rewrites
     their wording, v5 adds the categories all of them missed.
     """
     merged = _load(V3, adapt=_adapt_v3)
@@ -411,8 +411,12 @@ def instruction(text: str) -> str:
 #
 #     QALQALAH_MISSING  covers ق ط ب ج د, and says
 #                       "say the «د» at the end of «أَحَدْ»"
-#     HAMS_LOST         covers ف ح ث ه ش خ ص س ك ت, and says
-#                       "say «سَ» and «زَ» one after the other"
+#
+# HAMS_LOST was the clearest example of this shape - one code over ف ح ث ه ش خ
+# ص س ك ت whose instruction said "say «سَ» and «زَ» one after the other" - and it
+# is gone as of the 2026-08-07 scope decision. Named here because the pattern is
+# what this list is about, and losing the example would make the list read as
+# two arbitrary codes rather than as a recognisable defect.
 #
 # So a learner who softened the ق in «وَٱقْتَرِب» is told to practise د. That is
 # not a smaller version of the right advice, it is advice about a different
@@ -441,7 +445,7 @@ def instruction(text: str) -> str:
 # a letter that does not occur in the word. Two entries share this code by
 # design - it is one confusion with two sources - but the authored text picked
 # one source and named it.
-LETTER_SPECIFIC_EXAMPLE = frozenset({"QALQALAH_MISSING", "HAMS_LOST",
+LETTER_SPECIFIC_EXAMPLE = frozenset({"QALQALAH_MISSING",
                                      "MAKHARIJ_INTERDENTAL_TO_ZAY"})
 
 # Where a mismatched example is FIXABLE rather than merely suppressible. A

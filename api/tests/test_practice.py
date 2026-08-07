@@ -19,14 +19,16 @@ from tilawah.engine.typed_errors import TypedError
 from tilawah.engine import pipeline
 
 
-def focuses(letter="ذ", word="ذَٰلِكَ", word_index=1):
-    return [r["focus"] for r in practice.ladder(letter, word, word_index)]
+def focuses(letter="ذ", word="ذَٰلِكَ", word_index=1, code="", expected_count=0):
+    return [r["focus"] for r in practice.ladder(
+        letter, word, word_index, code=code, expected_count=expected_count)]
 
 
 def test_the_full_ladder_goes_narrow_to_wide():
-    """The whole point of the shape: the learner meets the sound alone before
-    meeting it inside anything."""
-    assert focuses() == ["letter", "syllables", "word", "ayah"]
+    """The whole point of the ARTICULATION shape: the learner meets the sound
+    alone before meeting it inside anything."""
+    assert focuses(code="SUB_DHAL_ZAY") == [
+        "letter", "syllables", "word", "ayah"]
 
 
 def test_syllables_are_the_letter_under_each_haraka():
@@ -73,8 +75,14 @@ def test_an_unplaceable_word_is_shown_but_not_recordable():
 def test_madd_letters_skip_the_syllable_rung(letter):
     """ا و ي carry the lengthening BECAUSE they are unvowelled. Showing "اَ" as
     something to practise asks for a sound the letter does not make in that
-    role."""
-    assert focuses(letter=letter) == ["letter", "word", "ayah"]
+    role.
+
+    This is about the LETTER, not the error: a madd letter can carry an
+    articulation error too - a و read as ف - and that card still opens on the
+    bare letter. The duration ladder is a separate question, below.
+    """
+    assert focuses(letter=letter, code="SUB_WAW_V") == [
+        "letter", "word", "ayah"]
 
 
 @pytest.mark.parametrize("value", ["", "fatha", "mofakham", "sh"])
@@ -82,7 +90,133 @@ def test_a_non_letter_starts_the_ladder_at_the_word(value):
     """`letter` is not always a letter. A haraka error reports a NAME, a ṣifa
     error reports a ṣifa, and a duration error may report nothing. None of
     those can be set in an Arabic chip or said aloud on their own."""
-    assert focuses(letter=value) == ["word", "ayah"]
+    assert focuses(letter=value, code="GENERIC_SIFAT_MISMATCH") == [
+        "word", "ayah"]
+
+
+# ── the ladder branches on the error, not on the letter ───────────────────
+#
+# THE BUG THIS FIXES. Every card opened on "the letter, bare" regardless of what
+# went wrong, and for three of the four categories that rung teaches nothing:
+# the letter was not mispronounced (it was skipped), or it should not have been
+# said at all, or the thing that was wrong was a duration a bare letter does not
+# have. See the module docstring in engine/practice.py.
+
+@pytest.mark.parametrize("code,opening", [
+    ("LETTER_DROPPED", "word_include"),
+    ("LETTER_ADDED", "word_omit"),
+])
+def test_structural_errors_open_on_the_word_not_the_letter(code, opening):
+    assert focuses(code=code) == [opening, "word", "ayah"]
+
+
+@pytest.mark.parametrize("code", ["LETTER_DROPPED", "LETTER_ADDED"])
+def test_an_omission_or_insertion_never_drills_the_letter_alone(code):
+    """THE REGRESSION GUARD. Stated as an absence over every input shape,
+    because the defect was not one wrong branch - it was one ladder applied to
+    everything, and it would come back the same way.
+
+    The letter here is a perfectly good Arabic letter with a perfectly good
+    isolated drill available. That is the point: the drill is available and
+    still wrong, because the learner's mouth was never the problem.
+    """
+    for letter in ("ذ", "ح", "ا", "ن", ""):
+        for word, wi in [("ذَٰلِكَ", 1), ("قَالَ", 0), ("", -1)]:
+            rungs = practice.ladder(letter, word, wi, code=code)
+            got = [r["focus"] for r in rungs]
+            assert "letter" not in got, f"{code} {letter!r} {word!r}: {got}"
+            assert "syllables" not in got, f"{code} {letter!r} {word!r}: {got}"
+
+
+@pytest.mark.parametrize("code", [
+    "MADD_TOO_SHORT", "MADD_TOO_LONG", "MADD_WAJIB_SHORTENED",
+    "MADD_ADDED_LEEN", "MADD_ADDED",
+    # The engine-side vocabulary reaches ladder() too - present() passes e.code,
+    # which is what typed_diff emitted, not the resolved registry name.
+    "MADD_SHORT", "MADD_LONG",
+])
+def test_madd_opens_on_the_word_with_a_count(code):
+    """A bare letter has no duration. The first rung is the word, held for the
+    count the reference calls for."""
+    rungs = practice.ladder("ا", "قَالَ", 0, code=code, expected_count=4)
+    assert [r["focus"] for r in rungs] == ["word_hold", "word", "ayah"]
+    hold = rungs[0]
+    assert hold["items"] == ["قَالَ"], "the hold rung must carry the WORD"
+    assert hold["hold"] == 4
+
+
+@pytest.mark.parametrize("code", [
+    "MADD_TOO_SHORT", "MADD_TOO_LONG", "MADD_WAJIB_SHORTENED",
+    "MADD_ADDED_LEEN", "MADD_SHORT", "MADD_LONG",
+])
+def test_a_madd_rung_is_never_a_bare_letter_without_the_word(code):
+    """THE REGRESSION GUARD for the duration ladder. Two things must hold at
+    once, and only asserting the first would miss the case that matters: no rung
+    is the bare letter, AND the rung carrying the count is the word."""
+    for letter in ("ا", "و", "ي", "ن", ""):
+        rungs = practice.ladder(letter, "قَالَ", 0, code=code,
+                                expected_count=6)
+        for r in rungs:
+            assert r["focus"] not in ("letter", "syllables"), r["focus"]
+            if r["hold"]:
+                assert r["items"] == ["قَالَ"], (
+                    f"{code} {letter!r}: a count on a rung with no word")
+
+
+def test_a_madd_error_with_no_reference_count_omits_the_hold_rung():
+    """The count comes from the reference and nowhere else. Where the reference
+    did not supply one there is no number to count to, so the rung is dropped
+    rather than shown counting to zero - the same doctrine as a play button for
+    a file that is not on disk."""
+    assert focuses(letter="ا", word="قَالَ", word_index=0,
+                   code="MADD_TOO_SHORT", expected_count=0) == ["word", "ayah"]
+
+
+def test_qalqala_drop_is_an_articulation_error_despite_the_name():
+    """A dropped qalqalah is not a dropped LETTER. The letter was said; the
+    bounce at the end of it was not, and the bounce is an articulation. A
+    prefix rule on "dropped" would have put this on the omission ladder and
+    taken away the drill that actually helps."""
+    assert practice.category("QALQALA_DROP") == "articulation"
+    assert focuses(letter="د", word="يَلِدْ", word_index=0,
+                   code="QALQALA_DROP")[0] == "letter"
+
+
+def test_an_unclassified_code_keeps_the_ladder_it_always_had():
+    """Articulation is the default on purpose: a code nobody has classified
+    keeps exactly the shape it has always had rather than silently losing
+    rungs."""
+    assert practice.category("SOMETHING_NEW") == "articulation"
+    assert practice.category("") == "articulation"
+    assert focuses(code="SOMETHING_NEW") == [
+        "letter", "syllables", "word", "ayah"]
+
+
+def test_every_rung_carries_the_full_wire_shape():
+    """The client indexes these directly, so a rung missing one is not a
+    degraded ladder - it is a crash on the results screen."""
+    keys = {"level", "focus", "items", "recordable", "check", "word_index",
+            "audio", "audio_source", "hold"}
+    for code, count in [("SUB_DHAL_ZAY", 0), ("LETTER_DROPPED", 0),
+                        ("LETTER_ADDED", 0), ("MADD_TOO_SHORT", 4)]:
+        for rung in practice.ladder("ذ", "ذَٰلِكَ", 1, code=code,
+                                    expected_count=count):
+            assert set(rung) == keys, f"{code} {rung['focus']}: {set(rung)}"
+
+
+def test_the_slow_word_rungs_record_the_same_range_as_the_normal_one():
+    """They are the same word. A slow first pass that could not be recorded
+    would make rung 1 unscorable on three of the four ladders."""
+    for code, count in [("LETTER_DROPPED", 0), ("LETTER_ADDED", 0),
+                        ("MADD_TOO_SHORT", 4)]:
+        rungs = practice.ladder("ا", "قَالَ", 3, code=code,
+                                expected_count=count)
+        word_rungs = [r for r in rungs if r["focus"] in practice.WORD_FOCUSES]
+        assert len(word_rungs) == 2
+        for r in word_rungs:
+            assert r["recordable"] is True
+            assert r["check"] == practice.SCORED
+            assert r["word_index"] == 3
 
 
 def test_levels_are_gapless_after_a_rung_is_skipped():

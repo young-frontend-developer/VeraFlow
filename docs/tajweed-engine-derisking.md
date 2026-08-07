@@ -256,6 +256,11 @@ one.
 
 ### Ṣifa checks: measured, not built
 
+> **Superseded in part by §10.** `HAMS_LOST`, `SHIDDA_LOST` and `JAHR_LOST` were
+> later given detectors and then removed outright as a scope decision. The
+> paragraph below is kept as written because the reasoning still applies to
+> `TAFKHEEM_ADDED` and to any future ṣifa detector.
+
 `typed_diff` compares phoneme strings and never reads the ṣifāt the model also
 predicts, so `TAFKHEEM_ADDED`, `HAMS_LOST`, `SHIDDA_LOST` and `JAHR_LOST` have
 **no detector** despite having registry entries. The harness reports
@@ -318,6 +323,84 @@ unintended ixfo slips in. **Nothing consumes this yet, on purpose:** all three
 excluded from `in_scope()`, and weighting a detector that does not run would be
 theatre. `detection_weight()` computes it and a test pins it, so promoting the
 entry is a one-line change rather than a re-derivation.
+
+---
+
+## 10. Scope: dropping lahn khafiy khafiy (2026-08-07)
+
+**Decision, requested by Rahmatulloh.** `HAMS_LOST`, `JAHR_LOST` and
+`SHIDDA_LOST` are removed from the app. This is a **scope decision, not a bug
+fix**, and it is recorded here so a later reader does not mistake it for one and
+"restore" it as a repair.
+
+### The reasoning
+
+Hams/jahr and shidda/rakhawa are **lahn khafiy khafiy** — the faintest class of
+error. A shadeed letter read slightly loose, or a mahmus letter carrying a trace
+of voice, is inaudible to most reciters, changes no meaning, and breaks no
+required rule. What this app corrects today is the errors that **change meaning
+or break a required rule**. These are neither, so they are out of scope.
+
+### What this is not
+
+It is not a claim the detectors failed. All three worked, and their
+preconditions were among the better-narrowed in the engine:
+
+| code | loose | narrowed | what remained |
+|---|---|---|---|
+| `HAMS_LOST` | 95.6% | **41.4%** | sakin hams letter |
+| `SHIDDA_LOST` | 97.3% | **17.7%** | sakin ء ك ت (qalqalah letters excluded) |
+| `JAHR_LOST` | 100.0% | **8.8%** | sakin ذ ز ض ظ غ |
+
+Those numbers are kept in `engine/coverage.py`'s docstring as the evidence that
+the removal was about **what the checks are about**, not about whether they
+worked.
+
+### Removed, not hidden
+
+Suppressing the card would have left the pipeline computing findings nobody
+could act on, and left the codes dragging every segment's coverage score down
+against checks that can never fire. So the removal runs through every layer:
+
+| layer | change |
+|---|---|
+| registry | deleted via `tajweed_registry_v3_amendments.json` → `delete`, then regenerated. **39 → 36 entries** |
+| routing | `engine/sifat_codes.OUT_OF_SCOPE` — `code_for` returns `None` for both ṣifāt |
+| pipeline | `_sifat_errors` skips both fields; no `TypedError` is ever constructed |
+| coverage | preconditions deleted from `possible_codes`; the codes leave `relevant` |
+| ranking | follows automatically — `rank_error_frequency.py` reads `coverage.py` |
+| card kinds | both ṣifāt dropped from `cards._BY_SIFA` |
+| guidance | `sifat_guidance.json` → `detected: false`, **text retained** |
+| calibration | `pick_calibration_set.py` no longer targets them |
+
+**The `OUT_OF_SCOPE` gate is checked before the generic fallback**, and that
+ordering is the point. Removing the two ṣifāt from `ROUTED` alone would have
+dropped them into `GENERIC_SIFAT_MISMATCH` and shown the learner *"the ṣifa did
+not come out right"* for precisely the errors we just decided not to report —
+worse than leaving the checks switched on. `test_code_mapping.py::
+test_out_of_scope_sifat_do_not_fall_into_the_generic` pins that specific failure
+separately from the others.
+
+### What stays, deliberately
+
+- **The observation layer.** `sifa_compare.FIELDS` still measures hams and
+  shidda disagreement, and `calibrate.py` still reports it. That is
+  observation-only, never reaches a learner, and is the false-positive floor
+  anyone reviving these checks would need. Deleting it would cost the
+  measurement and save nothing.
+- **The authored guidance text**, marked `detected: false` with a note. Decision
+  4 puts authoring with a qori; discarding text that already exists would make
+  an advanced-user mode a content project instead of a routing change.
+
+### If this is revisited
+
+For an **advanced-user mode**, the restore is mechanical and the steps are
+written next to the deletions — see `tajweed_registry_v3_amendments.json` →
+`delete` → `HAMS_LOST`. Two things must come back together, and the second is
+easy to miss: the `shadeed` branch **and** the `rikhw`-vs-`between` drop. Those
+two values differ in degree, not direction; 4 of the 16 ṣifa disagreements on a
+real 2:7 recitation were that pair, and every one produced a card. A restore
+without it reintroduces a measured false positive.
 
 ---
 

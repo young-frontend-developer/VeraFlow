@@ -8,12 +8,14 @@
     "review_required": true,
     "review_note": "These are mechanical descriptions of where the tongue, lips, throat and air go. They are not rulings and they decide nothing - but they are learner-facing sentences about tajweed, and Decision 4 puts those with a qori. Everything here ships marked draft and is withheld in production until reviewed.",
     "budget": "name: a few words. how: at most two short sentences - it sits inside a card with a word budget.",
-    "detector_coverage": "Only tafkheem_or_taqeeq, hams_or_jahr, shidda_or_rakhawa, ghonna, qalqla and itbaq are actually compared today. The rest are authored ahead of a detector so that adding one is a routing change and not a content project; tools/audit_cards.py lists which are which."
+    "detector_coverage": "Only tafkheem_or_taqeeq, ghonna, qalqla and itbaq are actually compared today. The rest are authored ahead of a detector so that adding one is a routing change and not a content project; tools/audit_cards.py lists which are which.",
+  "detector_coverage_history": "hams_or_jahr and shidda_or_rakhawa were compared until 2026-08-07 and now carry detected:false. That is a SCOPE decision - lahn khafiy khafiy, outside what this app corrects - and not the same state as a ṣifa that never had a detector. Their guidance text is retained deliberately."
   },
   "sifat": {
     "hams_or_jahr": {
       "also_known_as": "hams / jahr",
-      "detected": true,
+      "detected": false,
+      "_detected_note": "Was true until 2026-08-07. The comparison was removed as a scope decision, not because it failed - lahn khafiy khafiy is outside what this app corrects. The text below is kept, unreviewed as ever, so restoring the check for an advanced-user mode is a routing change and not a content project. See engine/sifat_codes.OUT_OF_SCOPE.",
       "uz": {
         "name": "Nafas yoki ovoz (hams / jahr)",
         "wrong": "Bu harfda nafas va ovoz nisbati noto'g'ri chiqdi.",
@@ -27,7 +29,8 @@
     },
     "shidda_or_rakhawa": {
       "also_known_as": "shidda / rakhawa",
-      "detected": true,
+      "detected": false,
+      "_detected_note": "Was true until 2026-08-07. Removed with hams_or_jahr under the same scope decision - see the note on that entry.",
       "uz": {
         "name": "To'siq yoki oqim (shiddat / raxovat)",
         "wrong": "Bu harfda havo oqimi kerakli tarzda to'xtamadi.",

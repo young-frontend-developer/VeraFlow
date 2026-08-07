@@ -5,7 +5,7 @@
    "uz-Latn",
    "ru"
   ],
-  "total_errors": 39,
+  "total_errors": 36,
   "status": "DRAFT — every entry is marked status='draft'. Rahmatulloh (qari) must review each one and set status='reviewed' before it is shown to a learner. The app's safety gate must only display entries where status == 'reviewed'.",
   "field_guide": {
    "group": "makharij | sifat | ghunna | madd | ahkam",
@@ -87,31 +87,6 @@
     "pochemu_vazhno": "Длительность гунны также входит в правило. Короткая гунна считается невыполненной полностью.",
     "kak_ispravit": "Считайте про себя: 'ин-н(раз, два)а'. Отбивайте ритм пальцем по колену два раза.",
     "uprazhnenie": "Прочитайте 'إِنَّ' 10 раз, каждый раз считая на 'نّ' ровно до двух. Затем повторите с 'ثُمَّ'."
-   }
-  },
-  "HAMS_LOST": {
-   "status": "draft",
-   "group": "sifat",
-   "severity": "medium",
-   "detection_confidence": "high",
-   "detection_signal": "sifat hams_or_jahr: kutilgan 'hams' o'rniga 'jahr'",
-   "uz": {
-    "name": "Jarangsiz harf jarangli o'qilgan",
-    "short": "Harf nafas bilan emas, ovoz bilan chiqdi.",
-    "nima_xato": "Siz jarangsiz (mahmus) harfni jarangli qilib o'qidingiz — nafas oqimi o'rniga ovoz ishlatdingiz.",
-    "qoida": "Mahmus (jarangsiz) harflar: ف، ح، ث، ه، ش، خ، ص، س، ك، ت. Bu harflarda ovoz paychalari titramaydi, faqat nafas oqimi chiqadi.",
-    "nega_muhim": "Jarangsiz harfni jarangli o'qish uni boshqa harfga aylantiradi: ت → د, س → ز, ك → g.",
-    "tuzatish": "Barmog'ingizni tomog'ingizga qo'ying. Mahmus harfni aytganda titrash bo'lmasligi kerak. 'سَ' va 'زَ' ni ketma-ket ayting — farqni barmoq bilan seziting.",
-    "mashq": "Tomoqni ushlab juftlarni 10 marta: 'تَ/دَ', 'سَ/زَ', 'كَ/gَ'. Har safar birinchisida titrash yo'qligini tekshiring."
-   },
-   "ru": {
-    "name": "Глухая буква прочитана звонко",
-    "short": "Буква вышла с голосом вместо выдоха.",
-    "chto_ne_tak": "Вы прочитали глухую (махмуса) букву звонко — использовали голос вместо потока воздуха.",
-    "pravilo": "Глухие буквы: ف، ح، ث، ه، ش، خ، ص، س، ك، ت. При них голосовые связки не вибрируют, выходит только поток воздуха.",
-    "pochemu_vazhno": "Озвончение глухой буквы превращает её в другую: ت → د, س → ز, ك → г.",
-    "kak_ispravit": "Положите палец на горло. При глухой букве вибрации быть не должно. Произнесите 'سَ' и 'زَ' подряд — почувствуйте разницу пальцем.",
-    "uprazhnenie": "Держа палец на горле, 10 раз пары: 'تَ/دَ', 'سَ/زَ', 'كَ/гَ'. Каждый раз проверяйте отсутствие вибрации на первой."
    }
   },
   "IDGHAM_MISSING": {
@@ -212,31 +187,6 @@
     "pochemu_vazhno": "Применение ихфа или идгама на месте изхара нарушает границы правил.",
     "kak_ispravit": "Произносите нун полностью: язык полностью касается махраджа нуна, звук слышен отчётливо, через нос не тянется. Быстро переходите к следующей букве.",
     "uprazhnenie": "10 раз: 'مَنْ آمَنَ', 'مِنْ عِلْم', 'أَنْعَمْتَ', 'مِنْ خَيْر'. Проверяйте, что нун слышен отчётливо."
-   }
-  },
-  "JAHR_LOST": {
-   "status": "draft",
-   "group": "sifat",
-   "severity": "medium",
-   "detection_confidence": "high",
-   "detection_signal": "sifat hams_or_jahr: kutilgan 'jahr' o'rniga 'hams'",
-   "uz": {
-    "name": "Jarangli harf jarangsiz o'qilgan",
-    "short": "Harf ovozsiz, faqat nafas bilan chiqdi.",
-    "nima_xato": "Siz jarangli (majhur) harfni jarangsiz qilib o'qidingiz — ovoz paychalari ishlamadi.",
-    "qoida": "Majhur (jarangli) harflarda ovoz paychalari titraydi va nafas oqimi to'xtaydi. Mahmus harflardan tashqari barcha harflar majhur.",
-    "nega_muhim": "Jarangli harfni jarangsiz o'qish uni juftiga aylantiradi: د → ت, ز → س, ع → ح.",
-    "tuzatish": "Barmog'ingizni tomog'ingizga qo'ying va harfni ayting — titrash sezilishi shart. Agar titrash yo'q bo'lsa, ovozingizni ishlating, faqat nafas chiqarmang.",
-    "mashq": "Tomoqni ushlab 10 marta: 'دَ', 'زَ', 'عَ', 'بَ'. Har birida titrash borligini tasdiqlang."
-   },
-   "ru": {
-    "name": "Звонкая буква прочитана глухо",
-    "short": "Буква вышла без голоса, только с выдохом.",
-    "chto_ne_tak": "Вы прочитали звонкую (маджхура) букву глухо — голосовые связки не работали.",
-    "pravilo": "При звонких буквах голосовые связки вибрируют, поток воздуха останавливается. Все буквы, кроме глухих, являются звонкими.",
-    "pochemu_vazhno": "Оглушение звонкой буквы превращает её в пару: د → ت, ز → س, ع → ح.",
-    "kak_ispravit": "Положите палец на горло и произнесите букву — вибрация обязательна. Если её нет, задействуйте голос, а не только выдох.",
-    "uprazhnenie": "Держа палец на горле, 10 раз: 'دَ', 'زَ', 'عَ', 'بَ'. Убедитесь в наличии вибрации на каждой."
    }
   },
   "MADD_ADDED": {
@@ -935,32 +885,6 @@
     "pochemu_vazhno": "Оба состояния ر подчиняются правилу. Чтение её всегда тяжело — распространённая ошибка.",
     "kak_ispravit": "При 'رِ' язык остаётся плоским, звук лёгкий и выходит впереди. Не создавайте объём во рту, как при тяжёлой ر.",
     "uprazhnenie": "Сравнивайте: 'رِزْق' (лёгкая) и 'رَبّ' (тяжёлая), по 10 раз. Затем: 'فِرْعَوْن', 'مِرْيَة' — здесь ر лёгкая."
-   }
-  },
-  "SHIDDA_LOST": {
-   "status": "draft",
-   "group": "sifat",
-   "severity": "medium",
-   "detection_confidence": "high",
-   "source_ref": "2-dars «Шиддат ва раховат»",
-   "detection_signal": "sifat shidda_or_rakhawa: kutilgan 'shadeed' o'rniga 'rikhw' yoki 'between'",
-   "uz": {
-    "name": "Shiddat harfi raxovat kabi o'qilgan",
-    "short": "Tovush to'siqqa uchramadi.",
-    "nima_xato": "Siz shiddat harfini raxovat kabi sirg'altib o'qidingiz — tovush to'siqqa uchramadi va havo to'xtamadi.",
-    "qoida": "Shiddat harflari talaffuzida tovush to'siqqa uchrab, kuchli chiqadi; shuning uchun ular portlovchi, kuch bilan talaffuz qilinuvchi harflar deyiladi. Raxovat esa shiddatning aksi — harflar kuchsiz tarzda sirg'alib chiqadi.",
-    "nega_muhim": "Shiddat harfini sirg'altib o'qish uni boshqa harfga o'xshatib yuboradi.",
-    "tuzatish": "Sinov: harfni cho'zishga urinib ko'ring. Shiddat harfi cho'zilmaydi — maxraj to'liq yopilib, havo butunlay to'xtaydi, keyin birdan ochiladi. Agar cho'zilsa, siz uni raxovat qilib o'qigansiz.",
-    "mashq": "Har bir shiddat harfini sukun bilan 5 martadan ayting va har safar havo to'liq to'xtayotganini tekshiring. Keyin raxovat harfi bilan solishtiring: raxovat cho'ziladi, shiddat cho'zilmaydi."
-   },
-   "ru": {
-    "name": "Буква шиддат прочитана как раховат",
-    "short": "Звук не встретил преграды.",
-    "chto_ne_tak": "Вы произнесли букву шиддат скользяще, как раховат — звук не встретил преграды и воздух не остановился.",
-    "pravilo": "При буквах шиддат звук встречает преграду и выходит сильно; поэтому их называют взрывными, произносимыми с силой. Раховат — противоположность: буквы выходят слабо, скользя.",
-    "pochemu_vazhno": "Скользящее произнесение буквы шиддат уподобляет её другой букве.",
-    "kak_ispravit": "Проверка: попробуйте протянуть букву. Шиддат не тянется — махрадж полностью смыкается, воздух останавливается, затем резко раскрывается. Если тянется — вы произнесли её как раховат.",
-    "uprazhnenie": "Каждую букву шиддат с сукуном по 5 раз, проверяя полную остановку воздуха. Затем сравните с буквой раховат: раховат тянется, шиддат — нет."
    }
   },
   "TAFKHEEM_ADDED": {

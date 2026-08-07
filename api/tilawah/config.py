@@ -73,7 +73,15 @@ class Settings:
     # card is about to be absent from the re-read; see the recovery loop in
     # Recite.tsx. A learner can score 0.95 while still making exactly the
     # mistake they were sent to fix, and that must not unlock anything.
-    practice_pass: float = float(os.getenv("TILAWAH_PRACTICE_PASS", 0.9))
+    # LOWERED FROM 0.9 TO 0.8 on 2026-08-07, by decision rather than by
+    # measurement. 0.9 was rejecting recitations at 0.88 and sending learners
+    # back to the same ayah six and seven times, which is the failure mode this
+    # value was always most likely to have: it is a gate on somebody's practice,
+    # and set high it does not raise standards, it just stops the session.
+    # Perfection is not what this app is for. The client also caps re-reads at
+    # three per card regardless of score - see web/src/lib/retry.ts - so the
+    # threshold can no longer trap anybody even if it is still too high.
+    practice_pass: float = float(os.getenv("TILAWAH_PRACTICE_PASS", 0.8))
 
     # Learner voice is never retained unless the learner asked for it to be.
     # This flag only permits the offer to be made; the per-user consent in

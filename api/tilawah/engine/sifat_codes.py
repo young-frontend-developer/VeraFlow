@@ -19,6 +19,12 @@ has authored an entry for - itbaq, safeer, tikraar, tafashie, istitala - which
 is what a fallback is for. If a ṣifa in ROUTED gains a specific entry later, it
 moves out of the generic by adding a row here, not by touching the pipeline.
 
+WHAT IS OUT OF SCOPE, WHICH IS A DIFFERENT THING
+------------------------------------------------
+OUT_OF_SCOPE is not the fallback and not a gap. It is a list of ṣifāt this app
+has decided not to correct at all, and a disagreement in one of them produces no
+error - not a generic, not a suppressed card, nothing. See the set below.
+
 The value vocabulary is quran_transcript's, not ours - see
 quran_transcript/phonetics/sifa.py, SifaOutput:
 
@@ -35,17 +41,34 @@ quran_transcript/phonetics/sifa.py, SifaOutput:
 # different degree of heavy", because that is not an error a teacher corrects.
 HEAVY = {"mofakham", "low_mofakham"}
 
-# Neither of these is a full stop. shadeed is the only value that means the
-# airflow was cut, so a disagreement WITHIN this pair is a difference of degree
-# between two letters that both flowed - the same non-error as mofakham vs
-# low_mofakham.
-LOOSE = {"rikhw", "between"}
-
 GENERIC = "GENERIC_SIFAT_MISMATCH"
 
-# The ṣifāt this module routes. A disagreement in any OTHER field goes generic.
-ROUTED = {"tafkheem_or_taqeeq", "hams_or_jahr", "shidda_or_rakhawa", "ghonna",
-          "qalqla"}
+# ── ṢIFĀT THIS APP DOES NOT CORRECT ───────────────────────────────────────
+# SCOPE DECISION 2026-08-07, requested by Rahmatulloh. Not a bug, not a
+# measurement problem, and not a gap waiting to be filled.
+#
+# hams/jahr and shidda/rakhawa are lahn khafiy khafiy - the faintest class of
+# error. A shadeed letter read slightly loose, or a mahmus letter with a trace
+# of voice, is inaudible to most reciters, changes no meaning, and breaks no
+# required rule. The app's current purpose is the errors that DO one of those
+# two things, so these are removed rather than shown, ranked or counted.
+#
+# WHAT THIS IS NOT. It is not a claim the detectors failed. Both had sound,
+# measured preconditions (HAMS_LOST 95.6% -> 41.4%; JAHR_LOST 100% -> 8.8%;
+# SHIDDA_LOST 97.3% -> 17.7%) and their registry entries were sourced and
+# usable. They are switched off because of what they are about, so the restore
+# for an advanced-user mode is mechanical - see tajweed_registry_v3_amendments
+# .json -> delete -> HAMS_LOST for the exact steps.
+#
+# CHECKED BEFORE THE GENERIC, deliberately. Removing these from ROUTED alone
+# would drop them into the fallback, and the learner would get "the ṣifa did not
+# come out right" for exactly the errors we just decided not to report - the
+# worst of both.
+OUT_OF_SCOPE = {"hams_or_jahr", "shidda_or_rakhawa"}
+
+# The ṣifāt this module routes. A disagreement in any OTHER field goes generic,
+# unless it is OUT_OF_SCOPE, in which case there is no error at all.
+ROUTED = {"tafkheem_or_taqeeq", "ghonna", "qalqla"}
 
 RAA, LAM = "ر", "ل"
 
@@ -66,10 +89,12 @@ RAA, LAM = "ر", "ل"
 #             delete the useful direction. The single impossible case is the
 #             MADD LETTER, which has no heaviness of its own at all.
 #
-# hams_or_jahr and shidda_or_rakhawa are NOT listed, deliberately: every Arabic
-# letter has a value for both, so there is no letter on which a disagreement is
-# impossible. A guard listing them would be inventing a restriction, which is
-# the same failure in the other direction.
+# hams_or_jahr and shidda_or_rakhawa are absent from this section because they
+# are absent from the whole module now - see OUT_OF_SCOPE. They never had a
+# letter guard when they were routed, and correctly so: every Arabic letter has
+# a value for both, so there was no letter on which a disagreement was
+# impossible. Noted here so a restore does not go looking for a guard that was
+# never needed and invent one.
 QALQALA_LETTERS = frozenset("قطبجد")
 GHUNNA_LETTERS = frozenset("نمںۦ۾")
 ISTILA_LETTERS = frozenset("خصضطظغق")
@@ -127,49 +152,27 @@ def code_for(field: str, letter: str, expected: str, heard: str) -> str | None:
     Returns:
         a specific code   - the registry has an entry written for exactly this
         GENERIC           - a real disagreement with nothing authored about it
-        None              - not an error; do not emit a card at all
+        None              - not an error; do not emit a card at all. Covers three
+                            cases: a ṣifa this app does not correct
+                            (OUT_OF_SCOPE), a ṣifa this letter cannot have
+                            (applies), and a difference of degree between two
+                            values that are both acceptable.
 
     `letter` is the reference base letter, which is what makes RAA_* and
     LAM_TAFKHEEM_WRONG reachable: ر and ل have their own rulings for heaviness
     that contradict the general one, so routing on the ṣifa alone would hand a
     learner the wrong correction.
     """
+    # Before everything, including the letter guard: an out-of-scope ṣifa is not
+    # a weak error or an unauthored one, it is not an error this app reports.
+    if field in OUT_OF_SCOPE:
+        return None
+
     if not applies(field, letter, expected):
         return None
 
     if field == "tafkheem_or_taqeeq":
         return _tafkheem(letter, expected, heard)
-
-    if field == "hams_or_jahr":
-        if expected == "hams" and heard == "jahr":
-            return "HAMS_LOST"
-        if expected == "jahr" and heard == "hams":
-            return "JAHR_LOST"
-        return GENERIC
-
-    if field == "shidda_or_rakhawa":
-        # 'between' is included on the authority of the registry entry itself,
-        # whose detection_signal reads "kutilgan 'shadeed' o'rniga 'rikhw' yoki
-        # 'between'". A shadeed letter that came out even partly loose is the
-        # error SHIDDA_LOST is written about.
-        if expected == "shadeed" and heard in ("rikhw", "between"):
-            return "SHIDDA_LOST"
-        # NEITHER SIDE IS A STOP. rikhw and between differ in DEGREE of
-        # looseness, and the registry knows one direction - a stop that came out
-        # loose - because that is the one a teacher corrects. "You held it
-        # slightly less loosely than the reference" is not a correction, and a
-        # card saying "the ṣifa did not come out right" about it is a false
-        # positive with a confusing explanation attached.
-        #
-        # Exactly the rule _tafkheem already applies to mofakham vs
-        # low_mofakham. Measured on a real 2:7 recitation, where 4 of the 16
-        # ṣifa disagreements were this and every one produced a card.
-        if expected in LOOSE and heard in LOOSE:
-            return None
-        # A loose letter read tight has no entry in any registry generation, so
-        # it stays generic rather than borrowing SHIDDA_LOST's text, which would
-        # tell the learner to do MORE of what they already overdid.
-        return GENERIC
 
     if field == "ghonna":
         if expected == "maghnoon" and heard == "not_maghnoon":

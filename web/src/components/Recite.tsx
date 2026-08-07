@@ -8,6 +8,7 @@ import Feedback, {
   cardId,
 } from "./Feedback";
 import { Selection } from "./Picker";
+import { decideRetry } from "../lib/retry";
 import ReciterSelect from "./ReciterSelect";
 import {
   Attempt,
@@ -83,7 +84,22 @@ export default function Recite({
     fixed: [],
     stillWrong: null,
     rungs: {},
+    tries: {},
+    accepted: [],
   });
+
+  /**
+   * The live retry state, for reading inside an async handler.
+   *
+   * stopRecordRung awaits a network round trip and then needs the CURRENT try
+   * count to decide whether the cap has been reached. Closing over `retry` from
+   * render would read the count as it was when recording STARTED, so the cap
+   * would always be one behind and the third attempt would not fire it.
+   */
+  const retryRef = useRef(retry);
+  useEffect(() => {
+    retryRef.current = retry;
+  }, [retry]);
 
   const handleRef = useRef<RecorderHandle | null>(null);
   /**
@@ -137,7 +153,7 @@ export default function Recite({
     setOwnRecording(null);
     setActiveCardId(null);
     setRetry({ cardId: null, level: null, phase: null, fixed: [],
-               stillWrong: null, rungs: {} });
+               stillWrong: null, rungs: {}, tries: {}, accepted: [] });
   }, [key]);
 
   useEffect(() => () => handleRef.current?.cancel(), []);
@@ -159,7 +175,7 @@ export default function Recite({
     setFailure(null);
     setActiveCardId(null);
     setRetry({ cardId: null, level: null, phase: null, fixed: [],
-               stillWrong: null, rungs: {} });
+               stillWrong: null, rungs: {}, tries: {}, accepted: [] });
     audioRef.current?.pause();
     try {
       handleRef.current = await startRecording();
@@ -230,11 +246,18 @@ export default function Recite({
 
   /* ── the recovery loop ──────────────────────────────────────────────────
      Re-record ONE RUNG of a card's practice ladder and re-check only the error
-     that card is about. Two rungs are recordable and they submit different
-     ranges:
+     that card is about. Rungs submit one of two ranges:
 
-       word  just that word          start_word = word_index, num_words = 1
-       ayah  the range on screen     whatever the learner selected
+       word*  just that word          start_word = word_index, num_words = 1
+       ayah   the range on screen     whatever the learner selected
+
+     `word*` is every word-focused rung, not only `word`. The omission,
+     insertion and duration ladders open on the word too — said slowly, with
+     the thing to attend to named — and those rungs are the same word range as
+     the normal-pace one, so they record and score identically. Matching on the
+     `word` prefix rather than listing them keeps a new word rung on the server
+     from silently falling through to the ayah branch and re-recording the
+     whole verse.
 
      The range machinery is the same one the practice segments use, and
      `word_index` is ayah-relative precisely so it can be handed straight to
@@ -245,7 +268,7 @@ export default function Recite({
   /** The range one rung submits, or null if it cannot be recorded. */
   function rungRange(rung: PracticeRung) {
     if (!rung.recordable) return null;
-    if (rung.focus === "word") {
+    if (rung.focus.startsWith("word")) {
       if (rung.word_index < 0) return null;
       return { start_word: rung.word_index, num_words: 1 };
     }
@@ -278,26 +301,24 @@ export default function Recite({
     try {
       const blob = await h.stop();
       const out = await submitAttempt(blob, sura.number, ayah.aya, lang, range);
-      // SCOPED to this error. The re-read covers one word, so anything else it
-      // turns up belongs to a different card and must not silently close this
-      // one — or, worse, open new cards for a word the learner was drilling.
-      const stillThere =
-        out.status === "ok" &&
-        out.errors.some((x) => x.code === e.code && x.letter === e.letter);
-      // A re-read we could not judge is NOT a fix. Only a clean, analysable
-      // result closes the card; anything else leaves it exactly as it was.
       const judged = out.status === "ok" && out.analysable;
       const score = out.score ?? 0;
-      const need = out.pass_score ?? 0.9;
-      // BOTH CONDITIONS, and the second is the one that matters. A learner can
-      // score 0.95 on a long range while making exactly the mistake they were
-      // sent to fix, and unlocking on the number alone would wave that through.
-      const cleared = judged && !stillThere && score >= need;
+      // Counted BEFORE the decision, so this re-read is the nth try and the cap
+      // can fire on it. An unjudged read does not count — see decideRetry.
+      const tried = (retryRef.current.tries[id] ?? 0) + (judged ? 1 : 0);
+      // The whole decision lives in lib/retry.ts. It used to be inline here and
+      // it deadlocked on any ayah with more than one error: the last rung is
+      // the AYAH, so its score covers other cards' mistakes too, and a learner
+      // who fixed this card perfectly was held shut by a mistake the app had
+      // not shown them yet. See that module for the full account.
+      const verdict = decideRetry({ out, error: e, attempt: tried });
+      const cleared = verdict.cleared;
       const isLast = level >= (e.practice?.length ?? 0);
 
       setRetry((r) => {
         const prev = r.rungs[id] ?? EMPTY_RUNGS;
         return {
+          ...r,
           cardId: null,
           level: null,
           phase: null,
@@ -306,6 +327,9 @@ export default function Recite({
           // finish, and closing there would send the learner away one rung
           // short of putting it back in context.
           fixed: cleared && isLast ? [...r.fixed, id] : r.fixed,
+          accepted:
+            verdict.accepted && isLast ? [...r.accepted, id] : r.accepted,
+          tries: { ...r.tries, [id]: tried },
           stillWrong: cleared ? null : id,
           rungs: {
             ...r.rungs,

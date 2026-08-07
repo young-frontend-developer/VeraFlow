@@ -21,8 +21,33 @@ client is expected never to print it.
 `kind` is a WIRE CONTRACT, not a display string. The titles live in the
 client's i18n table, so adding a language does not touch the engine.
 """
+from ..content import makharij
 from . import practice
+from . import teaching
 from .typed_errors import TypedError
+
+
+def makhraj_line(code: str, expected: str, letter: str,
+                 lang: str = "uz") -> str:
+    """Where the correct letter comes from, for cards that are about producing
+    one. "" for the rest.
+
+    THE SCOPE IS THE SAME AS THE ISOLATED-LETTER DRILL'S, deliberately. If it
+    makes sense to hand a learner the bare letter to practise, it makes sense to
+    tell them where that letter lives; and where the bare-letter drill is wrong,
+    so is the description. A learner who SKIPPED a ح does not need to be told
+    where ح comes from - they can already say it - and a madd error is about a
+    length, not a place. One rule, applied in both places, so the card and its
+    ladder cannot disagree about what kind of mistake this is.
+
+    That means MAKHARIJ_*, the ṣifa codes, the qalqalah codes and both generics
+    get a line - which is the point, since GENERIC_LETTER_SUBSTITUTED and
+    GENERIC_SIFAT_MISMATCH are the most-shown cards in the app and had no
+    makhraj description of any kind.
+    """
+    if practice.category(code) != "articulation":
+        return ""
+    return makharij.for_error(expected, letter, lang)
 
 # ── code -> kind ──────────────────────────────────────────────────────────
 # The closed set. Anything not named here falls back to its registry `group`,
@@ -56,12 +81,15 @@ KINDS = (EXTRA, MISSING, WRONG, PRONUNCIATION, TAJWEED, MADD, GHUNNA, HARAKA,
 # any ghunna disagreement other than the one GHUNNA_MISSING covers, resolved to
 # GENERIC_SIFAT_MISMATCH -> group `fallback` -> "Talaffuz". A nasalisation error
 # titled "pronunciation" is precisely the mad/ghunna-vs-ṣifat confusion.
+#
+# hams_or_jahr and shidda_or_rakhawa are not listed. They were, mapped to
+# PRONUNCIATION, until the 2026-08-07 scope decision removed both comparisons -
+# no TypedError can carry either ṣifa now, so a row for them would describe a
+# card that cannot be built. See engine/sifat_codes.OUT_OF_SCOPE.
 _BY_SIFA = {
     "ghonna": GHUNNA,
     "qalqla": TAJWEED,
     "tafkheem_or_taqeeq": PRONUNCIATION,
-    "hams_or_jahr": PRONUNCIATION,
-    "shidda_or_rakhawa": PRONUNCIATION,
     "itbaq": PRONUNCIATION,
 }
 
@@ -145,6 +173,14 @@ WIRE_KEYS = (
     # `sifa_name` the "which ṣifa", `articulation` the "which mouth position" -
     # the three questions a card could not previously answer at all.
     "rule_name", "sifa_name", "articulation",
+    # Where the CORRECT letter comes from and what it is like, one sentence,
+    # rendered above the fix. Empty on cards that are not about producing a
+    # letter - see content/makharij.py.
+    "makhraj",
+    # Teaching order. `tier` is which of the four categories this belongs to
+    # and `reveal_order` its position in the chain the client unlocks one at a
+    # time. See engine/teaching.py.
+    "tier", "reveal_order",
 )
 
 
@@ -181,6 +217,13 @@ def ensure_shape(err: dict) -> dict:
     # on a card that no qori wrote and no detector supported.
     for key in ("rule_name", "sifa_name", "articulation"):
         out.setdefault(key, "")
+    # `makhraj` IS reconstructed, unlike the three above, and the difference is
+    # the point: those are authored text and inventing them for an old attempt
+    # would put words on a card no qori wrote. This is a LOOKUP keyed by a
+    # letter the legacy row already carries, so rebuilding it produces exactly
+    # the sentence a fresh card would get - the same reasoning as the ladder.
+    out.setdefault("tier", 0)
+    out.setdefault("reveal_order", 0)
 
     body = out.get("content") or {}
     if not out.get("kind"):
@@ -199,12 +242,23 @@ def ensure_shape(err: dict) -> dict:
         out["count"] = len(out["occurrences"])
 
     # Rebuilt, not blanked, for the same reason as `occurrences`. The ladder is
-    # DERIVED from the letter and the word, both of which a legacy row already
-    # carries, so a replayed attempt gets a working practice section rather than
-    # an empty one - and no migration is needed to give it one.
+    # DERIVED from the letter, the word and the code, all of which a legacy row
+    # already carries, so a replayed attempt gets a working practice section
+    # rather than an empty one - and no migration is needed to give it one.
+    #
+    # `code` and `expected_count` matter here as much as on a fresh card: an old
+    # LETTER_DROPPED row replayed without them would rebuild the bare-letter
+    # opening that practice.category() exists to keep off that ladder, so the
+    # history screen would show the defect the live path no longer has.
     if not out.get("practice"):
         out["practice"] = practice.ladder(
-            out["letter"], out["word"], out["word_index"])
+            out["letter"], out["word"], out["word_index"],
+            code=out["code"], expected_count=out["expected_count"])
+    if not out.get("makhraj"):
+        out["makhraj"] = makhraj_line(out["code"], out["expected"],
+                                      out["letter"])
+    if not out.get("tier"):
+        out["tier"] = teaching.tier(out["kind"])
     return out
 
 

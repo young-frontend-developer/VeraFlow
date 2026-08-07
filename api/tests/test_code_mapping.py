@@ -21,8 +21,8 @@ def test_registry_actually_loads():
     """v3 was on disk and unread for the whole life of the coaching module."""
     reg = coaching.registry()
     assert len(reg) >= 55, (
-        f"only {len(reg)} entries loaded; v3 (39) + v5 (22) should merge to "
-        f"roughly 60. A registry file is not being read."
+        f"only {len(reg)} entries loaded; v3 (36) + v5 (22) + v6 (4) should "
+        f"merge to roughly 60. A registry file is not being read."
     )
     for code in ("MADD_TOO_SHORT", "MAKHARIJ_SAD_TO_SEEN", "TAFKHEEM_LOST",
                  "QALQALAH_MISSING", "GENERIC_SIFAT_MISMATCH"):
@@ -112,9 +112,6 @@ def test_substitution_pairs_are_single_letters():
 @pytest.mark.parametrize("field,letter,exp,heard,code", [
     ("tafkheem_or_taqeeq", "ط", "mofakham", "moraqaq", "TAFKHEEM_LOST"),
     ("tafkheem_or_taqeeq", "ت", "moraqaq", "mofakham", "TAFKHEEM_ADDED"),
-    ("hams_or_jahr",       "ت", "hams", "jahr", "HAMS_LOST"),
-    ("hams_or_jahr",       "د", "jahr", "hams", "JAHR_LOST"),
-    ("shidda_or_rakhawa",  "ط", "shadeed", "rikhw", "SHIDDA_LOST"),
     ("ghonna",             "ن", "maghnoon", "not_maghnoon", "GHUNNA_MISSING"),
     ("qalqla",             "ق", "moqalqal", "not_moqalqal", "QALQALAH_MISSING"),
     # letter-specific rulings that contradict the general one
@@ -132,6 +129,89 @@ def test_unauthored_sifat_stay_generic(field):
     """The generic is narrowed, not deleted - these are what it is still for."""
     assert sifat_codes.code_for(field, "ص", "motbaq", "monfateh") == \
         sifat_codes.GENERIC
+
+
+# ── the lahn khafiy khafiy scope decision (2026-08-07) ────────────────────
+#
+# hams/jahr and shidda/rakhawa are not corrected by this app. The removal has to
+# hold at three separate layers, and each one has failed independently before:
+# an entry can come back into the registry, a branch can come back into the
+# router, and a field dropped from ROUTED lands in the GENERIC fallback - which
+# would show the learner "the ṣifa did not come out right" for exactly the
+# errors we decided not to report. So all three are pinned, not just the last.
+
+OUT_OF_SCOPE_VALUES = {
+    "hams_or_jahr": ["hams", "jahr"],
+    "shidda_or_rakhawa": ["shadeed", "rikhw", "between"],
+}
+
+
+@pytest.mark.parametrize("field,values", sorted(OUT_OF_SCOPE_VALUES.items()))
+def test_out_of_scope_sifat_never_produce_an_error(field, values):
+    """EVERY direction, on letters where the ṣifa genuinely applies.
+
+    Not a spot check: the whole cross product, because the previous shape of
+    this routing had a specific branch per direction plus a fallthrough, and a
+    partial restore would leave one of them live.
+    """
+    letters = ["ت", "د", "ط", "ك", "ء", "س", "ص", "ب", "ن"]
+    for letter in letters:
+        for expected in values:
+            for heard in values:
+                assert sifat_codes.code_for(field, letter, expected,
+                                            heard) is None, (
+                    f"{field} {expected}->{heard} on {letter} produced a code; "
+                    f"this ṣifa is out of scope and must yield nothing at all")
+
+
+@pytest.mark.parametrize("field", sorted(OUT_OF_SCOPE_VALUES))
+def test_out_of_scope_sifat_do_not_fall_into_the_generic(field):
+    """The failure mode of a half-removal, stated on its own.
+
+    Deleting these from ROUTED without OUT_OF_SCOPE would route them to
+    GENERIC_SIFAT_MISMATCH, which is worse than leaving them on: the learner
+    gets a card with no property named for an error we do not believe in.
+    """
+    assert field in sifat_codes.OUT_OF_SCOPE
+    assert field not in sifat_codes.ROUTED
+    # An unrecognised value must not slip past the scope gate into the fallback.
+    assert sifat_codes.code_for(field, "ت", "whatever", "something_else") is None
+
+
+@pytest.mark.parametrize("code", ["HAMS_LOST", "JAHR_LOST", "SHIDDA_LOST"])
+def test_out_of_scope_codes_are_gone_from_every_registry(code):
+    """The entry side. Regenerating v3 from the amendments must keep them out,
+    and no later generation may quietly re-add one."""
+    from tilawah.engine import coverage
+
+    assert code not in coaching.registry(), (
+        f"{code} is back in the merged coaching registry")
+    assert code not in coverage.registry(), (
+        f"{code} is back in the detection registry")
+    assert code not in coverage.in_scope()
+
+
+@pytest.mark.parametrize("code", ["HAMS_LOST", "JAHR_LOST", "SHIDDA_LOST"])
+def test_out_of_scope_codes_have_no_precondition(code):
+    """The coverage side. A precondition that survives the entry keeps the code
+    in `relevant`, which drags every segment's coverage score down against a
+    check that can never fire, and puts it back in the review ranking."""
+    from tilawah.engine import coverage
+
+    src = coverage.possible_codes.__doc__ or ""
+    assert code not in src
+    # Behavioural, not textual: over a sample chosen to hit sakin hams, sakin
+    # jahr obstruents and sakin shadeed, the code must never appear.
+    from quran_transcript import Aya, quran_phonetizer
+
+    from tilawah.engine.moshaf import MOSHAF
+
+    for sura, aya in [(1, 7), (112, 1), (112, 4), (103, 1), (108, 1)]:
+        uth = Aya(sura, aya).get().uthmani
+        flat = quran_phonetizer(uth, MOSHAF, remove_spaces=True)
+        spaced = quran_phonetizer(uth, MOSHAF, remove_spaces=False)
+        assert code not in coverage.possible_codes(
+            flat.phonemes, flat.sifat, spaced.phonemes), f"{sura}:{aya}"
 
 
 # ── RULE 5: never invent tajweed that cannot exist ────────────────────────
@@ -198,21 +278,15 @@ def test_heavy_degree_difference_is_not_an_error():
         "tafkheem_or_taqeeq", "ق", "low_mofakham", "mofakham") is None
 
 
-def test_looseness_degree_difference_is_not_an_error():
-    """The same rule for shidda. `shadeed` is the only value meaning the
-    airflow was cut, so rikhw vs between is a difference of degree between two
-    letters that both flowed — not something a teacher corrects.
-
-    Measured, not assumed: 4 of the 16 ṣifa disagreements on a real 2:7
-    recitation were this pair, and every one produced a card reading "the ṣifa
-    did not come out right"."""
-    assert sifat_codes.code_for(
-        "shidda_or_rakhawa", "س", "rikhw", "between") is None
-    assert sifat_codes.code_for(
-        "shidda_or_rakhawa", "س", "between", "rikhw") is None
-    # The direction that IS an error keeps firing.
-    assert sifat_codes.code_for(
-        "shidda_or_rakhawa", "ط", "shadeed", "between") == "SHIDDA_LOST"
+# The shidda equivalent of the test above - rikhw vs between being a difference
+# of degree rather than a direction - is now subsumed by
+# test_out_of_scope_sifat_never_produce_an_error, which asserts the stronger
+# thing: NO shidda_or_rakhawa pair produces a code, degree or direction. The
+# original finding is preserved in the amendments file's restore note, because
+# a restore that reinstates the shadeed branch without the rikhw/between drop
+# would reintroduce a false positive that was measured, not theorised: 4 of the
+# 16 ṣifa disagreements on a real 2:7 recitation were that pair, and every one
+# produced a card reading "the ṣifa did not come out right".
 
 
 def test_every_routed_sifat_code_has_an_entry():
@@ -223,10 +297,6 @@ def test_every_routed_sifat_code_has_an_entry():
         ("tafkheem_or_taqeeq", "ر", "mofakham", "moraqaq"),
         ("tafkheem_or_taqeeq", "ر", "moraqaq", "mofakham"),
         ("tafkheem_or_taqeeq", "ل", "moraqaq", "mofakham"),
-        ("hams_or_jahr", "ت", "hams", "jahr"),
-        ("hams_or_jahr", "د", "jahr", "hams"),
-        ("shidda_or_rakhawa", "ط", "shadeed", "rikhw"),
-        ("shidda_or_rakhawa", "ط", "shadeed", "between"),
         ("ghonna", "ن", "maghnoon", "not_maghnoon"),
         ("qalqla", "ق", "moqalqal", "not_moqalqal"),
         ("qalqla", "س", "not_moqalqal", "moqalqal"),
@@ -240,19 +310,25 @@ def test_every_routed_sifat_code_has_an_entry():
 def test_sifat_routing_no_longer_collapses_to_one_code():
     """The behaviour this whole change is about.
 
-    Six different ṣifa faults previously produced six identical cards.
+    Six different ṣifa faults previously produced six identical cards. Two of
+    the six were hams/jahr and are now out of scope entirely, so the surviving
+    faults are these - each still has to reach its own code. The count is
+    derived from the list rather than written as a literal, so removing another
+    check for scope does not turn this into a red test about a decision that
+    was made deliberately.
     """
     faults = [
         ("tafkheem_or_taqeeq", "ط", "mofakham", "moraqaq"),
         ("tafkheem_or_taqeeq", "ت", "moraqaq", "mofakham"),
-        ("hams_or_jahr", "ت", "hams", "jahr"),
-        ("hams_or_jahr", "د", "jahr", "hams"),
+        ("tafkheem_or_taqeeq", "ر", "mofakham", "moraqaq"),
         ("ghonna", "ن", "maghnoon", "not_maghnoon"),
         ("qalqla", "ق", "moqalqal", "not_moqalqal"),
+        ("qalqla", "س", "not_moqalqal", "moqalqal"),
     ]
     codes = {sifat_codes.code_for(*f) for f in faults}
-    assert len(codes) == 6, f"still collapsing: {codes}"
+    assert len(codes) == len(faults), f"still collapsing: {codes}"
     assert sifat_codes.GENERIC not in codes
+    assert None not in codes
 
 
 # ── alif is not a consonant ───────────────────────────────────────────────
@@ -324,7 +400,9 @@ def test_kind_of(code, group, kind):
     ("ghonna", "ghunna"),
     ("qalqla", "tajweed"),
     ("tafkheem_or_taqeeq", "pronunciation"),
-    ("hams_or_jahr", "pronunciation"),
+    # hams_or_jahr was the fourth case here. It is out of scope now, so no
+    # TypedError can carry it and there is no kind for it to resolve to.
+    ("itbaq", "pronunciation"),
 ])
 def test_the_sifa_decides_the_kind_not_the_fallback_group(sifa, kind):
     """A ṣifa disagreement nobody authored an entry for resolves to

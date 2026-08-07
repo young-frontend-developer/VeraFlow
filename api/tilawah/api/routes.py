@@ -11,7 +11,7 @@ from sqlmodel import Session, select
 
 from .. import content
 from ..config import settings
-from ..content import coaching
+from ..content import coaching, hadith
 from ..db import delete_stored_audio, get_session
 from ..db.models import Attempt, User
 from ..engine import cards
@@ -21,7 +21,8 @@ from ..engine.ranges import (Range, estimate_seconds, legal_cuts, n_words,
 from ..engine.segments import segments_for, segments_for_range
 from ..engine.target import target_for
 from .schemas import (AttemptOut, AyahBriefOut, AyahOut, AyahSegmentsOut,
-                      MetaOut, PracticeSegmentOut, ReciterOut, RecitersOut,
+                      HadithOut, MetaOut, PracticeSegmentOut, ReciterOut,
+                      RecitersOut,
                       ReviewDecisionIn, ReviewEntryOut, ReviewQueueOut,
                       SegmentOut, SuraAyatOut, SuraOut, WrongFlagIn)
 
@@ -422,6 +423,22 @@ def set_consent(device_id: str = Form(...), consented: bool = Form(...),
     return {"ok": True, "consented": consented, "audio_consented": audio}
 
 
+@router.get("/hadith/today", response_model=HadithOut | None)
+def hadith_today(lang: str = "uz") -> HadithOut | None:
+    """The day's hadith, or null.
+
+    NULL IS A REAL ANSWER and the client draws nothing for it. In production
+    only reviewed entries are eligible, and none have been reviewed yet, so
+    this returns null there today - which is correct. An unchecked hadith with
+    a citation nobody has verified is worse than no card at all.
+
+    Selection is deterministic by date: same day, same hadith, every device.
+    See content/hadith.py.
+    """
+    got = hadith.today(lang, show_unreviewed=settings.show_unreviewed)
+    return HadithOut(**got) if got else None
+
+
 @router.get("/attempts", response_model=list[AttemptOut])
 def history(device_id: str, limit: int = 20,
             session: Session = Depends(get_session)) -> list[AttemptOut]:
@@ -437,5 +454,10 @@ def history(device_id: str, limit: int = 20,
                        status=r.status, reason="", clean=r.clean,
                        suppressed=r.suppressed, analysable=r.analysable,
                        errors=[cards.ensure_shape(e) for e in (r.errors or [])],
-                       snr_db=r.snr_db, duration_s=r.duration_s)
+                       snr_db=r.snr_db, duration_s=r.duration_s,
+                       # Read straight off the row. The Today screen's week
+                       # strip and its "last practiced" line are drawn from
+                       # these and from nothing else - a missing timestamp
+                       # leaves a day unmarked rather than guessed.
+                       created_at=r.created_at)
             for r in rows]

@@ -37,6 +37,18 @@ export type RetryState = {
   stillWrong: string | null;
   /** Per card: which rungs are cleared, which failed, and the last score. */
   rungs: Record<string, RungState>;
+  /**
+   * Re-reads per card, for the attempt cap. Counted per CARD rather than per
+   * rung: the learner experiences "I have done this word four times", not "I
+   * have done rung three of card two twice".
+   */
+  tries: Record<string, number>;
+  /**
+   * Cards closed by the cap rather than by getting it right. They close with a
+   * different, gentler line — see `fixed_enough` — because telling someone
+   * "fixed" when it is not is the kind of small lie this app does not tell.
+   */
+  accepted: string[];
 };
 
 export const EMPTY_RUNGS: RungState = { done: [], failed: null, score: null };
@@ -143,37 +155,77 @@ export default function Feedback({
 
   const open = attempt.errors.filter((e) => !retry.fixed.includes(cardId(e)));
 
+  /* ── ONE AT A TIME (progressive reveal) ────────────────────────────────
+     The server sends every card it found, ranked into teaching tiers, each
+     carrying `reveal_order`. The learner meets ONE.
+
+     Eight cards is not eight lessons — it is a defect report handed to a
+     beginner, and the reliable outcome is that they close the screen. So the
+     highest-priority unresolved card is open, the ones already fixed stay
+     visible as confirmations (the loop should end where it started, not
+     scroll somewhere new), and the rest are counted but not shown.
+
+     COUNTED, NOT HIDDEN. "hali N ta bor" is the difference between focus and
+     concealment: the learner knows more is coming and can decide to keep
+     going, instead of discovering a second wave after thinking they were
+     done. The count is honest because the server numbers `reveal_order` after
+     the content gate, so everything counted here really does exist. */
+  const current = open[0] ?? null;
+  const currentId = current ? cardId(current) : null;
+  const remaining = Math.max(0, open.length - 1);
+  const visible = attempt.errors.filter(
+    (e) => retry.fixed.includes(cardId(e)) || cardId(e) === currentId,
+  );
+
+  /* The closing line, and it has to be EARNED. "Well done!" after a read with
+     four mistakes in it is the praise a learner learns to discount, and once
+     discounted it never works again. This says the one true specific thing —
+     the rest of the recitation was correct — and only when the score actually
+     says so. Below the mark, the neutral line: come back to the ayah. */
+  const scored = attempt.score ?? 0;
+  const mostlyRight = scored >= (attempt.pass_score ?? 0.8);
+
   return (
     <>
-      {/* THE OUTCOME, IN A SENTENCE, BEFORE ANY CARD.
-          No ring, no badge, no percentage, no confetti. A learner arriving at
-          results should be able to read one line and know where they stand —
-          how many places to look at, and that looking at them is the ordinary
-          business of learning rather than a verdict.
+      {/* THE FRAMING, BEFORE ANY CARD.
+          No ring, no badge, no percentage, no confetti — and no tally of what
+          went wrong. A learner arriving at results reads one calm line telling
+          them what is about to happen: we are going to fix one thing.
 
-          It counts the OPEN cards, so as they fix things the sentence comes
-          down with them and reads "everything sorted" at the end instead of
-          still announcing the original tally. */}
+          It follows the OPEN cards, so as they work through them the sentence
+          moves with them and closes on encouragement rather than still
+          announcing the original count. */}
       <section className="card verdict">
         <p className="verdict__title">
           {open.length === 0
             ? t(lang, "verdict_all_fixed")
-            : t(lang, "verdict_title").replace("{n}", String(open.length))}
+            : open.length === 1
+              ? t(lang, "verdict_one_place")
+              : t(lang, "verdict_one_at_a_time")}
         </p>
         <p className="verdict__body">
           {open.length === 0
-            ? t(lang, "verdict_all_fixed_body")
+            ? mostlyRight
+              ? t(lang, "verdict_all_fixed_earned")
+              : t(lang, "verdict_all_fixed_body")
             : t(lang, "verdict_body")}
         </p>
       </section>
 
-      {attempt.errors.map((e) => {
+      {visible.map((e) => {
         const id = cardId(e);
         // A card the learner has re-read correctly closes into a confirmation.
         // The loop ends where it started — on the same card — rather than
         // scrolling them somewhere new.
         if (retry.fixed.includes(id)) {
-          return <Fixed key={id} lang={lang} error={e} />;
+          return (
+            <Fixed
+              key={id}
+              lang={lang}
+              error={e}
+              accepted={retry.accepted.includes(id)}
+            />
+          );
         }
         return (
           // Per-card, not per-page. A card that cannot render is one lost
@@ -205,6 +257,18 @@ export default function Feedback({
           </ErrorBoundary>
         );
       })}
+
+      {/* WHAT IS STILL WAITING, as a count and nothing more. Not a preview,
+          not a list, not a peek — those would put the second correction on
+          screen beside the first, which is the thing the reveal exists to
+          prevent. Just enough for the learner to know the screen is not lying
+          to them about being finished. */}
+      {remaining > 0 && (
+        <p className="ladder-more" role="status">
+          {t(lang, "more_remaining").replace("{n}", String(remaining))}
+        </p>
+      )}
+
       {/* The way out. After working through the cards the learner should be
           able to read the whole ayah again in one tap — that IS the practice,
           and leaving them to scroll back up to find the record button makes
@@ -308,6 +372,19 @@ function Correction({
         </p>
       )}
 
+      {/* 0. THE FRAMING LINE — a teacher's opening, not a diagnostic header.
+             A card that opens by stating a fault, however neutrally worded,
+             reads as a report about the learner. One line first, in the
+             register a teacher actually uses — "let's fix this spot" — costs a
+             sentence and changes what the whole card is: an invitation to work
+             on something together rather than a finding filed against them.
+
+             It is UI copy, not tajweed, so it lives in the client's i18n and
+             not in the registry — nothing here needs a qori to approve it, and
+             routing it through the content gate would leave cards opening
+             blunt in production, which is exactly backwards. */}
+      <p className="card__framing">{t(lang, "card_framing")}</p>
+
       {/* 1. ERROR — the learner-facing category and the letter. Never the code. */}
       <p className="card__kicker">
         {kindTitle}
@@ -394,7 +471,22 @@ function Correction({
         />
       )}
 
-      {/* 5. HOW TO FIX IT — the correction, then the physical instruction.
+      {/* 5a. WHAT THE CORRECT LETTER IS — before being told how to fix it.
+              Where it comes from in the mouth and what it is like, one
+              sentence, keyed by letter in content/makharij.json.
+
+              A card could previously say "you read ص as س" and hand over a
+              drill without ever saying what ص is. On the two GENERIC entries —
+              which catch every confusion nobody has authored an entry for, and
+              so are the most-shown cards in the app — there was no description
+              of any letter anywhere on the card. It sits ABOVE the fix because
+              that is the order a teacher uses: this is the sound, now here is
+              what to do. */}
+      {error.makhraj && (
+        <p className="card__body card__body--makhraj">{error.makhraj}</p>
+      )}
+
+      {/* 5b. HOW TO FIX IT — the correction, then the physical instruction.
              Two different answers to two different questions: `fix` is what to
              do about THIS mistake, `articulation` is how the sound is made at
              all — where the tongue, throat or lips go. A card that named the
@@ -473,7 +565,24 @@ function oneLetter(v: string | undefined): boolean {
 }
 
 /** The end of the loop: brief, warm, and then out of the way. */
-function Fixed({ lang, error }: { lang: Lang; error: TajweedError }) {
+/**
+ * A card that has closed.
+ *
+ * TWO WAYS TO CLOSE, AND THEY DO NOT SAY THE SAME THING. `accepted` means the
+ * attempt cap closed it rather than the recitation — the learner tried three
+ * times and the app stopped asking. Printing "fixed" over that would be a
+ * small, cheap lie about something the learner can hear for themselves, so it
+ * gets its own line: this is enough, let's continue.
+ */
+function Fixed({
+  lang,
+  error,
+  accepted = false,
+}: {
+  lang: Lang;
+  error: TajweedError;
+  accepted?: boolean;
+}) {
   return (
     <article className="card card--fixed" role="status">
       <p className="card__kicker">
@@ -487,7 +596,9 @@ function Fixed({ lang, error }: { lang: Lang; error: TajweedError }) {
           </>
         )}
       </p>
-      <p className="card__fixed-title">{t(lang, "fixed_title")}</p>
+      <p className="card__fixed-title">
+        {t(lang, accepted ? "fixed_enough" : "fixed_title")}
+      </p>
     </article>
   );
 }

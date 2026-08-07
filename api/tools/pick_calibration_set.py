@@ -43,8 +43,15 @@ DURATION = ["MADD_SHORT", "MADD_LONG", "GHUNNA_SHORT", "GHUNNA_LONG",
 # The ṣifa preconditions. No detector reads these yet, but the harness measures
 # reference-vs-predicted disagreement wherever they are possible, and that is
 # the number that decides whether such a detector is buildable.
-SIFA = ["TAFKHEEM_LOST", "TAFKHEEM_ADDED", "HAMS_LOST", "SHIDDA_LOST",
-        "JAHR_LOST", "RAA_TAFKHEEM_MISSING", "RAA_TARQIQ_MISSING",
+#
+# HAMS_LOST, SHIDDA_LOST and JAHR_LOST are deliberately absent: their codes were
+# removed on 2026-08-07 as a scope decision (lahn khafiy khafiy - see
+# engine/sifat_codes.OUT_OF_SCOPE), so possible_codes() no longer returns them
+# and selecting clips to cover them would optimise the calibration set for
+# checks that cannot fire. calibrate.py still reports the raw hams and shidda
+# ṣifa disagreement rate, because that is observation and costs nothing.
+SIFA = ["TAFKHEEM_LOST", "TAFKHEEM_ADDED",
+        "RAA_TAFKHEEM_MISSING", "RAA_TARQIQ_MISSING",
         "QALQALAH_MISSING", "MADD_WAJIB_SHORTENED", "MADD_ADDED_LEEN"]
 TARGETS = DURATION + SIFA
 

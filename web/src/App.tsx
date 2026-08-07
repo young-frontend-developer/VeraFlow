@@ -1,5 +1,14 @@
 import { useEffect, useState } from "react";
+import Achievements from "./components/Achievements";
+import Auth from "./components/Auth";
+import Opening from "./components/Opening";
+import Personalize from "./components/Personalize";
+import Welcome from "./components/Welcome";
+import { CreateJourney, JourneyReady } from "./components/JourneySetup";
+import { BRAND } from "./lib/brand";
+import { Journey, adjustJourney, hasJourney, storedJourney } from "./lib/journey";
 import LangToggle from "./components/LangToggle";
+import ConsentGate from "./components/ConsentGate";
 import Onboarding, { Experience } from "./components/Onboarding";
 import PilotBanner from "./components/PilotBanner";
 import Picker, { Selection } from "./components/Picker";
@@ -8,6 +17,7 @@ import { ReadMode } from "./components/Reader";
 import Recite from "./components/Recite";
 import Review from "./components/Review";
 import { Learn, Memorize } from "./components/Soon";
+import { Bookmark, StarOrnament } from "./components/Ornament";
 import TabBar, { Tab } from "./components/TabBar";
 import Today from "./components/Today";
 import { Failure, Loading } from "./components/States";
@@ -37,6 +47,18 @@ const RECITER_KEY = "tilawah_reciter";
 const CONSENT_KEY = "tilawah_consent";
 const AUDIO_CONSENT_KEY = "tilawah_consent_audio";
 const CONSENT_SEEN_KEY = "tilawah_consent_seen";
+/** The account screen has been shown and dismissed. See the gate in render. */
+const AUTH_SEEN_KEY = "tilawah_auth_seen";
+/**
+ * ONE KEY FOR THE WHOLE ENTRY EXPERIENCE, not one per screen.
+ *
+ * The first-open flow is Basmala -> Welcome -> Personalize -> Create -> Ready
+ * -> Account, and it is one journey rather than six gates. Storing a flag per
+ * screen means a half-finished onboarding resumes in a different place than it
+ * left, and a learner who backgrounds the app mid-flow comes back to a
+ * fragment. This records only WHETHER the entry experience has been completed.
+ */
+const ENTRY_KEY = "veyraflow_entry_done";
 /**
  * How much Qur'an reading the learner said they had done, at onboarding.
  *
@@ -86,7 +108,7 @@ function ReviewApp() {
   return (
     <div className="app app--tool">
       <header className="app__header">
-        <h1 className="wordmark">Tilawah</h1>
+        <h1 className="wordmark">{BRAND}</h1>
         <span className="app__tool-tag">qori review</span>
       </header>
       <main className="app__main">
@@ -123,6 +145,31 @@ function LearnerApp() {
   );
   const [consentSeen, setConsentSeen] = useState(
     () => localStorage.getItem(CONSENT_SEEN_KEY) === "1",
+  );
+  // Dismissed once, dismissed for good — see the gate below.
+  const [authSeen, setAuthSeen] = useState(
+    () => localStorage.getItem(AUTH_SEEN_KEY) === "1",
+  );
+  const [entryDone, setEntryDone] = useState(
+    () => localStorage.getItem(ENTRY_KEY) === "1",
+  );
+  const [entry, setEntry] = useState<
+    "basmala" | "welcome" | "personalize" | "create" | "ready" | "account"
+    | "consent"
+  >("basmala");
+  /**
+   * The journey being assembled during onboarding.
+   *
+   * Held in state, not written to storage, until the learner presses "Create My
+   * Journey" - an abandoned onboarding should leave nothing behind, and a
+   * half-filled journey in localStorage would make hasJourney() true for
+   * someone who never finished.
+   */
+  const [draftJourney, setDraftJourney] = useState<Journey>(
+    () => storedJourney() ?? {
+      goal: null, stage: null, focus: null, minutes: null, when: null,
+      weekly: 5, created: "",
+    },
   );
   const [info, setInfo] = useState<Meta | null>(null);
   const [failed, setFailed] = useState(false);
@@ -236,13 +283,122 @@ function LearnerApp() {
     // written, surfacing in the browser as an unexplained CORS error.
   }
 
+  // ── THE ENTRY EXPERIENCE ──────────────────────────────────────────────
+  // One continuous flow, in order, before anything else in the app renders:
+  //
+  //   Basmala -> Welcome -> Personalization -> Create My Journey ->
+  //   Journey Ready -> Account
+  //
+  // Each stage hands to the next; nothing here is a dead end and every stage
+  // after the Basmala can be skipped. It runs ONCE - see ENTRY_KEY - because a
+  // ceremonial opening on the fourth launch is an obstacle, not a moment.
+  if (!entryDone) {
+    if (entry === "basmala") {
+      return <Opening onDone={() => setEntry("welcome")} />;
+    }
+    if (entry === "welcome") {
+      return <Welcome lang={lang} onDone={() => setEntry("personalize")} />;
+    }
+    if (entry === "personalize") {
+      return (
+        <Personalize
+          lang={lang}
+          onDone={(a) => {
+            setDraftJourney((j) => ({ ...j, ...a }));
+            setEntry("create");
+          }}
+        />
+      );
+    }
+    if (entry === "create") {
+      return (
+        <CreateJourney
+          lang={lang}
+          journey={draftJourney}
+          onCreate={() => {
+            // Written here and not before: the journey exists when the learner
+            // says it does. That is what makes the button honest.
+            setDraftJourney(adjustJourney(draftJourney));
+            setEntry("ready");
+          }}
+          onBack={() => setEntry("personalize")}
+        />
+      );
+    }
+    if (entry === "ready") {
+      return (
+        <JourneyReady
+          lang={lang}
+          journey={draftJourney}
+          onBegin={() => setEntry("account")}
+        />
+      );
+    }
+    // Account is skippable, so the learner experiences the beginning of the
+    // app before being asked for anything. Their journey is already stored
+    // locally and attaches to an account whenever accounts exist - see Auth.
+    if (entry === "account") {
+      return (
+        <Auth
+          lang={lang}
+          onLang={setLang}
+          onContinue={() => {
+            localStorage.setItem(AUTH_SEEN_KEY, "1");
+            setAuthSeen(true);
+            setEntry("consent");
+          }}
+        />
+      );
+    }
+
+    // CONSENT IS THE LAST STEP AND IT IS INSIDE THIS FLOW, not after it.
+    // It used to be reached via the old Onboarding component, which meant the
+    // learner finished the journey payoff, tapped through the account screen,
+    // and landed on a bare consent page with no navigation - the one moment
+    // the entry experience is supposed to hand them the app. It is also the
+    // only step here that is a real decision rather than an introduction, so
+    // it comes last, after they know what they are consenting for.
+    return (
+      <ConsentGate
+        lang={lang}
+        audioOffered={info?.collect_audio_offered ?? false}
+        onDecide={(c, a) => {
+          decide(c, a, null);
+          setEntryDone(true);
+          localStorage.setItem(ENTRY_KEY, "1");
+        }}
+      />
+    );
+  }
+
+  // ── the account screen ────────────────────────────────────────────────
+  // FIRST, AND SKIPPABLE. It comes before onboarding because that is where a
+  // sign-in belongs, and it is skippable because Tilawah genuinely works
+  // without an account — everything runs against an anonymous device id.
+  //
+  // Once dismissed it stays dismissed. There are no accounts to sign into yet
+  // (see Auth.tsx), so re-presenting it every launch would be nagging toward a
+  // door that does not open.
+  if (!authSeen) {
+    return (
+      <Auth
+        lang={lang}
+        onLang={setLang}
+        onContinue={() => {
+          setAuthSeen(true);
+          localStorage.setItem(AUTH_SEEN_KEY, "1");
+        }}
+      />
+    );
+  }
+
   // First run. Welcome, language, experience, then consent — asked once, before
   // anything is recorded, and never buried in a settings tab.
   if (!consentSeen) {
     return (
       <div className="app">
         <header className="app__header">
-          <h1 className="wordmark">Tilawah</h1>
+          <h1 className="wordmark">{BRAND}</h1>
           <LangToggle lang={lang} onChange={setLang} />
         </header>
         <Onboarding
@@ -257,9 +413,35 @@ function LearnerApp() {
 
   return (
     <div className="app">
+      {/* The top bar: wordmark left, utilities right.
+          THE AVATAR IS NOT A LOGGED-IN USER. There are no accounts — see
+          Auth.tsx — so it carries the app's own mark rather than initials,
+          which would imply a person and a session that do not exist. It opens
+          Profile, which is the real destination behind it.
+          The bookmark opens the picker at the stored place, which is what a
+          bookmark in this app actually means. */}
       <header className="app__header">
-        <h1 className="wordmark">Tilawah</h1>
-        <LangToggle lang={lang} onChange={setLang} />
+        <h1 className="wordmark">{BRAND}</h1>
+        <div className="app__tools">
+          <LangToggle lang={lang} onChange={setLang} />
+          <button
+            className="icon-btn"
+            aria-label={t(lang, "nav_bookmark")}
+            onClick={() => {
+              setSelection(null);
+              setTab("practice");
+            }}
+          >
+            <Bookmark />
+          </button>
+          <button
+            className="avatar"
+            aria-label={t(lang, "nav_profile")}
+            onClick={() => setTab("profile")}
+          >
+            <StarOrnament size={18} />
+          </button>
+        </div>
       </header>
 
       {/* VERSION SKEW, NAMED.
@@ -320,6 +502,7 @@ function LearnerApp() {
                 setSelection(null);
                 setTab("practice");
               }}
+              onViewAchievements={() => setTab("profile")}
             />
           )
         ) : tab === "learn" ? (

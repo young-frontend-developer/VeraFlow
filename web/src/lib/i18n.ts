@@ -27,6 +27,24 @@ export function dateline(lang: Lang, d = new Date()): string {
   return `${d.getDate()} ${MONTHS[lang][d.getMonth()]}`;
 }
 
+/**
+ * "Last practiced N ago", from a real timestamp.
+ *
+ * Coarse on purpose — hours, then days — because the point is orientation, not
+ * precision. "43 minutes ago" invites the learner to read a schedule into it.
+ * Callers pass a real Date or do not call this at all: there is no "a while
+ * ago" fallback, because a fallback is where an invented recency would live.
+ */
+export function sinceLabel(lang: Lang, then: Date, now = new Date()): string {
+  const mins = Math.max(0, Math.round((now.getTime() - then.getTime()) / 60000));
+  if (mins < 60) return t(lang, "since_recent");
+  const hours = Math.round(mins / 60);
+  if (hours < 24) {
+    return t(lang, "since_hours").replace("{n}", String(hours));
+  }
+  return t(lang, "since_days").replace("{n}", String(Math.round(hours / 24)));
+}
+
 const STRINGS = {
   uz: {
     // navigation
@@ -38,6 +56,198 @@ const STRINGS = {
     nav_profile: "Profil",
     nav_library: "Oyatlar",
     nav_log: "Yozuvlar",
+    nav_bookmark: "Saqlangan joy",
+    // -- the entry experience --------------------------------------------
+    welcome_1_title: "Qur'on yo'lingiz — yo'lboshchi bilan",
+    welcome_1_body:
+      "{brand} sizga nimadan boshlashni va keyin nima qilishni aytadi. O'zingiz reja tuzishingiz shart emas.",
+    welcome_2_title: "O'qing — biz tinglaymiz",
+    welcome_2_body:
+      "Oyatni ovoz chiqarib o'qing. {brand} qaysi harfda, qaysi so'zda xato bo'lganini aniq ko'rsatadi va qanday tuzatishni tushuntiradi.",
+    welcome_3_title: "Har kuni bir oz",
+    welcome_3_body:
+      "Kuniga bir necha daqiqa. Baho ham, reyting ham, musobaqa ham yo'q — faqat siz va matn.",
+    welcome_start: "Boshlaymiz",
+    onboard_choose_later: "Keyinroq tanlayman",
+    personalize_done: "Tayyor",
+
+    q_goal: "{brand}ga nima uchun keldingiz?",
+    q_stage: "Qur'on yo'lingizda qayerdasiz?",
+    q_focus: "Avval nimaga e'tibor beramiz?",
+    q_minutes: "Kuniga qancha vaqt ajrata olasiz?",
+    q_when: "Qachon mashq qilishni istaysiz?",
+
+    goal_recitation: "O'qishimni yaxshilash",
+    goal_tajweed: "Tajvidni o'rganish",
+    goal_memorize: "Qur'onni yodlash",
+    goal_habit: "Kundalik odat qilish",
+    goal_understand: "Qur'onni ko'proq tushunish",
+    goal_everything: "Hammasidan bir oz",
+
+    stage_beginning: "Endi boshlayapman",
+    stage_improving: "O'qiyman, lekin yaxshilamoqchiman",
+    stage_comfortable: "O'qishim ancha ravon",
+    stage_memorizing: "Hozir yodlayapman",
+
+    focus_recitation: "O'qish",
+    focus_tajweed: "Tajvid",
+    focus_memorization: "Yodlash",
+    focus_consistency: "Doimiylik",
+    focus_understanding: "Tushunish",
+
+    min_5: "5 daqiqa",
+    min_10: "10 daqiqa",
+    min_15: "15 daqiqa",
+    min_20: "20 daqiqa",
+    min_30: "30+ daqiqa",
+
+    when_after_fajr: "Bomdoddan keyin",
+    when_morning: "Ertalab",
+    when_afternoon: "Kunduzi",
+    when_after_maghrib: "Shomdan keyin",
+    when_evening: "Kechqurun",
+    when_later: "O'zim tanlayman",
+
+    journey_mine: "MENING YO'LIM",
+    journey_goal: "Maqsad",
+    journey_daily: "Kunlik vaqt",
+    journey_focus: "Yo'nalish",
+    journey_when: "Mashq vaqti",
+    journey_stage: "Daraja",
+    journey_weekly: "Haftalik niyat",
+    journey_build_title: "Keling, yo'lingizni tuzamiz.",
+    journey_build_body: "Javoblaringiz asosida. Keyin istalgan vaqtda o'zgartirasiz.",
+    journey_create_cta: "Yo'limni yaratish",
+    journey_change: "Javoblarni o'zgartirish",
+    journey_ready_title: "Yo'lingiz tayyor.",
+    journey_today: "BUGUN",
+    journey_this_week: "SHU HAFTA",
+    journey_path: "HOZIRGI YO'NALISH",
+    journey_begin_cta: "Bugungi yo'lni boshlash",
+    minutes_n: "{n} daqiqa",
+    minutes_per_day: "kuniga {n} daqiqa",
+    sessions_n: "{n} marta",
+    path_unset: "Hali tanlanmagan",
+    step_practice: "Mashq",
+    step_practice_note: "Oyat o'qing, tajvid bo'yicha izoh oling",
+    step_reflect: "Tafakkur",
+    step_reflect_note: "Kun hadisi",
+
+    // -- achievements -----------------------------------------------------
+    ach_recent: "SO'NGGI YUTUQLAR",
+    ach_view_all: "Barchasi →",
+    ach_all: "YUTUQLAR",
+    ach_count: "{of} tadan {n} tasi",
+    ach_not_built:
+      "Bu bo'lim hali tayyor emas — hozircha bu yutuqni olib bo'lmaydi.",
+    ach_first_step: "Birinchi qadam",
+    ach_first_step_how: "Yo'lingizni yarating",
+    ach_first_voice: "Birinchi ovoz",
+    ach_first_voice_how: "Birinchi marta ovoz chiqarib o'qing",
+    ach_moment_reflect: "Tafakkur lahzasi",
+    ach_moment_reflect_how: "Kun hadisini o'qing",
+    ach_ayah_by_ayah: "Oyat-baoyat",
+    ach_ayah_by_ayah_how: "10 ta har xil oyat o'qing",
+    ach_steady_tongue: "Tilda barqarorlik",
+    ach_steady_tongue_how: "10 marta toza o'qing",
+    ach_one_surah: "Bir sura, yaxshi bilingan",
+    ach_one_surah_how: "Bir suraning barcha oyatlarini o'qing",
+    ach_returning_daily: "Kundan kunga qaytish",
+    ach_returning_daily_how: "Uch xil kuni mashq qiling",
+    ach_words_to_carry: "Yodda qoladigan so'zlar",
+    ach_words_to_carry_how: "Yetti kun hadis o'qing",
+    ach_month_returning: "Qaytishlar oyi",
+    ach_month_returning_how: "Oyning 20 kunida mashq qiling",
+    ach_returning_heart: "Qaytgan qalb",
+    ach_returning_heart_how: "Tanaffusdan so'ng qayting",
+    ach_every_letter: "Har harf boshlanadigan joy",
+    ach_every_letter_how: "Maxrajlar darsi",
+    ach_beginning_hifz: "Hifz boshlanishi",
+    ach_beginning_hifz_how: "Yodlashni boshlang",
+    ach_first_ayahs: "Yodlangan ilk oyatlar",
+    ach_first_ayahs_how: "Ilk oyatlarni yodlang",
+    ach_surah_by_heart: "Yoddagi sura",
+    ach_surah_by_heart_how: "Bir surani yod oling",
+    ach_journey_completed: "Tugallangan yo'l",
+    ach_journey_completed_how: "Bir yo'nalishni tugating",
+
+
+    // ── Today: the five sections ──────────────────────────────────────
+    today_kicker: "QAYERDA TOʻXTAGANDINGIZ",
+    today_title: "Yoʻlingizni davom ettiring",
+    since_recent: "Yaqinda oʻqilgan",
+    since_hours: "{n} soat oldin oʻqilgan",
+    since_days: "{n} kun oldin oʻqilgan",
+    hero_surah: "{n}-SURA · {name}",
+    hero_verse_of: "{n}-oyat, jami {of} tadan",
+    hero_remaining: "taxminan {t} qoldi",
+    // The app's own aside, not a quotation — nobody is credited because
+    // nobody said it.
+    today_aside: "Shoshilmaslik — ravonlik. Ravonlik — hurmat.",
+
+    plan_kicker: "KUNINGIZ",
+    plan_title: "Bugun uchun tinch reja",
+    plan_count: "{n} ta qadam",
+    plan_label_memorize: "YODLASH",
+    plan_label_revise: "TAKRORLASH",
+    plan_label_reflect: "TAFAKKUR",
+    plan_type_recite: "oʻqish",
+    plan_type_revise: "takrorlash",
+    plan_reflect_title: "Kun oyati",
+    plan_reflect_detail: "quyida · bir daqiqa",
+    plan_minutes: "≈ {n} daq",
+    plan_seconds: "≈ {n} son",
+
+    hadith_kicker_section: "KUN HADISI",
+    hadith_title: "Bugungi hadis",
+    hadith_kicker: "PAYGʻAMBARIMIZ ﷺ AYTDILAR",
+    hadith_meaning_note: "maʼno tarjimasi",
+    hadith_draft_note:
+      "Matn va manba raqami hali qori tomonidan tekshirilmagan.",
+    reflect_kicker: "OʻQISH ODOBI HAQIDA",
+    reflect_translation: "«Va Qurʼonni tartil bilan — shoshilmay, ravon oʻqing.»",
+    reflect_source: "Muzzammil surasi · {sura}:{aya} · maʼno tarjimasi",
+
+    learning_kicker: "OʻRGANISH",
+    learning_title: "Boshlovchi darslar",
+
+    stats_kicker: "HAFTANGIZ",
+    stats_title: "Shu hafta",
+    stats_week_label: "Hafta kunlari",
+    stats_month_label: "Soʻnggi besh hafta",
+    stats_trend_label: "Kunlik mashq vaqti",
+    stats_verses: "OʻQILGAN OYAT",
+    stats_time: "QURʼON BILAN",
+    stats_accuracy: "TAJVID ANIQLIGI",
+    stats_empty_title: "Bu hafta hali yozuv yoʻq",
+    stats_empty_body:
+      "Bir oyat oʻqing — shundan soʻng bu yerda haqiqiy raqamlar paydo boʻladi. Boʻsh joyni oʻylab topilgan sonlar bilan toʻldirmaymiz.",
+    stats_empty_action: "Oyat tanlash",
+    day_mon: "D",
+    day_tue: "S",
+    day_wed: "C",
+    day_thu: "P",
+    day_fri: "J",
+    day_sat: "S",
+    day_sun: "Y",
+
+    // ── the account screen ────────────────────────────────────────────
+    auth_tagline: "Qurʼonni ovoz chiqarib oʻqing, tinch izoh oling.",
+    auth_signup: "Roʻyxatdan oʻtish",
+    auth_login: "Kirish",
+    auth_email: "Email",
+    auth_password: "Parol",
+    auth_or: "yoki",
+    auth_google: "Google bilan davom etish",
+    auth_apple: "Apple bilan davom etish",
+    auth_lang: "Til",
+    auth_continue: "Hisobsiz davom etish",
+    auth_anon_note:
+      "Tilawah hozir hisobsiz ishlaydi. Barcha imkoniyatlar shu qurilmada toʻliq ochiq.",
+    // Said before the fields, not after. A learner should know the form is
+    // inert before they type into it.
+    auth_pending:
+      "Hisoblar hali ulanmagan — bu yerdagi maydonlar hozircha ishlamaydi. Quyidagi tugma orqali hisobsiz davom eting.",
 
     // ── onboarding. No sign up, no log in: there are no accounts, and the
     // consent step is the real decision being made here.
@@ -58,6 +268,30 @@ const STRINGS = {
     onboard_level_some_note: "Odatdagi murattal oʻqish",
     onboard_level_fluent: "Erkin oʻqiyman",
     onboard_level_fluent_note: "Odatdagi murattal oʻqish",
+
+    // ── the knowledge assessment. Asked ONCE, in onboarding. The result is a
+    // setting in Profile, never a badge or a banner in the app.
+    assess_title: "Tajvid bilimingiz qay darajada?",
+    assess_body:
+      "Uchta qisqa savol. Bu imtihon emas — javoblaringiz faqat boshlangʻich sozlamani belgilaydi va keyin Profilda oʻzgartiriladi.",
+    assess_q_alphabet: "Arab alifbosini bilasizmi?",
+    assess_a_alphabet_0: "Yoʻq, hali oʻrganmaganman",
+    assess_a_alphabet_1: "Koʻp harflarni tanijman",
+    assess_a_alphabet_2: "Ha, erkin oʻqiyman",
+    assess_q_tajweed: "Tajvid qoidalarini oʻrganganmisiz?",
+    assess_a_tajweed_0: "Yoʻq, hech qachon",
+    assess_a_tajweed_1: "Biroz — asosiy qoidalarni",
+    assess_a_tajweed_2: "Ha, ustoz bilan oʻqiganman",
+    assess_q_fluency: "Oʻqishingizni qanday baholaysiz?",
+    assess_a_fluency_0: "Hali boshlamaganman",
+    assess_a_fluency_1: "Sekin, xatolar bilan",
+    assess_a_fluency_2: "Ravon oʻqiyman",
+    level_beginner: "Boshlangʻich",
+    level_intermediate: "Oʻrta",
+    level_advanced: "Yuqori",
+    level_setting: "Bilim darajasi",
+    level_setting_note:
+      "Onboardingda soʻralgan. Istalgan vaqtda oʻzgartirasiz.",
 
     // ── today
     today_greeting: "Assalomu alaykum",
@@ -159,11 +393,25 @@ const STRINGS = {
     waiting_hint: "Bir necha soniya kutib turing.",
 
     // ── the outcome statement. One sentence, no score, no badge.
+    // The opening. A learner arriving at results is told what is about to
+    // happen, not how many faults were counted against them. verdict_title is
+    // kept because the history screen still replays old attempts with it.
     verdict_title: "Koʻrib chiqadigan {n} ta joy bor",
+    verdict_one_at_a_time: "Bu safar bitta narsani tuzatamiz",
+    verdict_one_place: "Keling, shu joyni tuzataylik",
     verdict_body:
-      "Har biri uchun nima boʻlgani va qanday tuzatish kerakligi quyida yozilgan. Shoshilmang — bittadan.",
+      "Nima boʻlgani va qanday tuzatish kerakligi quyida yozilgan. Shoshilmang.",
     verdict_all_fixed: "Hammasi tuzatildi",
     verdict_all_fixed_body: "Endi oyatni boshidan bir marta oʻqib koʻring.",
+    // Said ONLY when the score actually supports it — see Feedback.tsx. Praise
+    // that is not earned is praise the learner learns to discount, and once
+    // discounted it never works again.
+    verdict_all_fixed_earned:
+      "Qolgan qismi toʻgʻri chiqdi — faqat shu joyga eʼtibor berdik. Endi oyatni boshidan oʻqing.",
+    // What is still waiting, as a count and nothing more.
+    more_remaining: "Hali {n} ta joy bor — buni tugatgach koʻrsatamiz",
+    // Opens every card. Not a diagnosis, an invitation.
+    card_framing: "Keling, shu joyni tuzataylik",
     verdict_again: "Oyatni qaytadan oʻqish",
 
     // all clear
@@ -257,11 +505,22 @@ const STRINGS = {
     meter_yours: "Siz",
     meter_count_with_me: "Men bilan sanang:",
 
-    // ── the practice ladder. Narrow to wide: the letter alone, the letter
-    // with each haraka, the word they misread, then back to the ayah.
+    // ── the practice ladder. The FIRST rung differs by error type — see
+    // engine/practice.py. Only an articulation error opens on the bare letter;
+    // an omission, an insertion and a duration error each open on the word,
+    // said slowly, with the thing to attend to named here. Each label is an
+    // instruction, because on those three rungs the same word is shown twice
+    // and only the label says what is different about the first pass.
     rung_letter: "Faqat shu harf",
     rung_syllables: "Harakatlar bilan",
+    rung_word_include: "Sekin ayting — tushib qolgan harfni eshitilsin",
+    rung_word_omit: "Sekin ayting — ortiqcha tovushsiz",
+    rung_word_hold: "Sekin ayting — cho‘zilishni sanab ushlang",
     rung_word: "Shu soʻz",
+    // Same rung, named differently when a SLOW pass at the same word came
+    // before it — otherwise two rungs show the identical word under the
+    // identical label and read as a duplicate rather than as a second pass.
+    rung_word_normal: "Endi oddiy tezlikda",
     rung_ayah: "Endi oyatni oʻqing",
     rung_record: "Oʻqib koʻrish",
     rung_again: "Yana bir bor",
@@ -285,6 +544,9 @@ const STRINGS = {
     retry_word_stop: "Toʻxtatish",
     retry_checking: "Tekshirilmoqda",
     fixed_title: "Barakalla! Toʻgʻirladingiz.",
+    // Closed by the attempt cap, not by getting it right. Says so plainly
+    // rather than borrowing the praise line - see the Fixed component.
+    fixed_enough: "Bu yetarli, davom etamiz.",
     // Shown when the re-read still has the same mistake. No scolding: the same
     // card comes back unchanged and this is the whole message.
     not_yet: "Hali ham shu joyda. Yana bir bor urinib koʻring.",
@@ -417,6 +679,190 @@ const STRINGS = {
     nav_profile: "Профиль",
     nav_library: "Аяты",
     nav_log: "Записи",
+    nav_bookmark: "Сохранённое место",
+    welcome_1_title: "Ваш путь к Корану — с проводником",
+    welcome_1_body:
+      "{brand} подскажет, с чего начать и что делать дальше. Составлять план самому не нужно.",
+    welcome_2_title: "Читайте — мы слушаем",
+    welcome_2_body:
+      "Прочитайте аят вслух. {brand} покажет, в какой букве и в каком слове была ошибка, и объяснит, как её исправить.",
+    welcome_3_title: "Понемногу каждый день",
+    welcome_3_body:
+      "Несколько минут в день. Ни оценок, ни рейтингов, ни соревнования — только вы и текст.",
+    welcome_start: "Начнём",
+    onboard_choose_later: "Выберу позже",
+    personalize_done: "Готово",
+
+    q_goal: "Что привело вас в {brand}?",
+    q_stage: "Где вы на своём пути к Корану?",
+    q_focus: "С чего начнём?",
+    q_minutes: "Сколько времени в день вы можете уделить?",
+    q_when: "Когда вам удобно заниматься?",
+
+    goal_recitation: "Улучшить чтение",
+    goal_tajweed: "Изучить таджвид",
+    goal_memorize: "Учить Коран наизусть",
+    goal_habit: "Выработать ежедневную привычку",
+    goal_understand: "Больше понимать Коран",
+    goal_everything: "Всего понемногу",
+
+    stage_beginning: "Только начинаю",
+    stage_improving: "Читаю, но хочу лучше",
+    stage_comfortable: "Читаю уверенно",
+    stage_memorizing: "Сейчас учу наизусть",
+
+    focus_recitation: "Чтение",
+    focus_tajweed: "Таджвид",
+    focus_memorization: "Заучивание",
+    focus_consistency: "Постоянство",
+    focus_understanding: "Понимание",
+
+    min_5: "5 минут",
+    min_10: "10 минут",
+    min_15: "15 минут",
+    min_20: "20 минут",
+    min_30: "30+ минут",
+
+    when_after_fajr: "После фаджра",
+    when_morning: "Утром",
+    when_afternoon: "Днём",
+    when_after_maghrib: "После магриба",
+    when_evening: "Вечером",
+    when_later: "Выберу сам",
+
+    journey_mine: "МОЙ ПУТЬ",
+    journey_goal: "Цель",
+    journey_daily: "Время в день",
+    journey_focus: "Направление",
+    journey_when: "Время занятий",
+    journey_stage: "Уровень",
+    journey_weekly: "Намерение на неделю",
+    journey_build_title: "Давайте построим ваш путь.",
+    journey_build_body: "На основе ваших ответов. Изменить можно в любой момент.",
+    journey_create_cta: "Создать мой путь",
+    journey_change: "Изменить ответы",
+    journey_ready_title: "Ваш путь готов.",
+    journey_today: "СЕГОДНЯ",
+    journey_this_week: "НА ЭТОЙ НЕДЕЛЕ",
+    journey_path: "ТЕКУЩЕЕ НАПРАВЛЕНИЕ",
+    journey_begin_cta: "Начать сегодняшний путь",
+    minutes_n: "{n} минут",
+    minutes_per_day: "{n} минут в день",
+    sessions_n: "{n} раз",
+    path_unset: "Пока не выбрано",
+    step_practice: "Практика",
+    step_practice_note: "Прочитайте аят и получите разбор",
+    step_reflect: "Размышление",
+    step_reflect_note: "Хадис дня",
+
+    ach_recent: "НЕДАВНИЕ ДОСТИЖЕНИЯ",
+    ach_view_all: "Все →",
+    ach_all: "ДОСТИЖЕНИЯ",
+    ach_count: "{n} из {of}",
+    ach_not_built:
+      "Этот раздел ещё не готов — пока это достижение получить нельзя.",
+    ach_first_step: "Первый шаг",
+    ach_first_step_how: "Создайте свой путь",
+    ach_first_voice: "Первый голос",
+    ach_first_voice_how: "Прочитайте вслух в первый раз",
+    ach_moment_reflect: "Момент размышления",
+    ach_moment_reflect_how: "Прочитайте хадис дня",
+    ach_ayah_by_ayah: "Аят за аятом",
+    ach_ayah_by_ayah_how: "Прочитайте 10 разных аятов",
+    ach_steady_tongue: "Уверенность в чтении",
+    ach_steady_tongue_how: "10 чистых чтений",
+    ach_one_surah: "Одна сура, хорошо знакомая",
+    ach_one_surah_how: "Прочитайте все аяты одной суры",
+    ach_returning_daily: "День за днём",
+    ach_returning_daily_how: "Занимайтесь в три разных дня",
+    ach_words_to_carry: "Слова, которые остаются",
+    ach_words_to_carry_how: "Семь дней с хадисом",
+    ach_month_returning: "Месяц возвращений",
+    ach_month_returning_how: "Занимайтесь 20 дней за месяц",
+    ach_returning_heart: "Возвращающееся сердце",
+    ach_returning_heart_how: "Вернитесь после перерыва",
+    ach_every_letter: "Где начинается каждая буква",
+    ach_every_letter_how: "Урок махраджей",
+    ach_beginning_hifz: "Начало хифза",
+    ach_beginning_hifz_how: "Начните заучивание",
+    ach_first_ayahs: "Первые выученные аяты",
+    ach_first_ayahs_how: "Выучите первые аяты",
+    ach_surah_by_heart: "Сура наизусть",
+    ach_surah_by_heart_how: "Выучите суру целиком",
+    ach_journey_completed: "Завершённый путь",
+    ach_journey_completed_how: "Завершите направление",
+
+
+    today_kicker: "ГДЕ ВЫ ОСТАНОВИЛИСЬ",
+    today_title: "Продолжите свой путь",
+    since_recent: "Читали недавно",
+    since_hours: "Читали {n} ч назад",
+    since_days: "Читали {n} дн назад",
+    hero_surah: "СУРА {n} · {name}",
+    hero_verse_of: "Аят {n} из {of}",
+    hero_remaining: "осталось около {t}",
+    today_aside: "Медленно — значит ровно. Ровно — значит бережно.",
+
+    plan_kicker: "ВАШ ДЕНЬ",
+    plan_title: "Спокойный план на сегодня",
+    plan_count: "{n} шага",
+    plan_label_memorize: "ЗАУЧИТЬ",
+    plan_label_revise: "ПОВТОРИТЬ",
+    plan_label_reflect: "РАЗМЫШЛЕНИЕ",
+    plan_type_recite: "чтение",
+    plan_type_revise: "повторение",
+    plan_reflect_title: "Аят дня",
+    plan_reflect_detail: "ниже · одна минута",
+    plan_minutes: "≈ {n} мин",
+    plan_seconds: "≈ {n} сек",
+
+    hadith_kicker_section: "ХАДИС ДНЯ",
+    hadith_title: "Хадис на сегодня",
+    hadith_kicker: "ПРОРОК ﷺ СКАЗАЛ",
+    hadith_meaning_note: "перевод смысла",
+    hadith_draft_note:
+      "Текст и номер источника ещё не проверены кори.",
+    reflect_kicker: "ОБ ЭТИКЕТЕ ЧТЕНИЯ",
+    reflect_translation: "«И читай Коран размеренно — не торопясь, ровно.»",
+    reflect_source: "Сура Аль-Муззаммиль · {sura}:{aya} · перевод смысла",
+
+    learning_kicker: "ОБУЧЕНИЕ",
+    learning_title: "Вводные уроки",
+
+    stats_kicker: "ВАША НЕДЕЛЯ",
+    stats_title: "На этой неделе",
+    stats_week_label: "Дни недели",
+    stats_month_label: "Последние пять недель",
+    stats_trend_label: "Время практики по дням",
+    stats_verses: "ПРОЧИТАНО АЯТОВ",
+    stats_time: "С КОРАНОМ",
+    stats_accuracy: "ТОЧНОСТЬ ТАДЖВИДА",
+    stats_empty_title: "На этой неделе записей пока нет",
+    stats_empty_body:
+      "Прочитайте один аят — и здесь появятся настоящие цифры. Мы не заполняем это место выдуманными числами.",
+    stats_empty_action: "Выбрать аят",
+    day_mon: "П",
+    day_tue: "В",
+    day_wed: "С",
+    day_thu: "Ч",
+    day_fri: "П",
+    day_sat: "С",
+    day_sun: "В",
+
+    auth_tagline: "Читайте Коран вслух и получайте спокойный разбор.",
+    auth_signup: "Регистрация",
+    auth_login: "Вход",
+    auth_email: "Email",
+    auth_password: "Пароль",
+    auth_or: "или",
+    auth_google: "Продолжить с Google",
+    auth_apple: "Продолжить с Apple",
+    auth_lang: "Язык",
+    auth_continue: "Продолжить без аккаунта",
+    auth_anon_note:
+      "Сейчас Tilawah работает без аккаунта. Все возможности полностью доступны на этом устройстве.",
+    auth_pending:
+      "Аккаунты пока не подключены — поля здесь не работают. Продолжите без аккаунта кнопкой ниже.",
 
     onboard_welcome: "Добро пожаловать в Tilawah",
     onboard_welcome_body:
@@ -435,6 +881,28 @@ const STRINGS = {
     onboard_level_some_note: "Обычное чтение мураттал",
     onboard_level_fluent: "Читаю свободно",
     onboard_level_fluent_note: "Обычное чтение мураттал",
+
+    assess_title: "Каков ваш уровень таджвида?",
+    assess_body:
+      "Три коротких вопроса. Это не экзамен — ответы задают лишь начальную настройку, и её можно изменить в Профиле.",
+    assess_q_alphabet: "Знаете ли вы арабский алфавит?",
+    assess_a_alphabet_0: "Нет, пока не изучал",
+    assess_a_alphabet_1: "Узнаю большинство букв",
+    assess_a_alphabet_2: "Да, читаю свободно",
+    assess_q_tajweed: "Изучали ли вы правила таджвида?",
+    assess_a_tajweed_0: "Нет, никогда",
+    assess_a_tajweed_1: "Немного — основные правила",
+    assess_a_tajweed_2: "Да, занимался с устазом",
+    assess_q_fluency: "Как вы оцениваете своё чтение?",
+    assess_a_fluency_0: "Ещё не начинал",
+    assess_a_fluency_1: "Медленно, с ошибками",
+    assess_a_fluency_2: "Читаю бегло",
+    level_beginner: "Начальный",
+    level_intermediate: "Средний",
+    level_advanced: "Высокий",
+    level_setting: "Уровень знаний",
+    level_setting_note:
+      "Спрошено при первом запуске. Можно изменить в любой момент.",
 
     today_greeting: "Ассаламу алайкум",
     today_continue: "Вы остановились здесь",
@@ -526,10 +994,16 @@ const STRINGS = {
     waiting_hint: "Это займёт несколько секунд.",
 
     verdict_title: "Есть {n} мест(а) для разбора",
+    verdict_one_at_a_time: "В этот раз исправим одно",
+    verdict_one_place: "Давайте поправим это место",
     verdict_body:
-      "Ниже для каждого написано, что произошло и как это исправить. Не торопитесь — по одному.",
+      "Ниже написано, что произошло и как это исправить. Не торопитесь.",
     verdict_all_fixed: "Всё исправлено",
     verdict_all_fixed_body: "Теперь прочитайте аят целиком ещё раз.",
+    verdict_all_fixed_earned:
+      "Остальное прочитано верно — мы занимались только этим местом. Теперь прочитайте аят с начала.",
+    more_remaining: "Осталось ещё {n} — покажем, когда закончите это",
+    card_framing: "Давайте поправим это место",
     verdict_again: "Прочитать аят снова",
 
     clear_title: "Прекрасно",
@@ -600,7 +1074,11 @@ const STRINGS = {
 
     rung_letter: "Только эта буква",
     rung_syllables: "С огласовками",
+    rung_word_include: "Медленно — так, чтобы пропущенная буква прозвучала",
+    rung_word_omit: "Медленно — без лишнего звука",
+    rung_word_hold: "Медленно — считая долготу",
     rung_word: "Это слово",
+    rung_word_normal: "Теперь в обычном темпе",
     rung_ayah: "Теперь весь аят",
     rung_record: "Прочитать",
     rung_again: "Ещё раз",
@@ -616,6 +1094,7 @@ const STRINGS = {
     retry_word_stop: "Остановить",
     retry_checking: "Проверяем",
     fixed_title: "Прекрасно! Вы исправили.",
+    fixed_enough: "Этого достаточно, идём дальше.",
     not_yet: "Пока то же место. Попробуйте ещё раз.",
     hear_yourself: "Послушать своё чтение",
     hear_yourself_stop: "Остановить",

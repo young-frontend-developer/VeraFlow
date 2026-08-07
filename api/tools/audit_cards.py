@@ -78,7 +78,12 @@ def render(code: str, lang: str, shape: str) -> dict:
         "body": body or {},
         "guide": guide or {},
         "kind": cards.kind_of(code, (body or {}).get("group", ""), err.sifa),
+        # code and expected_count pick the ladder shape - the audit renders the
+        # card "the way pipeline.present would build it", so it has to pass the
+        # same two arguments or it would audit a ladder no learner ever sees.
         "practice": practice.ladder(err.letter, err.word, err.word_index,
+                                    code=code,
+                                    expected_count=err.expected_count,
                                     letter_audio=(body or {}).get(
                                         "audio_pair", "")),
     }

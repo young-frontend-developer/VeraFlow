@@ -1,17 +1,28 @@
 import { useRef } from "react";
 import { PracticeRung, TajweedError } from "../lib/api";
 import { Key, Lang, t } from "../lib/i18n";
+import DurationMeter from "./DurationMeter";
 
 /**
  * The practice section of a correction card — slots 6, 7 and 8 of RULE 12's
  * canonical shape (listen, practise, re-check), which are one thing in the UI
  * because they are one thing to do: hear it, say it, prove it.
  *
- * THE LADDER. Four rungs, narrow to wide — the letter alone, the letter under
- * each haraka, the word they actually misread, then back to the ayah. The
- * learner meets the sound by itself before meeting it inside anything, which is
- * how a teacher introduces it, and arrives back at the ayah having already said
- * it right three times.
+ * THE LADDER DEPENDS ON THE MISTAKE, and the server has already chosen which
+ * one — this component renders whatever rungs arrive, in order. See
+ * engine/practice.py for why there are four shapes:
+ *
+ *   articulation  letter → syllables → word → ayah
+ *   omission      word_include → word → ayah
+ *   insertion     word_omit → word → ayah
+ *   duration      word_hold → word → ayah
+ *
+ * On an articulation error the learner meets the sound by itself before meeting
+ * it inside anything, which is how a teacher introduces it. On the other three
+ * that opening would be wrong: a dropped letter was never mispronounced, an
+ * added one needs leaving out rather than saying, and a bare letter has no
+ * duration to hold. Those ladders open on the word instead, said slowly, with
+ * the thing to attend to named by the rung.
  *
  * ── PROGRESSIVE UNLOCK (RULE 9) ────────────────────────────────────────────
  *
@@ -52,13 +63,47 @@ import { Key, Lang, t } from "../lib/i18n";
  * says teaches the learner the app lies.
  */
 
-/** focus -> the i18n key naming that rung. */
+/**
+ * focus -> the i18n key naming that rung.
+ *
+ * Exhaustive by type: adding a focus on the server without a label here is a
+ * compile error rather than a rung rendered with a blank name.
+ */
 const FOCUS_KEY: Record<PracticeRung["focus"], Key> = {
   letter: "rung_letter",
   syllables: "rung_syllables",
+  word_include: "rung_word_include",
+  word_omit: "rung_word_omit",
+  word_hold: "rung_word_hold",
   word: "rung_word",
   ayah: "rung_ayah",
 };
+
+/** The three rungs that are a SLOW, deliberate first pass at the word. */
+const SLOW_FOCUSES: PracticeRung["focus"][] = [
+  "word_include",
+  "word_omit",
+  "word_hold",
+];
+
+/**
+ * The label for one rung, in the context of the whole ladder.
+ *
+ * Only one rung needs the context: the plain `word` rung is "this word" when it
+ * opens the word section, and "now at normal pace" when a slow pass at the SAME
+ * word came before it. Without that, the omission, insertion and duration
+ * ladders print the identical word twice under the identical label, which reads
+ * as a rendering bug rather than as a second, faster pass.
+ */
+function labelFor(rung: PracticeRung, rungs: PracticeRung[]): Key {
+  if (
+    rung.focus === "word" &&
+    rungs.some((r) => r.level < rung.level && SLOW_FOCUSES.includes(r.focus))
+  ) {
+    return "rung_word_normal";
+  }
+  return FOCUS_KEY[rung.focus];
+}
 
 /** How much slower "slow" is. Slow enough to hear the shape, not a drone. */
 const SLOW_RATE = 0.6;
@@ -118,6 +163,7 @@ export default function PracticeLadder({
             lang={lang}
             error={error}
             rung={rung}
+            label={labelFor(rung, rungs)}
             busy={activeLevel === rung.level}
             phase={phase}
             locked={rung.level > firstOpen}
@@ -141,6 +187,7 @@ function Rung({
   lang,
   error,
   rung,
+  label,
   busy,
   phase,
   locked,
@@ -157,6 +204,8 @@ function Rung({
   lang: Lang;
   error: TajweedError;
   rung: PracticeRung;
+  /** Resolved by labelFor() — the plain `word` rung is renamed in context. */
+  label: Key;
   busy: boolean;
   phase: "recording" | "checking" | null;
   locked: boolean;
@@ -199,7 +248,7 @@ function Rung({
       aria-disabled={locked}
     >
       <div className="rung__head">
-        <span className="rung__name">{t(lang, FOCUS_KEY[rung.focus])}</span>
+        <span className="rung__name">{t(lang, label)}</span>
         {done && (
           <span className="rung__tick" aria-label={t(lang, "rung_done")}>
             ✓
@@ -219,6 +268,23 @@ function Rung({
             </span>
           ))}
         </p>
+      )}
+
+      {/* THE COUNT, on the one rung that is about duration. "Hold it for 4
+          harakat" is not actionable — a haraka is a relative unit and a
+          beginner has no reference for it — so the rung carries the counter
+          that beats it out, which is what a teacher does with their hand.
+          countOnly: the needed-vs-yours comparison is already in the card body
+          a few lines above, and repeating what they got wrong at the moment
+          they are about to try again teaches nothing. */}
+      {rung.focus === "word_hold" && rung.hold > 0 && !locked && (
+        <DurationMeter
+          lang={lang}
+          letter={error.letter}
+          expected={rung.hold}
+          heard={0}
+          countOnly
+        />
       )}
 
       {locked ? (

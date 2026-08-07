@@ -92,18 +92,6 @@
    "review_order": 7
   },
   {
-   "code": "HAMS_LOST",
-   "group": "sifat",
-   "severity": "medium",
-   "detection_confidence": "high",
-   "universal": false,
-   "beginner_segments": 297,
-   "beginner_pct": 47.1,
-   "all_segments": 6770,
-   "all_pct": 41.4,
-   "review_order": 8
-  },
-  {
    "code": "GHUNNA_MISSING",
    "group": "ghunna",
    "severity": "medium",
@@ -113,7 +101,7 @@
    "beginner_pct": 43.9,
    "all_segments": 8794,
    "all_pct": 53.7,
-   "review_order": 9
+   "review_order": 8
   },
   {
    "code": "GHUNNA_TOO_SHORT",
@@ -125,7 +113,7 @@
    "beginner_pct": 43.9,
    "all_segments": 8794,
    "all_pct": 53.7,
-   "review_order": 10
+   "review_order": 9
   },
   {
    "code": "MAKHARIJ_AIN_TO_HAMZA",
@@ -137,7 +125,7 @@
    "beginner_pct": 35.7,
    "all_segments": 7482,
    "all_pct": 45.7,
-   "review_order": 11
+   "review_order": 10
   },
   {
    "code": "MAKHARIJ_AIN_TO_HHA",
@@ -149,7 +137,7 @@
    "beginner_pct": 35.7,
    "all_segments": 7482,
    "all_pct": 45.7,
-   "review_order": 12
+   "review_order": 11
   },
   {
    "code": "MAKHARIJ_INTERDENTAL_TO_ZAY",
@@ -161,7 +149,7 @@
    "beginner_pct": 31.7,
    "all_segments": 4885,
    "all_pct": 29.8,
-   "review_order": 13
+   "review_order": 12
   },
   {
    "code": "MAKHARIJ_THAL_TO_ZAA_CONFUSION",
@@ -173,7 +161,7 @@
    "beginner_pct": 31.7,
    "all_segments": 4885,
    "all_pct": 29.8,
-   "review_order": 14
+   "review_order": 13
   },
   {
    "code": "QALQALAH_EXCESSIVE",
@@ -185,7 +173,7 @@
    "beginner_pct": 28.1,
    "all_segments": 3869,
    "all_pct": 23.6,
-   "review_order": 15
+   "review_order": 14
   },
   {
    "code": "QALQALAH_MISSING",
@@ -197,7 +185,7 @@
    "beginner_pct": 28.1,
    "all_segments": 3869,
    "all_pct": 23.6,
-   "review_order": 16
+   "review_order": 15
   },
   {
    "code": "TAFKHEEM_ADDED",
@@ -209,7 +197,7 @@
    "beginner_pct": 25.8,
    "all_segments": 4585,
    "all_pct": 28.0,
-   "review_order": 17
+   "review_order": 16
   },
   {
    "code": "MAKHARIJ_QAF_TO_KAF",
@@ -221,7 +209,7 @@
    "beginner_pct": 25.5,
    "all_segments": 5721,
    "all_pct": 35.0,
-   "review_order": 18
+   "review_order": 17
   },
   {
    "code": "MADD_ADDED_LEEN",
@@ -233,19 +221,7 @@
    "beginner_pct": 23.0,
    "all_segments": 4396,
    "all_pct": 26.9,
-   "review_order": 19
-  },
-  {
-   "code": "SHIDDA_LOST",
-   "group": "sifat",
-   "severity": "medium",
-   "detection_confidence": "high",
-   "universal": false,
-   "beginner_segments": 95,
-   "beginner_pct": 15.1,
-   "all_segments": 2890,
-   "all_pct": 17.7,
-   "review_order": 20
+   "review_order": 18
   },
   {
    "code": "MAKHARIJ_SHEEN_TO_JEEM",
@@ -257,7 +233,7 @@
    "beginner_pct": 12.4,
    "all_segments": 1983,
    "all_pct": 12.1,
-   "review_order": 21
+   "review_order": 19
   },
   {
    "code": "MAKHARIJ_SAD_TO_SEEN",
@@ -269,7 +245,7 @@
    "beginner_pct": 12.4,
    "all_segments": 1895,
    "all_pct": 11.6,
-   "review_order": 22
+   "review_order": 20
   },
   {
    "code": "MAKHARIJ_KHA_TO_HHA",
@@ -281,7 +257,7 @@
    "beginner_pct": 11.7,
    "all_segments": 2289,
    "all_pct": 14.0,
-   "review_order": 23
+   "review_order": 21
   },
   {
    "code": "RAA_TARQIQ_MISSING",
@@ -293,7 +269,7 @@
    "beginner_pct": 11.6,
    "all_segments": 2585,
    "all_pct": 15.8,
-   "review_order": 24
+   "review_order": 22
   },
   {
    "code": "MADD_WAJIB_SHORTENED",
@@ -305,7 +281,7 @@
    "beginner_pct": 9.7,
    "all_segments": 2043,
    "all_pct": 12.5,
-   "review_order": 25
+   "review_order": 23
   },
   {
    "code": "MAKHARIJ_THA_TO_SEEN",
@@ -317,7 +293,7 @@
    "beginner_pct": 8.9,
    "all_segments": 1281,
    "all_pct": 7.8,
-   "review_order": 26
+   "review_order": 24
   },
   {
    "code": "MAKHARIJ_TAA_TO_TA",
@@ -329,7 +305,7 @@
    "beginner_pct": 8.4,
    "all_segments": 1201,
    "all_pct": 7.3,
-   "review_order": 27
+   "review_order": 25
   },
   {
    "code": "MAKHARIJ_DAD_TO_DAL",
@@ -341,7 +317,7 @@
    "beginner_pct": 6.7,
    "all_segments": 1541,
    "all_pct": 9.4,
-   "review_order": 28
+   "review_order": 26
   },
   {
    "code": "MAKHARIJ_DAD_TO_ZAA",
@@ -353,7 +329,7 @@
    "beginner_pct": 6.7,
    "all_segments": 1541,
    "all_pct": 9.4,
-   "review_order": 29
+   "review_order": 27
   },
   {
    "code": "MAKHARIJ_GHAYN_TO_QAF",
@@ -365,19 +341,7 @@
    "beginner_pct": 6.3,
    "all_segments": 1155,
    "all_pct": 7.1,
-   "review_order": 30
-  },
-  {
-   "code": "JAHR_LOST",
-   "group": "sifat",
-   "severity": "medium",
-   "detection_confidence": "high",
-   "universal": false,
-   "beginner_segments": 36,
-   "beginner_pct": 5.7,
-   "all_segments": 1446,
-   "all_pct": 8.8,
-   "review_order": 31
+   "review_order": 28
   },
   {
    "code": "MADD_ADDED",
@@ -389,7 +353,7 @@
    "beginner_pct": 100.0,
    "all_segments": 16366,
    "all_pct": 100.0,
-   "review_order": 32
+   "review_order": 29
   }
  ],
  "segments_per_sura": {

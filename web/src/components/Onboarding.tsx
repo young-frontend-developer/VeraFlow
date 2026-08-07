@@ -2,9 +2,10 @@ import { useState } from "react";
 import ConsentGate from "./ConsentGate";
 import { ArchOrnament, StarOrnament, Tick } from "./Ornament";
 import { Lang, t } from "../lib/i18n";
+import { Level, QUESTIONS, levelFrom, storeLevel } from "../lib/level";
 
 /**
- * First run: welcome → language → experience → consent.
+ * First run: welcome → language → experience → knowledge assessment → consent.
  *
  * THERE IS NO SIGN UP OR LOG IN, and that is a decision rather than an
  * omission. Tilawah has no accounts: identity is an anonymous id in this
@@ -23,7 +24,8 @@ import { Lang, t } from "../lib/i18n";
 
 export type Experience = "new" | "some" | "fluent";
 
-const STEPS = 4;
+// welcome, language, experience, ASSESSMENT, consent
+const STEPS = 5;
 
 export default function Onboarding({
   lang,
@@ -42,6 +44,22 @@ export default function Onboarding({
 }) {
   const [step, setStep] = useState(0);
   const [experience, setExperience] = useState<Experience | null>(null);
+  /**
+   * The knowledge assessment's answers, 0-2 per question, null while unanswered.
+   *
+   * ASKED ONCE, HERE, AND NOWHERE ELSE. The result is a stored setting the
+   * learner can change from Profile - never a banner, a badge or a widget in
+   * the running app. See lib/level.ts.
+   */
+  const [answers, setAnswers] = useState<(number | null)[]>(
+    QUESTIONS.map(() => null),
+  );
+
+  function finishAssessment(next: number) {
+    const level: Level = levelFrom(answers);
+    storeLevel(level);
+    setStep(next);
+  }
 
   return (
     <div className="onboard">
@@ -139,7 +157,63 @@ export default function Onboarding({
           </>
         )}
 
+        {/* THE KNOWLEDGE ASSESSMENT. Three questions, not a quiz: it decides a
+            starting setting, so a wrong answer costs a slightly gentler start
+            and nothing else. Skippable, and skipping lands on "beginner",
+            which is the harmless direction to be wrong in. */}
         {step === 3 && (
+          <>
+            <ArchOrnament className="onboard__ornament" size={46} />
+            <h2 className="onboard__display">{t(lang, "assess_title")}</h2>
+            <p className="onboard__lede">{t(lang, "assess_body")}</p>
+
+            {QUESTIONS.map((q, qi) => (
+              <div className="assess__q" key={q.id}>
+                <p className="assess__prompt">{t(lang, q.prompt as never)}</p>
+                <div className="choice choice--tight">
+                  {q.options.map((opt, oi) => (
+                    <button
+                      key={opt}
+                      className="choice__item"
+                      aria-pressed={answers[qi] === oi}
+                      onClick={() =>
+                        setAnswers((a) =>
+                          a.map((v, i) => (i === qi ? oi : v)),
+                        )
+                      }
+                    >
+                      <span>
+                        <span className="choice__name">
+                          {t(lang, opt as never)}
+                        </span>
+                      </span>
+                      <span className="choice__tick">
+                        <Tick />
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            <div className="onboard__foot">
+              <button
+                className="btn-primary"
+                onClick={() => finishAssessment(4)}
+              >
+                {t(lang, "onboard_next")}
+              </button>
+              <button
+                className="onboard__skip"
+                onClick={() => finishAssessment(4)}
+              >
+                {t(lang, "onboard_skip")}
+              </button>
+            </div>
+          </>
+        )}
+
+        {step === 4 && (
           <ConsentGate
             lang={lang}
             audioOffered={audioOffered}

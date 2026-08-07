@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Wire types. Deliberately does NOT expose silent_errors - those are internal
 promotion evidence, not learner-facing."""
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -188,6 +190,31 @@ class AttemptOut(BaseModel):
     # usage without shipping a new bundle - see Settings.practice_pass.
     score: float = 0.0
     pass_score: float = 0.0
+    # WHEN IT HAPPENED. Added for the Today screen's week view and its
+    # "last practiced N ago" line, and it is the only reason both of those can
+    # exist: without a real timestamp the alternatives were to draw a week
+    # strip with invented days on it or to leave the section out. The column
+    # has always been on the row (Attempt.created_at, indexed); it simply was
+    # never sent. None on legacy rows written before it was populated, and the
+    # client omits the day rather than guessing one.
+    created_at: datetime | None = None
+
+
+class HadithOut(BaseModel):
+    """The day's hadith, with its citation.
+
+    The citation is three separate fields rather than one joined string so the
+    client formats it and a reviewer can see exactly which collection and
+    number is being claimed. `draft` obliges the client to mark it, the same as
+    a draft correction card.
+    """
+    id: str = ""
+    ar: str = ""
+    text: str = ""
+    collection: str = ""
+    ref: str = ""
+    grading: str = ""
+    draft: bool = True
 
 
 class WrongFlagIn(BaseModel):

@@ -31,21 +31,29 @@ just whichever definition scored lowest. A check may fire only where the error i
   (b) AUDIBLE      - the difference is hearable, therefore correctable. A
                      pedagogical judgement, and the part most in need of a qori.
   (c) UNCLAIMED    - no other registry code already owns that context. A sakin
-                     ق that loses its stop is QALQALAH_MISSING; reporting
-                     SHIDDA_LOST on the same letter is double jeopardy.
+                     ق that loses its stop is QALQALAH_MISSING; reporting a
+                     second, weaker finding on the same letter is double
+                     jeopardy. (The worked example used to be SHIDDA_LOST,
+                     deleted 2026-08-07 - the rule outlives it.)
 
 Measured over all 16366 segments (loose -> narrowed):
 
     TAFKHEEM_ADDED  100.0% -> 28.0%   light letter beside a MUTBAQ neighbour
-    HAMS_LOST        95.6% -> 41.4%   sakin hams letter only
-    SHIDDA_LOST      97.3% -> 17.7%   sakin shadeed, minus the qalqalah letters
-    JAHR_LOST       100.0% ->  8.8%   sakin jahr obstruent, minus the qalqalah
-                                      letters -> ذ ز ض ظ غ
     MADD_ADDED      100.0% -> 100.0%  NOT NARROWED - see UNIVERSAL below, and
                                       MADD_ADDED_LEEN (26.9%) split out of it
     GHUNNA_ADDED    100.0% -> deleted The narrowing worked (14.7%) but the
                                       ENTRY was unsalvageable - no ṣifa flip
                                       exists to detect. See izhar_positions().
+    HAMS_LOST        95.6% -> 41.4%   ┐ all three narrowed successfully and were
+    SHIDDA_LOST      97.3% -> 17.7%   ├ then DELETED ANYWAY, 2026-08-07, as a
+    JAHR_LOST       100.0% ->  8.8%   ┘ scope decision rather than a defect.
+                                      lahn khafiy khafiy: inaudible to most
+                                      reciters, changes no meaning, breaks no
+                                      required rule. The numbers are kept here
+                                      because they are the evidence that the
+                                      removal was about scope and not about the
+                                      preconditions failing. See
+                                      engine/sifat_codes.OUT_OF_SCOPE.
 
 ⚠️ These narrowings are modelling claims about WHERE learners err, and they are
 not measured against real learner errors - only counted against the reference
@@ -93,11 +101,8 @@ MARKS = HARAKAT | {"ڇ"}         # ڇ marks qalqalah, it is not a letter
 # what kept TAFKHEEM_ADDED at 79.5% instead of 28%.
 MUTBAQ = set("صضطظ")
 # Owned by QALQALAH_MISSING / QALQALAH_EXCESSIVE. A sakin qalqalah letter that
-# loses its stop or its voicing is a qalqalah finding, not a shidda or jahr one.
+# loses its stop is a qalqalah finding.
 QALQALA_LETTERS = set("قطبجد")
-# Voiced obstruents - the only jahr letters that devoice. Sonorants (ل م ن ر و ي)
-# and madd letters do not, and neither does ع in practice.
-JAHR_OBSTRUENTS = set("بجدذزضظغق")
 
 # Substitutions are possible exactly where a source letter occurs. The value is
 # the set of letters that can trigger the code - most are one letter, but a
@@ -218,9 +223,11 @@ def _base(text: str) -> str:
 def _is_sakin(text: str) -> bool:
     """No haraka in the group = the letter carries sukun.
 
-    This is the workhorse of the ṣifa narrowings. A voweled consonant releases
-    into its vowel and takes its ṣifa with it; a sakin one has to hold the ṣifa
-    on its own, which is where hams, shidda and jahr are actually lost.
+    This was the workhorse of the ṣifa narrowings - a voweled consonant releases
+    into its vowel and takes its ṣifa with it, while a sakin one has to hold the
+    ṣifa on its own. The three checks that rested on it are gone (see the scope
+    decision in possible_codes); izhar_positions is the remaining caller, where
+    sukun is part of the ruling itself rather than a narrowing.
     """
     return not (set(text or "") & HARAKAT)
 
@@ -353,42 +360,27 @@ def possible_codes(phonemes: str, sifat, phonemes_spaced: str = "") -> set[str]:
         elif f["tafkheem_or_taqeeq"] == "moraqaq":
             found.add("RAA_TARQIQ_MISSING")
 
-    # ── qalqalah / hams / jahr / shidda ───────────────────────────────────
-    # These three ṣifāt are only losable on a SAKIN consonant - see the narrowing
-    # rule (a) in the module docstring - and never on a letter whose failure
-    # another code already reports.
+    # ── qalqalah ──────────────────────────────────────────────────────────
     if any(f["qalqla"] == "moqalqal" for _, f in groups):
         found.update({"QALQALAH_MISSING", "QALQALAH_EXCESSIVE"})
 
-    for text, f in groups:
-        base = _base(text)
-        if not base or not _is_sakin(text) or base in MADD_LETTERS:
-            continue
-        # 95.6% -> 41.4%. The weakest of the four narrowings: breathiness is
-        # hardest to localise, and "sakin" is the only restriction defensible
-        # without asserting a mechanism. Narrowing further to "before a jahr
-        # letter" reaches 22.1% but silences hams lost at waqf, which is a real
-        # and common learner failure.
-        if f["hams_or_jahr"] == "hams":
-            found.add("HAMS_LOST")
-        # 100% -> 8.8%. Devoicing needs a voiced obstruent; sonorants and madd
-        # letters do not devoice. Positions that actually carry qalqalah are
-        # removed because a devoiced sakin ق or ب is heard, and reported, as a
-        # qalqalah problem - leaving ذ ز ض ظ غ, exactly the Uzbek/Russian
-        # final-devoicing set from risk 4 of the architecture doc.
-        #
-        # The exclusion tests the ṣifa, not the letter. Equivalent here - every
-        # sakin qalqalah letter is moqalqal - but it is the correct test rather
-        # than a coincidentally correct one, and it inherits the shadda
-        # exception (2-dars) instead of restating it. See test_preconditions.
-        if (f["hams_or_jahr"] == "jahr" and base in JAHR_OBSTRUENTS
-                and f["qalqla"] != "moqalqal"):
-            found.add("JAHR_LOST")
-        # 97.3% -> 17.7%. A shadeed letter's stop is only assessable when sakin,
-        # and for the qalqalah letters the incomplete stop IS the qalqalah check.
-        # What is left is sakin ء ك ت.
-        if f["shidda_or_rakhawa"] == "shadeed" and f["qalqla"] != "moqalqal":
-            found.add("SHIDDA_LOST")
+    # HAMS_LOST, JAHR_LOST AND SHIDDA_LOST WERE HERE AND ARE GONE - scope
+    # decision 2026-08-07, not a defect. All three worked and all three narrowed
+    # well (41.4%, 8.8%, 17.7%); they are lahn khafiy khafiy, which is outside
+    # what this app corrects, so they are removed from the registry and from the
+    # detector rather than left computing numbers nobody may act on. Keeping the
+    # preconditions would keep them in `relevant`, drag every coverage score
+    # down against checks that can never fire, and put them back in the review
+    # ranking. See engine/sifat_codes.OUT_OF_SCOPE.
+    #
+    # WHAT THE RESTORE NEEDS, since the code is deleted and the reasoning is
+    # not: hams and shidda were only assessable on a SAKIN, non-madd consonant
+    # (narrowing rule (a)), and jahr additionally required a voiced obstruent -
+    # ب ج د ذ ز ض ظ غ ق, since sonorants and madd letters do not devoice and
+    # neither does ع in practice. Both jahr and shidda then excluded positions
+    # where qalqla == "moqalqal", testing the ṣifa rather than the letter so the
+    # 2-dars shadda exception was inherited from the phonetizer instead of
+    # restated here.
 
     # ── ghunnah ───────────────────────────────────────────────────────────
     # Ruling positions only. Every noon/meem is inherently maghnoon, so the sifa

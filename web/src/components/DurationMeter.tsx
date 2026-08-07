@@ -23,6 +23,18 @@ import { Lang, t } from "../lib/i18n";
  * units, not in milliseconds, so "2" is a count of units and not a stopwatch
  * reading. Printing it as an exact number would claim a precision the
  * measurement does not have.
+ *
+ * ── TWO PLACES, TWO JOBS (`countOnly`) ─────────────────────────────────────
+ *
+ * In the card body this DIAGNOSES: two bars, needed against yours, and the gap
+ * between them is the mistake drawn at the size of the mistake.
+ *
+ * On the `word_hold` practice rung it TEACHES, and the comparison would be
+ * noise there — the learner has already read it a few lines above, and
+ * reprinting what they got wrong at the moment they are about to try again is
+ * the opposite of encouraging. `countOnly` keeps the target bar and the counter
+ * and drops the heard bar, so the rung offers the one control that matters:
+ * count with me, hold along.
  */
 
 /** One haraka, in milliseconds, at the unhurried pace a teacher counts. */
@@ -33,6 +45,7 @@ export default function DurationMeter({
   letter,
   expected,
   heard,
+  countOnly = false,
 }: {
   lang: Lang;
   /** The letter being held, drawn at the head of each bar. */
@@ -40,6 +53,8 @@ export default function DurationMeter({
   /** Harakat the reference calls for, and what we heard. */
   expected: number;
   heard: number;
+  /** Target bar and counter only — no comparison. See the note above. */
+  countOnly?: boolean;
 }) {
   const [beat, setBeat] = useState(0);
   const timer = useRef<number | null>(null);
@@ -53,7 +68,11 @@ export default function DurationMeter({
     [],
   );
 
-  if (expected <= 0 || heard <= 0) return null;
+  // The heard side is required only when there is a comparison to draw. In
+  // countOnly mode a target is the whole input, which is what lets the rung
+  // render before the learner has said anything.
+  if (expected <= 0) return null;
+  if (!countOnly && heard <= 0) return null;
 
   function count() {
     if (timer.current !== null) {
@@ -77,11 +96,12 @@ export default function DurationMeter({
 
   const counting = beat > 0;
   // The bars share one scale so their lengths are comparable — the whole point
-  // of drawing them. Whichever is longer sets it.
-  const scale = Math.max(expected, heard);
+  // of drawing them. Whichever is longer sets it. With no heard bar there is
+  // nothing to compare against, so the target sets its own scale.
+  const scale = countOnly ? expected : Math.max(expected, heard);
 
   return (
-    <div className="meter">
+    <div className={countOnly ? "meter meter--count-only" : "meter"}>
       <Bar
         lang={lang}
         label={t(lang, "meter_needed")}
@@ -91,16 +111,18 @@ export default function DurationMeter({
         filled={counting ? beat : expected}
         tone="good"
       />
-      <Bar
-        lang={lang}
-        label={t(lang, "meter_yours")}
-        letter={letter}
-        count={heard}
-        scale={scale}
-        filled={heard}
-        tone="said"
-        approximate
-      />
+      {!countOnly && (
+        <Bar
+          lang={lang}
+          label={t(lang, "meter_yours")}
+          letter={letter}
+          count={heard}
+          scale={scale}
+          filled={heard}
+          tone="said"
+          approximate
+        />
+      )}
       <button className="meter__count" onClick={count}>
         {counting
           ? `${beat} / ${expected}`

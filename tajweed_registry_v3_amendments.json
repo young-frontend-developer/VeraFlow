@@ -2,7 +2,8 @@
   "_meta": {
     "purpose": "Structural corrections applied AFTER the v3 patch merge. Kept separate from both inputs on purpose: tajweed_error_registry_v2.json is the historical base and tajweed_registry_v3_patch.json is a sourced artifact from the book - neither should be rewritten to record a decision made later.",
     "applied_by": "api/tools/apply_v3_patch.py (step D)",
-    "authority": "Requested by Rahmatulloh 2026-08-01 after the Phase 2 precondition audit.",
+    "authority": "Requested by Rahmatulloh 2026-08-01 after the Phase 2 precondition audit. Extended 2026-08-07 with the lahn khafiy khafiy scope decision (HAMS_LOST, JAHR_LOST, SHIDDA_LOST).",
+    "DELETION_KINDS": "Two different reasons appear under `delete` and they must not be read as one. A DEFECT deletion means the entry could not work - GHUNNA_ADDED had no ṣifa flip to detect anywhere in the Quran. A SCOPE deletion means the entry worked and was removed anyway because the mistake it catches is outside what this app currently corrects. Scope deletions carry a restore path, because they are expected to come back.",
     "CONTENT_AUTHORING_RULE": "This file performs STRUCTURAL surgery only - deleting, splitting and merging entries. Where a resulting entry needs new learner-facing text, the text is NOT written here. Architecture decision 4: an LLM must never author a tajweed rule, correction or reason. Such entries carry content_status and are left without usable uz/ru bodies so content.render() returns None and the pipeline suppresses them.",
     "safety": "Every entry stays status='draft'. content/rules.json is untouched, so none of this reaches a learner either way."
   },
@@ -18,6 +19,21 @@
     },
     "MAKHARIJ_ZAA_TO_ZAY": {
       "reason": "Merged into MAKHARIJ_INTERDENTAL_TO_ZAY - see merges below."
+    },
+    "HAMS_LOST": {
+      "reason": "SCOPE DECISION, NOT A DEFECT. Requested by Rahmatulloh 2026-08-07. Hams/jahr is lahn khafiy khafiy - a refinement most reciters cannot hear, which changes neither meaning nor the validity of the recitation. This app's current purpose is correcting mistakes that change meaning or break a required rule, and this entry is not one of those. The entry was detectable and its precondition was sound (95.6% -> 41.4%); it is being removed because it is out of scope, not because it did not work.",
+      "what_would_replace_it": "Itself, unchanged, behind an advanced-user mode. Nothing about the entry needs rewriting - restore this block, the hams_or_jahr branch in engine/sifat_codes.code_for, and the precondition in engine/coverage.possible_codes, then delete the corresponding case from tests/test_code_mapping.py::test_out_of_scope_sifat_never_produce_an_error.",
+      "note": "Detection routing for the whole hams_or_jahr comparison is removed alongside it - see engine/sifat_codes.OUT_OF_SCOPE. Suppressing only the card would have left the pipeline generating an error nobody could ever see."
+    },
+    "JAHR_LOST": {
+      "reason": "SCOPE DECISION, NOT A DEFECT. Requested by Rahmatulloh 2026-08-07. Same ruling as HAMS_LOST - the other direction of the same ṣifa, and the same lahn khafiy khafiy classification. Removed for scope, not for accuracy: its precondition was the most restrictive of the four ṣifa narrowings (100% -> 8.8%, the sakin voiced obstruents ذ ز ض ظ غ).",
+      "what_would_replace_it": "Itself, unchanged, behind an advanced-user mode. See HAMS_LOST above for the restore path - both directions share one branch.",
+      "note": "The Uzbek/Russian final-devoicing pattern this entry targeted (risk 4 of docs/tajweed-engine-derisking.md) is real, and where it changes the letter outright it is still caught - as a phoneme substitution by typed_diff, not as a ṣifa finding."
+    },
+    "SHIDDA_LOST": {
+      "reason": "SCOPE DECISION, NOT A DEFECT. Requested by Rahmatulloh 2026-08-07. Shidda/rakhawa is lahn khafiy khafiy on the same grounds: a shadeed letter read slightly loose is audible to a trained ear and to almost nobody else, and it does not change the word. Its precondition was sound (97.3% -> 17.7%, sakin ء ك ت after the qalqalah letters are removed).",
+      "what_would_replace_it": "Itself, unchanged, behind an advanced-user mode. Restore this block plus the shidda_or_rakhawa branch in engine/sifat_codes.code_for - including the rikhw-vs-between drop, which is a separate finding and must not be lost in the restore.",
+      "note": "The stop that a beginner actually loses audibly is the qalqalah, and QALQALAH_MISSING still owns it. The two never overlapped: this entry's precondition already excluded every moqalqal position."
     }
   },
 

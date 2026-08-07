@@ -424,6 +424,31 @@ ol {
   line-height: 0;
 }
 
+/* THE CENTRE ITEM. Practice is the app's primary action and sits third of
+   five, so it gets a lifted disc inside the pill rather than a heavier weight
+   or a larger label — the row has to keep reading as one object. Active state
+   still comes from aria-current, so the two do not fight. */
+.tab--center .tab__glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin-top: -2px;
+  border-radius: 50%;
+  background: rgba(250, 248, 244, 0.12);
+  transition: background var(--t) var(--ease);
+}
+
+.tab--center[aria-current="page"] {
+  background: none;
+}
+
+.tab--center[aria-current="page"] .tab__glyph {
+  background: var(--sage);
+  color: var(--night);
+}
+
 /* ══ onboarding ═══════════════════════════════════════════════════════════ */
 
 .onboard {
@@ -1879,6 +1904,30 @@ ol {
   font-variant-numeric: tabular-nums;
 }
 
+/* The teacher's opening line on every card, and the count of what is still
+   waiting. Both are quiet on purpose: the framing must not compete with the
+   correction under it, and the remaining count is information, not a nag. */
+
+.card__framing {
+  margin: 0 0 10px;
+  color: var(--ink-2);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.card__body--makhraj {
+  margin-bottom: 10px;
+  color: var(--ink-2);
+  font-style: italic;
+}
+
+.ladder-more {
+  margin: 18px 0 0;
+  text-align: center;
+  color: var(--ink-2);
+  font-size: 14px;
+}
+
 /* ── the duration meter ──────────────────────────────────────────────── */
 
 .meter {
@@ -1886,6 +1935,17 @@ ol {
   padding: 18px 20px;
   border-radius: var(--r-soft);
   background: var(--ivory-sunk);
+}
+
+/* On the `word_hold` practice rung the meter is a metronome, not a diagnosis:
+   one bar and the counter, sitting inside a rung that already has its own
+   padding and its own background. The card-body version keeps the panel; this
+   one drops it so it reads as part of the rung rather than as a second card
+   nested inside it. */
+.meter--count-only {
+  margin: 10px 0 0;
+  padding: 0;
+  background: none;
 }
 
 .meter__row {
@@ -2463,4 +2523,887 @@ ol {
 
 .review__reject {
   color: var(--terra);
+}
+
+/* ══ the restyled Today, and the account screen ═══════════════════════════
+   Additive: the palette, radii, shadows and type scale are the ones already
+   set at the top of this file. Nothing here introduces a colour or a font. */
+
+/* ── section headers ──────────────────────────────────────────────────── */
+/* Label above, serif headline under it, a muted aside pushed to the right.
+   The aside sits on the headline's baseline so the two read as one line. */
+
+.section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 38px 0 14px;
+}
+
+.section-head--hero {
+  margin-top: 8px;
+}
+
+.section-title {
+  font-family: var(--serif);
+  font-size: 27px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.004em;
+  color: var(--ink);
+  margin-top: 7px;
+}
+
+.section-title--hero {
+  font-size: 32px;
+}
+
+.section-aside {
+  flex: none;
+  font-size: 13px;
+  color: var(--ink-3);
+  padding-bottom: 4px;
+}
+
+.today__block {
+  margin-top: 4px;
+}
+
+/* ── hero ─────────────────────────────────────────────────────────────── */
+
+.hero__caps {
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--terra);
+}
+
+.hero__name {
+  font-family: var(--serif);
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1.15;
+  margin: 9px 0 6px;
+}
+
+.hero__sub {
+  font-size: 13.5px;
+  color: var(--ink-2);
+  margin-bottom: 22px;
+}
+
+/* Verse numbers at either end of the rule, percentage centred above it. */
+.progress__pct {
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--ink-2);
+  margin-bottom: 7px;
+  font-variant-numeric: tabular-nums;
+}
+
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.progress-row .progress {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.progress__end {
+  font-size: 11.5px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+
+.hero__foot {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.hero__go {
+  width: auto;
+  flex: none;
+  padding: 15px 22px;
+}
+
+.hero__go-mark {
+  display: inline-flex;
+  opacity: 0.85;
+}
+
+.hero__aside {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+/* ── the daily plan ───────────────────────────────────────────────────── */
+
+.plan__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.plan__step {
+  padding: 0;
+  overflow: hidden;
+}
+
+.plan__hit {
+  position: relative;
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 20px 22px;
+}
+
+.plan__hit--static {
+  cursor: default;
+}
+
+button.plan__hit {
+  transition: background var(--t) var(--ease);
+}
+
+button.plan__hit:hover {
+  background: var(--ivory-lift);
+}
+
+/* Ordinal, not a count of anything: it says which step comes first and makes
+   no claim about progress through a course. */
+.plan__ordinal {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  font-family: var(--serif);
+  font-size: 22px;
+  color: var(--beige);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.plan__label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--terra);
+}
+
+.plan__icon {
+  display: inline-flex;
+  color: var(--terra);
+}
+
+.plan__title {
+  display: block;
+  font-size: 16.5px;
+  font-weight: 500;
+  color: var(--ink);
+  margin: 10px 0 3px;
+}
+
+.plan__detail {
+  display: block;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+/* ── the reflection card ──────────────────────────────────────────────── */
+/* Centred, ornament where a portrait would be. See Reflection.tsx for why
+   there is no photograph and no named attribution anywhere in this block. */
+
+.reflect {
+  text-align: center;
+  padding: 32px 26px 26px;
+}
+
+.reflect__mark {
+  display: inline-flex;
+  color: var(--sage);
+  margin-bottom: 16px;
+}
+
+.reflect__kicker {
+  margin-bottom: 18px;
+}
+
+.reflect__ar {
+  font-family: var(--arabic);
+  font-size: 26px;
+  line-height: 2.3;
+  color: var(--ink);
+  margin-bottom: 16px;
+}
+
+.reflect__line {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--ink);
+  max-width: 30ch;
+  margin: 0 auto 16px;
+}
+
+.reflect__cite {
+  font-size: 11.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ── the week ─────────────────────────────────────────────────────────── */
+
+.stats {
+  padding: 24px 22px 22px;
+}
+
+.week {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.week__day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  flex: 1;
+}
+
+.week__letter {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.week__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--beige);
+}
+
+/* A day with real attempts on it. */
+.week__day--on .week__dot {
+  background: var(--sage);
+}
+
+/* Today. Marked whether or not anything was recited: it is a position in the
+   week, not a claim about activity. */
+.week__day--today .week__letter {
+  color: var(--green);
+  font-weight: 600;
+}
+
+.week__day--today .week__dot {
+  background: var(--green);
+  box-shadow: 0 0 0 3px var(--green-soft);
+}
+
+.stats__rule {
+  height: 1px;
+  background: var(--border);
+  margin: 22px 0 20px;
+}
+
+.stats__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.stat__value {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat__label {
+  font-size: 10.5px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  line-height: 1.4;
+}
+
+/* ── top bar utilities ────────────────────────────────────────────────── */
+
+.app__tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: var(--ink-2);
+  transition: background var(--t) var(--ease);
+}
+
+.icon-btn:hover {
+  background: var(--ivory-sunk);
+}
+
+/* NOT a user photo and not initials: there are no accounts, so it carries the
+   app's own mark. See the note in App.tsx. */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--green-soft);
+  color: var(--green);
+  transition: opacity var(--t) var(--ease);
+}
+
+.avatar:hover {
+  opacity: 0.75;
+}
+
+/* ── the account screen ───────────────────────────────────────────────── */
+
+.auth {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px var(--pad);
+}
+
+.auth__inner {
+  width: 100%;
+  max-width: 420px;
+}
+
+.auth__head {
+  text-align: center;
+  margin-bottom: 26px;
+}
+
+.auth__mark {
+  display: inline-flex;
+  color: var(--sage);
+  margin-bottom: 12px;
+}
+
+.auth__wordmark {
+  font-size: 31px;
+}
+
+.auth__tagline {
+  font-size: 14.5px;
+  color: var(--ink-2);
+  margin-top: 8px;
+}
+
+.auth__card {
+  padding: 24px 22px;
+}
+
+.auth__switch {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--r-chip);
+  background: var(--ivory-sunk);
+  margin-bottom: 18px;
+}
+
+.auth__tab {
+  flex: 1;
+  padding: 10px;
+  border-radius: var(--r-chip);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-2);
+  transition: all var(--t) var(--ease);
+}
+
+.auth__tab.is-on {
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: var(--lift);
+}
+
+/* Stated before the fields, not under them. */
+.auth__pending {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  padding: 12px 14px;
+  border-radius: var(--r-soft);
+  background: var(--ivory-sunk);
+  margin-bottom: 18px;
+}
+
+.auth__form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.field__label {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+}
+
+.field__input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-soft);
+  background: var(--card);
+  font-family: var(--sans);
+  font-size: 15px;
+  color: var(--ink);
+  transition: border-color var(--t) var(--ease);
+}
+
+.field__input:focus {
+  outline: none;
+  border-color: var(--sage);
+}
+
+.field__input:disabled {
+  background: var(--ivory-sunk);
+  color: var(--ink-3);
+}
+
+.auth__submit {
+  margin-top: 4px;
+}
+
+.auth__or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 16px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.auth__or::before,
+.auth__or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.auth__providers {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Ours around the mark, theirs inside it. See Ornament.tsx. */
+.btn-provider {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-chip);
+  background: var(--card);
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+  transition: background var(--t) var(--ease);
+}
+
+.btn-provider:hover:not(:disabled) {
+  background: var(--ivory-sunk);
+}
+
+.btn-provider:disabled {
+  opacity: 0.45;
+}
+
+.btn-provider__apple {
+  display: inline-flex;
+  color: var(--ink);
+}
+
+.auth__lang {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 22px 0 18px;
+}
+
+.auth__lang-label {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.auth__lang-choices {
+  display: flex;
+  gap: 8px;
+}
+
+.auth__skip {
+  width: 100%;
+  justify-content: center;
+}
+
+.auth__note {
+  font-size: 12.5px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--ink-3);
+  margin-top: 12px;
+}
+
+/* ── the month grid and the activity bars ─────────────────────────────────
+   Structure taken from a progress dashboard; the reward mechanics deliberately
+   left behind. There is no streak count, no flame, no badge and no points
+   anywhere in here. A missed day is an empty cell — it is not styled as a
+   failure, and nothing tallies it. */
+
+.month {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+
+.month__cell {
+  aspect-ratio: 1;
+  border-radius: 5px;
+  background: var(--ivory-sunk);
+}
+
+.month__cell--on {
+  background: var(--sage);
+}
+
+/* Days that have not happened yet. Fainter, so the grid does not read as a
+   month of misses. */
+.month__cell--future {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.month__cell--today {
+  box-shadow: inset 0 0 0 1.5px var(--green);
+}
+
+.trend {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 46px;
+  margin-top: 16px;
+}
+
+.trend__bar {
+  flex: 1;
+  border-radius: 2px 2px 0 0;
+  background: var(--sage-soft);
+}
+
+/* ══ the entry experience ═════════════════════════════════════════════════ */
+
+/* The Basmala. Ivory, empty, and slow. No gradient, no particles, no logo
+   animation — the only motion in the whole screen is one opacity ramp. */
+
+.opening {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--ivory);
+  padding: 40px;
+  transition: opacity 420ms var(--ease);
+}
+
+.opening--out {
+  opacity: 0;
+}
+
+.opening__basmala {
+  font-family: var(--arabic);
+  font-size: clamp(26px, 7vw, 38px);
+  line-height: 2.1;
+  text-align: center;
+  color: var(--ink);
+  animation-name: basmala;
+  animation-timing-function: var(--ease);
+  animation-fill-mode: both;
+}
+
+@keyframes basmala {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.opening__brand {
+  position: absolute;
+  bottom: 46px;
+  font-family: var(--serif);
+  font-size: 14px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  animation: basmala 2400ms var(--ease) both;
+}
+
+/* The moment is the PAUSE, not the animation. Someone who cannot tolerate
+   motion gets the same beat, at full opacity, rather than a skipped screen. */
+@media (prefers-reduced-motion: reduce) {
+  .opening__basmala,
+  .opening__brand {
+    animation: none;
+    opacity: 1;
+  }
+  .opening {
+    transition: none;
+  }
+}
+
+.onboard__count {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+  margin-bottom: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.choice--tight .choice__item {
+  padding: 13px 16px;
+}
+
+/* Selection is never colour alone: border, background AND a check mark, plus
+   aria-pressed for anyone reading none of them. */
+.choice__item.is-on {
+  border-color: var(--green);
+  background: var(--green-soft);
+}
+
+.choice__item.is-on .choice__tick {
+  opacity: 1;
+}
+
+/* ── MY JOURNEY ───────────────────────────────────────────────────────── */
+
+.journey {
+  margin-top: 6px;
+}
+
+.journey__list {
+  margin-top: 14px;
+}
+
+.journey__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.journey__row:last-child {
+  border-bottom: none;
+}
+
+.journey__key {
+  font-size: 13px;
+  color: var(--ink-2);
+  flex: none;
+}
+
+.journey__val {
+  font-family: var(--serif);
+  font-size: 17px;
+  text-align: right;
+  color: var(--ink);
+}
+
+/* ── journey ready ───────────────────────────────────────────────────── */
+
+.ready__mark {
+  color: var(--amber);
+}
+
+.ready__steps {
+  margin-top: 14px;
+}
+
+.ready__step {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+}
+
+.ready__step-name {
+  font-family: var(--serif);
+  font-size: 19px;
+  color: var(--ink);
+}
+
+.ready__step-min {
+  font-size: 13px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.ready__week,
+.ready__path {
+  font-size: 15px;
+  color: var(--ink);
+  margin-top: 8px;
+}
+
+.ready__path {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ready__path-mark {
+  display: inline-flex;
+  color: var(--green);
+}
+
+/* ── achievement badges ──────────────────────────────────────────────────
+   One design, three states. `blocked` is the one most systems get wrong: it
+   looks locked AND says plainly that the feature does not exist, because a
+   badge you can work toward and a badge nobody can earn must not look the
+   same. No rainbow, no tiers, no progress rings, no percentages. */
+
+.badges {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.badges--row {
+  flex-direction: row;
+  gap: 10px;
+}
+
+.badge {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px 16px;
+  border-radius: var(--r-soft);
+  background: var(--card);
+  box-shadow: var(--lift);
+}
+
+.badges--row .badge {
+  flex: 1;
+  flex-direction: column;
+  text-align: center;
+  gap: 8px;
+  padding: 16px 10px;
+}
+
+.badge__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--ivory-sunk);
+  color: var(--ink-3);
+}
+
+/* Earned: emerald mark, a hairline of gold. Restrained — a quiet mark of
+   something done, not a trophy. */
+.badge--earned .badge__mark {
+  background: var(--green-soft);
+  color: var(--green);
+  box-shadow: inset 0 0 0 1px var(--amber-soft);
+}
+
+.badge--earned {
+  box-shadow: var(--lift), inset 0 0 0 1px var(--amber-soft);
+}
+
+.badge--blocked {
+  opacity: 0.62;
+}
+
+.badge__text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.badge__name {
+  font-family: var(--serif);
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.badges--row .badge__name {
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.badge__how {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+/* A section-header action that is a button but must read as a link. */
+button.link {
+  color: var(--green);
 }

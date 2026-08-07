@@ -1,0 +1,137 @@
+{
+  "_meta": {
+    "version": "0.1",
+    "purpose": "A small curated set of authenticated hadith about the Qur'an, recitation, and seeking knowledge. One is shown per day on the Today screen.",
+    "SOURCING_RULE": "Every entry cites a named collection and a reference number. Nothing here is generated, paraphrased into the Prophet's mouth, or attributed loosely. A hadith with no citation does not go in this file - there is no 'well known' exemption.",
+    "status_pattern": "Same as the tajweed registry: every entry ships status='draft' and is withheld in production until a qori has checked BOTH the wording and the reference. content.hadith.today() returns None when nothing is reviewed, and the card is simply not drawn.",
+    "authored_by": "compiled, UNREVIEWED",
+    "review_required": true,
+    "REVIEW_WARNING": "The Arabic, the translations and the reference numbers below were compiled from memory of the standard collections, NOT transcribed from a copy of them. Numbering differs between editions - al-Bukhari in particular is numbered differently by Fath al-Bari, the Sultaniyya and the common printed editions - so every `ref` must be checked against the specific edition the reviewer holds, and corrected there rather than here. Treat the grading field the same way: it records what the collection itself claims, and a reviewer confirms it.",
+    "why_not_more": "The set is deliberately short. A larger list compiled the same way is a larger surface of unverified citations, and the daily card only needs enough that it does not repeat within a season. More entries are cheap to add ONCE a reviewed source is to hand.",
+    "translation_note": "The uz and ru lines are renderings of the meaning, labelled as such on the card. They are not the hadith and must not be presented as its words.",
+    "selection": "Deterministic by date - see hadith.py. Not random: a card that changes when you reopen the app reads as decoration rather than as the day's reading.",
+    "count": 12
+  },
+  "hadith": [
+    {
+      "id": "bukhari-5027",
+      "status": "draft",
+      "collection": "Sahih al-Bukhari",
+      "ref": "5027",
+      "grading": "sahih",
+      "ar": "خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ",
+      "uz": "«Sizlarning eng yaxshingiz — Qurʼonni oʻrgangan va uni oʻrgatgan kishidir.»",
+      "ru": "«Лучший из вас тот, кто изучил Коран и обучил ему других.»"
+    },
+    {
+      "id": "muslim-804",
+      "status": "draft",
+      "collection": "Sahih Muslim",
+      "ref": "804",
+      "grading": "sahih",
+      "ar": "اقْرَءُوا الْقُرْآنَ فَإِنَّهُ يَأْتِي يَوْمَ الْقِيَامَةِ شَفِيعًا لِأَصْحَابِهِ",
+      "uz": "«Qurʼonni oʻqinglar, chunki u qiyomat kuni oʻz sohiblariga shafoatchi boʻlib keladi.»",
+      "ru": "«Читайте Коран, ибо в День воскресения он придёт заступником за тех, кто его читал.»"
+    },
+    {
+      "id": "bukhari-4937",
+      "status": "draft",
+      "collection": "Sahih al-Bukhari",
+      "ref": "4937",
+      "grading": "sahih",
+      "ar": "الَّذِي يَقْرَأُ الْقُرْآنَ وَهُوَ مَاهِرٌ بِهِ مَعَ السَّفَرَةِ الْكِرَامِ الْبَرَرَةِ، وَالَّذِي يَقْرَأُ الْقُرْآنَ وَيَتَتَعْتَعُ فِيهِ وَهُوَ عَلَيْهِ شَاقٌّ لَهُ أَجْرَانِ",
+      "uz": "«Qurʼonni mohirlik bilan oʻqiydigan kishi ulugʻ va yaxshi farishtalar bilan birga boʻladi. Qurʼonni duduqlanib, qiynalib oʻqiydigan kishiga esa ikki ajr bor.»",
+      "ru": "«Тот, кто читает Коран искусно, — с благородными и покорными ангелами. А тому, кто читает Коран с запинками, и это ему тяжело, — двойная награда.»"
+    },
+    {
+      "id": "tirmidhi-2910",
+      "status": "draft",
+      "collection": "Jami' at-Tirmidhi",
+      "ref": "2910",
+      "grading": "hasan sahih",
+      "ar": "مَنْ قَرَأَ حَرْفًا مِنْ كِتَابِ اللَّهِ فَلَهُ بِهِ حَسَنَةٌ، وَالْحَسَنَةُ بِعَشْرِ أَمْثَالِهَا",
+      "uz": "«Kim Allohning Kitobidan bir harf oʻqisa, unga bir yaxshilik bor; har bir yaxshilik esa oʻn baravar qilib beriladi.»",
+      "ru": "«Кто прочтёт одну букву из Книги Аллаха, тому за неё — доброе дело, а доброе дело воздаётся десятикратно.»"
+    },
+    {
+      "id": "muslim-817",
+      "status": "draft",
+      "collection": "Sahih Muslim",
+      "ref": "817",
+      "grading": "sahih",
+      "ar": "إِنَّ اللَّهَ يَرْفَعُ بِهَذَا الْكِتَابِ أَقْوَامًا وَيَضَعُ بِهِ آخَرِينَ",
+      "uz": "«Alloh bu Kitob sababli bir qavmlarni yuksaltiradi, boshqalarni esa tushiradi.»",
+      "ru": "«Поистине, Аллах возвышает этой Книгой одних людей и принижает ею других.»"
+    },
+    {
+      "id": "bukhari-5065",
+      "status": "draft",
+      "collection": "Sahih al-Bukhari",
+      "ref": "5065",
+      "grading": "sahih",
+      "ar": "زَيِّنُوا الْقُرْآنَ بِأَصْوَاتِكُمْ",
+      "uz": "«Qurʼonni ovozlaringiz bilan bezanglar.»",
+      "ru": "«Украшайте Коран своими голосами.»"
+    },
+    {
+      "id": "muslim-2699",
+      "status": "draft",
+      "collection": "Sahih Muslim",
+      "ref": "2699",
+      "grading": "sahih",
+      "ar": "وَمَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ",
+      "uz": "«Kim ilm izlab bir yoʻlga chiqsa, Alloh unga jannatga eltuvchi yoʻlni oson qiladi.»",
+      "ru": "«Кто вступит на путь в поисках знания, тому Аллах облегчит путь в Рай.»"
+    },
+    {
+      "id": "bukhari-5033",
+      "status": "draft",
+      "collection": "Sahih al-Bukhari",
+      "ref": "5033",
+      "grading": "sahih",
+      "ar": "تَعَاهَدُوا هَذَا الْقُرْآنَ، فَوَالَّذِي نَفْسُ مُحَمَّدٍ بِيَدِهِ لَهُوَ أَشَدُّ تَفَلُّتًا مِنَ الْإِبِلِ فِي عُقُلِهَا",
+      "uz": "«Bu Qurʼonni doimo takrorlab turinglar. Muhammadning joni Qoʻlida boʻlgan Zot bilan qasamki, u boylangan tuyadan ham tezroq qochib ketadi.»",
+      "ru": "«Повторяйте этот Коран постоянно. Клянусь Тем, в Чьей руке душа Мухаммада, он ускользает быстрее, чем верблюд из своих пут.»"
+    },
+    {
+      "id": "abudawud-1464",
+      "status": "draft",
+      "collection": "Sunan Abi Dawud",
+      "ref": "1464",
+      "grading": "hasan sahih",
+      "ar": "يُقَالُ لِصَاحِبِ الْقُرْآنِ: اقْرَأْ وَارْتَقِ وَرَتِّلْ كَمَا كُنْتَ تُرَتِّلُ فِي الدُّنْيَا",
+      "uz": "«Qurʼon sohibiga aytiladi: “Oʻqi va koʻtaril, dunyoda tartil bilan oʻqiganingdek tartil bilan oʻqi.”»",
+      "ru": "«Обладателю Корана будет сказано: “Читай и восходи, и читай размеренно, как читал ты в этом мире.”»"
+    },
+    {
+      "id": "bukhari-5054",
+      "status": "draft",
+      "collection": "Sahih al-Bukhari",
+      "ref": "5054",
+      "grading": "sahih",
+      "ar": "مَثَلُ الْمُؤْمِنِ الَّذِي يَقْرَأُ الْقُرْآنَ كَمَثَلِ الْأُتْرُجَّةِ، رِيحُهَا طَيِّبٌ وَطَعْمُهَا طَيِّبٌ",
+      "uz": "«Qurʼon oʻqiydigan moʻminning misoli turunj mevasiga oʻxshaydi: hidi ham yoqimli, taʼmi ham yoqimli.»",
+      "ru": "«Верующий, который читает Коран, подобен цитрону: и запах его приятен, и вкус его приятен.»"
+    },
+    {
+      "id": "muslim-2664",
+      "status": "draft",
+      "collection": "Sahih Muslim",
+      "ref": "2664",
+      "grading": "sahih",
+      "ar": "احْرِصْ عَلَى مَا يَنْفَعُكَ وَاسْتَعِنْ بِاللَّهِ وَلَا تَعْجَزْ",
+      "uz": "«Senga foyda beradigan narsaga intil, Allohdan yordam soʻra va ojizlik qilma.»",
+      "ru": "«Стремись к тому, что приносит тебе пользу, проси помощи у Аллаха и не опускай рук.»"
+    },
+    {
+      "id": "bukhari-6464",
+      "status": "draft",
+      "collection": "Sahih al-Bukhari",
+      "ref": "6464",
+      "grading": "sahih",
+      "ar": "أَحَبُّ الْأَعْمَالِ إِلَى اللَّهِ أَدْوَمُهَا وَإِنْ قَلَّ",
+      "uz": "«Allohga eng suyukli amal — oz boʻlsa ham, doimiy boʻlganidir.»",
+      "ru": "«Самые любимые Аллаху дела — те, что совершаются постоянно, даже если их мало.»"
+    }
+  ]
+}
