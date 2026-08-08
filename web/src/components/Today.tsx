@@ -8,46 +8,67 @@ import {
   history,
   suraAyat,
 } from "../lib/api";
-import { Lang, sinceLabel, t } from "../lib/i18n";
-import DailyPlan, { PlanStep, buildPlan } from "./DailyPlan";
+import { Lang, dateline, greeting, sinceLabel, t } from "../lib/i18n";
 import DailyHadith from "./DailyHadith";
-import WeekStats from "./WeekStats";
+import JourneyRail from "./JourneyRail";
+import TutorCard from "./TutorCard";
+import { RankCard, StatsRow, WeekRow } from "./Standing";
 import { RecentAchievements } from "./Achievements";
 import { recent, signalsFrom } from "../lib/achievements";
+import { totals as totalsOf } from "../lib/progress";
 import { hasJourney, storedJourney } from "../lib/journey";
 import { Blank, Loading } from "./States";
-import { ArchOrnament, BookOrnament, Chevron } from "./Ornament";
+import { ArchOrnament, Chevron } from "./Ornament";
 
 /**
- * TODAY — the screen the app opens on.
+ * HOME — the screen the app opens on.
  *
- * Five sections, top to bottom: where you left off, a plan for the day, the
- * daily verse, learning, and the week. That is the reference design's order and
- * it is a good one — it moves from the specific thing to resume, out to the
- * shape of the day, then to something to sit with, and only then to anything
- * resembling a number.
+ * ── THE ORDER, AND WHY IT IS THIS ORDER ────────────────────────────────────
  *
- * EVERY MODULE IS BACKED BY REAL DATA OR IT IS NOT DRAWN. This was already the
- * rule here before the restyle and the restyle does not get to relax it — the
- * new sections are the ones most exposed to it, because a plan, a course card
- * and a statistics panel are all things that look complete the instant they are
- * drawn with invented contents.
+ *   greeting     who you are and when it is. One line, no card.
+ *   continue     the ONE lit card on the screen: the ayah you were on, set
+ *                large enough to actually read, and the button that resumes it
+ *   figures      streak, hasanat, ayat, time — four counters, real or zero
+ *   rank         the named stage and the distance to the next
+ *   week         seven days, three shapes
+ *   journey      the suras that come next, as a rail
+ *   hadith       the day's narration, cited, or nothing at all
+ *   tutor        what the guidance is, with no face on it
+ *   badges       earned only
  *
- *   hero      the place stored when they last chose an ayah. Progress and
- *             minutes-remaining come from the engine's own per-ayah estimate.
- *             With no stored place there is nothing to continue, so the card
- *             becomes an invitation — designed, not a grey box.
- *   plan      derived from that same place. See DailyPlan.
- *   verse     a real ayah, cited. See Reflection.
- *   learning  THERE IS NO COURSE CONTENT. The card is an honest empty state at
- *             the same visual weight, with no modules, hours, percentage or
- *             difficulty label attached to nothing.
- *   week      counted from real attempts, or a designed empty state. See
- *             WeekStats.
+ * It descends from the specific to the general, and the descent is the design:
+ * one thing to do now, then the shape of your practice, then the wider path.
+ * A learner who reads only the first card has still been given the answer to
+ * the question they opened the app with.
  *
- * "Last practiced N ago" is read off the newest attempt's real timestamp, and
- * omitted entirely when there is none rather than defaulted to something
- * plausible.
+ * ── EVERY MODULE IS BACKED BY REAL DATA OR IT IS NOT DRAWN ─────────────────
+ *
+ * This was the rule here before the visual overhaul and the overhaul does not
+ * relax it. It is now the rule under MORE pressure, not less: a gamification
+ * layer is the easiest place in a product to draw a number that looks finished
+ * the instant it is drawn. Where a section can be built from real rows it is;
+ * where it cannot, it is absent:
+ *
+ *   continue   the stored place, with progress and remaining time from the
+ *              engine's own per-ayah estimate. With nothing stored the card
+ *              becomes a designed invitation, not a grey box.
+ *   figures    counted in lib/progress.ts from attempts. Zeroes are DRAWN and
+ *              styled — see the note in Standing.tsx for why these show zero
+ *              where the week card hides itself.
+ *   rank       a band of that same XP. Nothing awards XP for opening the app.
+ *   journey    mushaf order from where you are. Absent with no place stored,
+ *              because there is nothing for a suggestion to be relative to.
+ *   hadith     reviewed entries only; null is a real answer and draws nothing.
+ *   badges     earned only, from real history.
+ *
+ * THE LEARNING CARD IS GONE FROM THIS SCREEN. It used to sit here as an honest
+ * empty state saying no course exists. That was the right call while Home had
+ * five sections; with nine it became a paragraph of apology in the middle of
+ * the screen. The same refusal still lives in the Learn tab, in the same words,
+ * which is where someone looking for a course will go.
+ *
+ * "Last practiced N ago" is read off the newest attempt's real timestamp and
+ * omitted entirely when there is none.
  */
 
 export default function Today({
@@ -57,6 +78,7 @@ export default function Today({
   consented,
   onResume,
   onPick,
+  onOpenSura,
   onBrowse,
   onViewAchievements,
 }: {
@@ -67,12 +89,12 @@ export default function Today({
   consented: boolean;
   onResume: (sura: number, aya: number) => void;
   onPick: (sura: number, aya: number) => void;
+  onOpenSura: (sura: number) => void;
   onBrowse: () => void;
   /** Open the full achievement wall, which lives in Profile. */
   onViewAchievements: () => void;
 }) {
   const [ayah, setAyah] = useState<AyahBrief | null>(null);
-  const [prev, setPrev] = useState<AyahBrief | null>(null);
   const [next, setNext] = useState<AyahBrief | null>(null);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -99,7 +121,6 @@ export default function Today({
         if (!alive) return;
         setTotal(got.n_ayat);
         setAyah(got.ayat.find((a) => a.aya === place.aya) ?? null);
-        setPrev(got.ayat.find((a) => a.aya === place.aya - 1) ?? null);
         setNext(got.ayat.find((a) => a.aya === place.aya + 1) ?? null);
       })
       .catch(() => alive && setAyah(null))
@@ -121,7 +142,7 @@ export default function Today({
 
   useEffect(() => {
     if (!consented) return setRows([]);
-    history(60)
+    history(200)
       .then(setRows)
       .catch(() => setRows([]));
   }, [consented]);
@@ -133,39 +154,59 @@ export default function Today({
     ? sinceLabel(lang, new Date(lastDated.created_at))
     : "";
 
-  const percent =
-    ayah && total > 0 ? Math.round((ayah.aya / total) * 100) : 0;
-
-  const plan: PlanStep[] =
-    sura && ayah ? buildPlan(lang, sura, ayah, prev) : [];
+  const percent = ayah && total > 0 ? Math.round((ayah.aya / total) * 100) : 0;
+  const totals = totalsOf(rows ?? []);
 
   return (
     <>
-      {/* ── 1. HERO ──────────────────────────────────────────────────── */}
-      <header className="section-head section-head--hero">
-        <div>
-          <p className="section-label">{t(lang, "today_kicker")}</p>
-          <h2 className="section-title section-title--hero">
-            {t(lang, "today_title")}
-          </h2>
-        </div>
-        {/* Only when there is a real timestamp behind it. */}
-        {since && <p className="section-aside">{since}</p>}
+      {/* ── GREETING ─────────────────────────────────────────────────────
+             Not in a card. The one piece of type on this screen that sits
+             directly on the atmosphere, which is what makes the first card
+             below it read as the first LAYER rather than as the first item. */}
+      <header className="greet">
+        <h2 className="greet__line">{greeting(lang)}</h2>
+        <p className="greet__meta">
+          {dateline(lang)}
+          {since && <span className="greet__since"> · {since}</span>}
+        </p>
       </header>
 
+      {/* ── 1. CONTINUE ─────────────────────────────────────────────────── */}
       {loading ? (
         <div className="card">
           <Loading rows={3} />
         </div>
       ) : place && sura && ayah ? (
-        <article className="card hero">
-          <p className="hero__caps">
-            {t(lang, "hero_surah")
-              .replace("{n}", String(sura.number))
-              .replace("{name}", sura.translit)}
+        <article className="card card--hero hero">
+          <div className="hero__label">
+            <div>
+              <p className="section-label">{t(lang, "home_continue_kicker")}</p>
+              <h3 className="hero__name">{sura.translit}</h3>
+              <p className="hero__meaning">{sura.uz}</p>
+            </div>
+            {/* The sura's own name, in Arabic, at display size. It is the
+                card's mark — which is why it is set as type and not as an
+                icon. */}
+            <span className="hero__sura-ar" dir="rtl" lang="ar">
+              {sura.name_ar}
+            </span>
+          </div>
+
+          <p className="hero__ar" dir="rtl" lang="ar">
+            {ayah.uthmani}
           </p>
-          <h3 className="hero__name">{sura.uz}</h3>
-          <p className="hero__sub">
+
+          <div className="progress-row">
+            <span className="progress__end">{ayah.aya}</span>
+            <div className="progress" aria-hidden="true">
+              <span
+                className="progress__fill"
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+            <span className="progress__end">{total}</span>
+          </div>
+          <p className="progress__text">
             {t(lang, "hero_verse_of")
               .replace("{n}", String(ayah.aya))
               .replace("{of}", String(total))}
@@ -173,58 +214,57 @@ export default function Today({
             {t(lang, "hero_remaining").replace("{t}", secs(lang, ayah.seconds))}
           </p>
 
-          <p className="hero__ar" dir="rtl" lang="ar">
-            {ayah.uthmani}
-          </p>
-
-          <p className="progress__pct">{percent}%</p>
-          <div className="progress-row">
-            <span className="progress__end">{ayah.aya}</span>
-            <div className="progress" aria-hidden="true">
-              <span className="progress__fill" style={{ width: `${percent}%` }} />
-            </div>
-            <span className="progress__end">{total}</span>
-          </div>
-
-          <div className="hero__foot">
-            <button
-              className="btn-primary hero__go"
-              onClick={() => onResume(place.sura, place.aya)}
-            >
-              <span className="hero__go-mark" aria-hidden="true">
-                <Chevron size={14} />
-              </span>
-              {t(lang, "today_resume")}
-            </button>
-            {/* Unattributed by design. It is the app's own aside, not a
-                quotation, so there is no one to credit and nothing to
-                misattribute. */}
-            <p className="hero__aside">{t(lang, "today_aside")}</p>
-          </div>
+          <button
+            className="btn-primary hero__go"
+            onClick={() => onResume(place.sura, place.aya)}
+          >
+            {t(lang, "home_continue_cta")}
+            <span className="hero__go-mark" aria-hidden="true">
+              <Chevron size={15} />
+            </span>
+          </button>
         </article>
       ) : (
-        <article className="card">
+        <article className="card card--hero">
           <Blank
             title={t(lang, "today_first_title")}
             body={t(lang, "today_first_body")}
-            action={t(lang, "today_first_action")}
+            action={t(lang, "home_begin_cta")}
             onAction={onBrowse}
             ornament={<ArchOrnament className="blank__ornament" size={40} />}
           />
         </article>
       )}
 
-      {/* ── 2. THE DAY ───────────────────────────────────────────────── */}
-      <DailyPlan lang={lang} steps={plan} onOpen={onPick} />
+      {/* ── 2. THE FIGURES ──────────────────────────────────────────────
+             Only where there is history to count, or the possibility of any.
+             With retention declined there is no history and never will be, so
+             the whole block is absent rather than showing four permanent
+             zeroes that the learner has no way to move. Profile is where that
+             gets changed. */}
+      {consented && rows !== null && (
+        <>
+          <StatsRow lang={lang} totals={totals} />
+          <RankCard lang={lang} totals={totals} />
+          <WeekRow lang={lang} rows={rows} />
+        </>
+      )}
 
-      {/* ── 3. THE DAY'S HADITH ──────────────────────────────────────────
-             Replaced the daily verse card. Every entry is authenticated and
-             carries its collection and reference number; nothing is generated
-             and nothing is attributed loosely. The card draws nothing at all
-             when the server has nothing reviewed to give it, which in
-             production is currently always — see DailyHadith and
-             content/hadith.py. The heading goes with it, so an absent hadith
-             does not leave a section title over empty space. */}
+      {/* ── 3. YOUR JOURNEY ─────────────────────────────────────────────── */}
+      <JourneyRail
+        lang={lang}
+        suras={suras}
+        from={place?.sura ?? null}
+        onOpen={onOpenSura}
+      />
+
+      {/* ── 4. THE DAY'S HADITH ──────────────────────────────────────────
+             Every entry is authenticated and carries its collection and
+             reference number; nothing is generated and nothing is attributed
+             loosely. The card draws nothing at all when the server has nothing
+             reviewed to give it, which in production is currently always — see
+             DailyHadith and content/hadith.py. The heading goes with it, so an
+             absent hadith does not leave a section title over empty space. */}
       {hadith && (
         <section className="today__block">
           <header className="section-head">
@@ -237,48 +277,15 @@ export default function Today({
         </section>
       )}
 
-      {/* ── 4. LEARNING ──────────────────────────────────────────────────
-             NO COURSE EXISTS, so no course card is drawn. The reference puts a
-             progress bar, a percentage, a difficulty label and a module count
-             here; every one of those would be describing something that has not
-             been made. It gets the section heading and a card of the same
-             weight saying plainly that the work is not done — the same refusal
-             Soon.tsx already makes for the Learn tab, in the same words. */}
-      <section className="today__block">
-        <header className="section-head">
-          <div>
-            <p className="section-label">{t(lang, "learning_kicker")}</p>
-            <h2 className="section-title">{t(lang, "learning_title")}</h2>
-          </div>
-        </header>
-        <article className="card">
-          <Blank
-            title={t(lang, "learn_title")}
-            body={t(lang, "learn_body")}
-            ornament={<BookOrnament className="blank__ornament" size={40} />}
-          />
-        </article>
-      </section>
+      {/* ── 5. THE TUTOR ────────────────────────────────────────────────── */}
+      <TutorCard
+        lang={lang}
+        onStart={() =>
+          place ? onResume(place.sura, place.aya) : onBrowse()
+        }
+      />
 
-      {/* ── 5. THE WEEK ──────────────────────────────────────────────── */}
-      {consented && (
-        <section className="today__block">
-          <header className="section-head">
-            <div>
-              <p className="section-label">{t(lang, "stats_kicker")}</p>
-              <h2 className="section-title">{t(lang, "stats_title")}</h2>
-            </div>
-          </header>
-          <WeekStats
-            lang={lang}
-            rows={rows}
-            consented={consented}
-            onBrowse={onBrowse}
-          />
-        </section>
-      )}
-
-      {/* ── RECENT ACHIEVEMENTS ──────────────────────────────────────────
+      {/* ── 6. BADGES ────────────────────────────────────────────────────
              A preview of three EARNED badges and a way to the full wall, which
              lives in Profile. Absent entirely until something has been earned:
              a row of grey placeholders on the screen that answers "what do I do
@@ -295,7 +302,7 @@ export default function Today({
         onViewAll={onViewAchievements}
       />
 
-      {/* ── suggested next ───────────────────────────────────────────── */}
+      {/* ── suggested next ayah ─────────────────────────────────────────── */}
       {next && sura && (
         <section className="today__block">
           <p className="section-label">{t(lang, "today_next")}</p>

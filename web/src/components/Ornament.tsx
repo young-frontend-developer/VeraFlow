@@ -114,38 +114,101 @@ const icon = (children: React.ReactNode) => (
   </svg>
 );
 
+/**
+ * FIVE ICONS THAT ARE NOT THE STOCK FIVE.
+ *
+ * Every app in this category ships a house, an open book, a bar chart and a
+ * graduation cap, and the result is that they are all recognisably the same
+ * app. These are drawn from the same Timurid vocabulary as the ornaments above,
+ * on the same 20px grid at the same hairline weight, so the row reads as one
+ * hand — and so the nav belongs to this app rather than to the icon pack.
+ *
+ *   home      a mihrab arch under a lintel — the niche you stand in
+ *   practice  an open mushaf with the ayah rule down its centre
+ *   tutor     a microphone. The one literal glyph in the set, because the
+ *             centre button must not be a puzzle
+ *   progress  a rising path with the eight-point star at its summit
+ *   learn     a hanging qandil — the mosque lamp, which is what "learning"
+ *             looks like in this visual tradition and not what it looks like
+ *             in a stock icon set
+ */
 export const TabIcon = {
-  today: icon(
+  home: icon(
     <>
-      <circle cx="10" cy="10" r="6.8" />
-      <path d="M10 6.2V10l2.6 1.6" />
+      <path d="M4.2 16.8V9.4a5.8 5.8 0 0 1 11.6 0v7.4" />
+      <path d="M7.6 16.8v-7a2.4 2.4 0 0 1 4.8 0v7" />
+      <path d="M2.8 16.8h14.4" />
     </>,
   ),
-  // A MICROPHONE, because Practice is the record action and it is the centre
-  // of the pill. It was an arch - the same mark the empty states use - which
-  // said nothing about what the tab does.
   practice: icon(
     <>
-      <rect x="7.4" y="3" width="5.2" height="9" rx="2.6" />
-      <path d="M4.8 9.6a5.2 5.2 0 0 0 10.4 0" />
-      <path d="M10 14.8v2.4" />
+      <path d="M10 5.4v10.2" />
+      <path d="M10 5.4c-1.6-1-3.4-1.3-5.7-1.2v9.9c2.3-.1 4.1.2 5.7 1.2" />
+      <path d="M10 5.4c1.6-1 3.4-1.3 5.7-1.2v9.9c-2.3-.1-4.1.2-5.7 1.2" />
     </>,
   ),
+  // A MICROPHONE, because the centre is the record action. Kept literal on
+  // purpose: it is the one control the whole bar is arranged around.
+  tutor: (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="9" y="3" width="6" height="10.4" rx="3" />
+      <path d="M5.6 11.4a6.4 6.4 0 0 0 12.8 0" />
+      <path d="M12 17.8v3" />
+    </svg>
+  ),
+  progress: icon(
+    <>
+      <path d="M3 15.4l3.6-3.9 2.8 2.2 3.4-4.5" />
+      <path d="M15.4 4.2l1.1 2.2 2.2 1.1-2.2 1.1-1.1 2.2-1.1-2.2-2.2-1.1 2.2-1.1z" />
+    </>,
+  ),
+  // A QALAM - THE CUT REED, not a ballpoint and not a quill.
+  //
+  // The previous version was a generic stylus: a plain tapered barrel with a
+  // collar, which is the shape of every "edit" icon ever drawn. A qalam is a
+  // length of reed cut to a chisel nib, and three details are what say so
+  // rather than saying "pen":
+  //
+  //   the NIB is a slanted chisel, not a cone - the oblique cut is the whole
+  //     reason Arabic script has thick and thin strokes at all
+  //   the SPLIT runs back from the nib along the shaft, as a cut reed's does
+  //   the NODES are the two rings across the barrel, which is what makes it
+  //     read as reed rather than as moulded plastic
+  //
+  // Still the only diagonal in the row, which is what keeps it legible at
+  // 20px next to four upright glyphs. The line beneath is the written baseline.
   learn: icon(
     <>
-      <path d="M10 5.6v9.8" />
-      <path d="M10 5.6c-1.5-.9-3.2-1.2-5.4-1.1v9.4c2.2-.1 3.9.2 5.4 1.1" />
-      <path d="M10 5.6c1.5-.9 3.2-1.2 5.4-1.1v9.4c-2.2-.1-3.9.2-5.4 1.1" />
+      {/* The shaft: a REED, so it is a constant-width tube. The previous two
+          attempts both tapered it to a point, and a tapered barrel with a
+          collar is a pencil no matter what the comment above it says. */}
+      <path d="M15.9 3.1 7.4 11.6" />
+      <path d="M13.6 1.9 6.2 9.3" />
+      <path d="M15.9 3.1 13.6 1.9" />
+      {/* The nib: an oblique chisel cut across the end of the tube, which is
+          the whole reason Arabic script has thick and thin strokes. Drawn as a
+          closed wedge with a flat slanted edge — never a cone. */}
+      <path d="M7.4 11.6 6.2 9.3 3.4 13.1l2.2 1.1z" />
+      {/* The slit, running back from the nib as a cut reed's does. */}
+      <path d="M6.8 10.5 4.6 13.6" />
+      {/* The node — the joint that says reed rather than moulded plastic. */}
+      <path d="M11.6 5.6 9.3 4.4" />
+      {/* The written baseline. */}
+      <path d="M3.6 17.3h12.8" />
     </>,
   ),
-  memorize: icon(
-    <>
-      <circle cx="7.6" cy="10" r="4.4" />
-      <circle cx="12.4" cy="10" r="4.4" />
-    </>,
-  ),
-  // A PERSON. The old mark was a circle with a plus through it, which reads as
-  // "add" - the one thing this tab does not do.
+  // A PERSON. Not in the bar any more - it lives behind the settings gear -
+  // but Profile still labels itself with it.
   profile: icon(
     <>
       <circle cx="10" cy="7.3" r="3.1" />
@@ -231,6 +294,24 @@ export function Chevron({ size = 16 }: { size?: number }) {
   );
 }
 
+/** Leave. Not "back" — this exits practice entirely, to the sura list. */
+export function Close({ size = 17 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <path d="M4 4l8 8M12 4l-8 8" />
+    </svg>
+  );
+}
+
 export function Tick({ size = 16 }: { size?: number }) {
   return (
     <svg
@@ -249,7 +330,228 @@ export function Tick({ size = 16 }: { size?: number }) {
   );
 }
 
+/* ── the progress marks ─────────────────────────────────────────────────── */
+/* Streak, hasanat, ayat and time. Four glyphs at one weight on one grid, so
+   the stat row reads as a set rather than as four borrowed pictograms.
+
+   NOTE ON THE FLAME. A flame is the one conventional glyph in here and it is
+   used knowingly: a streak is a widely understood idea and inventing a private
+   symbol for it would make the card a riddle. It is drawn as a single hairline
+   contour rather than as a filled emoji-style blob, which is what keeps it in
+   the same family as the rest. */
+
+const mark = (size: number, children: React.ReactNode) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.35"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    {children}
+  </svg>
+);
+
+export function Flame({ size = 20 }: { size?: number }) {
+  return mark(
+    size,
+    <>
+      <path d="M12 3.2c3.4 3 5.4 5.6 5.4 8.6a5.4 5.4 0 0 1-10.8 0c0-1.4.5-2.6 1.5-3.8.3 1.1.9 1.8 1.7 2.1.4-2.6.8-4.7 2.2-6.9z" />
+      <path d="M12 20.4a2.6 2.6 0 0 1-2.6-2.6c0-1.3.9-2.2 2.6-3.8 1.7 1.6 2.6 2.5 2.6 3.8a2.6 2.6 0 0 1-2.6 2.6z" />
+    </>,
+  );
+}
+
+/** Hasanat. The eight-point star at its smallest, with a spark of light. */
+export function Sparkle({ size = 20 }: { size?: number }) {
+  return mark(
+    size,
+    <>
+      <path d="M12 3.4l1.9 4.1 4.1 1.9-4.1 1.9-1.9 4.1-1.9-4.1L6 9.4l4.1-1.9z" />
+      <path d="M18.2 15.4l.8 1.7 1.7.8-1.7.8-.8 1.7-.8-1.7-1.7-.8 1.7-.8z" />
+    </>,
+  );
+}
+
+/** Ayat completed. A folded page with the ayah rule across it. */
+export function Leaf({ size = 20 }: { size?: number }) {
+  return mark(
+    size,
+    <>
+      <path d="M6 3.6h7.4L18 8.2v12.2H6z" />
+      <path d="M13.4 3.6v4.6H18" />
+      <path d="M9 12.6h6M9 16.2h4" />
+    </>,
+  );
+}
+
+/** Time practised. A dial, not a stopwatch — nothing here is being raced. */
+export function Dial({ size = 20 }: { size?: number }) {
+  return mark(
+    size,
+    <>
+      <circle cx="12" cy="12" r="8.4" />
+      <path d="M12 7.2V12l3.2 2" />
+    </>,
+  );
+}
+
+/* ── the weekly activity glyphs ─────────────────────────────────────────── */
+/* Three states, three DIFFERENT SHAPES — never one shape in three colours. A
+   week strip whose only difference is hue is unreadable to anyone who cannot
+   separate the hues, and this one is read at a glance in a row of seven.
+
+   And no faces. A missed day drawn as a sad face is the app editorialising
+   about someone's week; an open ring says the same fact and says nothing
+   about them. */
+
+export function DayDone({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.16" />
+      <circle
+        cx="12"
+        cy="12"
+        r="10"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+      />
+      <path
+        d="M7.6 12.4 10.6 15.4 16.4 8.8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function DayMissed({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <circle
+        cx="12"
+        cy="12"
+        r="10"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeDasharray="2.6 3.4"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+export function DayPending({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <circle
+        cx="12"
+        cy="12"
+        r="10"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.2"
+      />
+      <circle cx="12" cy="12" r="2.6" fill="currentColor" />
+    </svg>
+  );
+}
+
+/* ── the tutor's mark ───────────────────────────────────────────────────── */
+
+/**
+ * WHAT STANDS IN FOR THE TEACHER.
+ *
+ * Not a face. Not an illustrated one, not a generated one, not a friendly
+ * abstract blob with eyes. This app puts a geometric mark wherever a product
+ * like it would put a headshot, and the rule holds hardest here, on the card
+ * that introduces guidance: a face beside a correction implies a person has
+ * looked at your recitation and formed an opinion of you, and no person has.
+ *
+ * So the tutor is a light. An eight-point khatam with a calligraphic stroke
+ * turning through it — the pen mark and the star, which is what this app
+ * actually is — set inside a ring that glows. It reads as a presence without
+ * pretending to be one.
+ */
+export function TutorMark({ size = 56 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 64 64"
+      fill="none"
+      aria-hidden="true"
+    >
+      <defs>
+        <radialGradient id="tutor-bloom" cx="50%" cy="42%" r="52%">
+          <stop offset="0%" stopColor="#ecca85" stopOpacity="0.42" />
+          <stop offset="100%" stopColor="#d4a853" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <circle cx="32" cy="32" r="30" fill="url(#tutor-bloom)" />
+      <circle
+        cx="32"
+        cy="32"
+        r="25"
+        stroke="currentColor"
+        strokeWidth="0.9"
+        opacity="0.4"
+      />
+      {/* the khatam */}
+      <g stroke="currentColor" strokeWidth="1.1" opacity="0.75">
+        <rect x="20" y="20" width="24" height="24" />
+        <rect x="20" y="20" width="24" height="24" transform="rotate(45 32 32)" />
+      </g>
+      {/* the calligraphic turn — one stroke, thick to thin, as a qalam makes */}
+      <path
+        d="M20.5 38.5c4.6 4.2 10.4 5.2 15.6 2.6 4.4-2.2 6.4-6.4 5-10.2-1.1-3-4.2-4.4-6.6-3.2-2 1-2.6 3.2-1.4 4.8 1 1.3 2.8 1.5 3.9.5"
+        stroke="currentColor"
+        strokeWidth="2.1"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 /* ── top bar ──────────────────────────────────────────────────────────── */
+
+/**
+ * Settings. Where Profile lives now that it is out of the tab row.
+ *
+ * A CLOSED COG, not a hub with spokes. The first version drew eight radiating
+ * strokes around a circle, which at 18px on a dark ground is not a gear — it is
+ * a sun, and it sat in the corner of a screen that already has a brass glow
+ * theme. The teeth are drawn as a single closed outline so the silhouette reads
+ * at a glance instead of resolving into rays.
+ */
+export function Gear({ size = 18 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.25"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M8.6 2.2h2.8l.35 1.9 1.5.87 1.8-.67 1.4 2.42-1.45 1.26v1.74l1.45 1.26-1.4 2.42-1.8-.67-1.5.87-.35 1.9H8.6l-.35-1.9-1.5-.87-1.8.67-1.4-2.42 1.45-1.26V8.98L3.55 7.72l1.4-2.42 1.8.67 1.5-.87z" />
+      <circle cx="10" cy="10" r="2.5" />
+    </svg>
+  );
+}
 
 export function Bookmark({ size = 18 }: { size?: number }) {
   return (

@@ -97,6 +97,12 @@ await ctx.addInitScript(
     localStorage.setItem("tilawah_consent_seen", "1");
     localStorage.setItem("tilawah_consent", "0");
     localStorage.setItem("tilawah_consent_audio", "0");
+    // The entry experience — basmala, welcome, personalisation, journey,
+    // account — runs once on a fresh device and is six screens of clicking
+    // before the app proper. It is not what this script is testing, and
+    // stepping through it was six more selectors to break. Marked done.
+    localStorage.setItem("veyraflow_entry_done", "1");
+    localStorage.setItem("tilawah_auth_seen", "1");
   },
   [SURA, AYA],
 );
@@ -147,47 +153,26 @@ try {
   }
   await shot(page, "01-home");
 
-  // The app opens on TODAY now, not on the picker. Practice is a tab, so get
-  // there first — the seeded place then restores inside it.
-  const practiceTab = page.locator(".tab", { hasText: /Mashq|Практика/ });
-  if (await practiceTab.count()) {
-    await practiceTab.click();
-    await page.waitForTimeout(900);
-  }
-
-  // The seeded place has already opened the sura in verse-by-verse mode. Only
-  // fall back to searching if that restore did not happen.
-  if (!(await page.locator(".modes").count())) {
-    console.log("no restore — falling back to the search box");
-    const search = page.getByPlaceholder(/Sura nomi|Название/);
-    await search.fill(String(SURA));
-    await page.waitForTimeout(500);
-    await page.locator(".row").first().click();
-    await page.locator(".modes").waitFor({ timeout: 20000 });
-  }
-  await page.getByRole("tab", { name: /Oyatma-oyat|По аятам/ }).click();
-  await page.locator(".verse").waitFor({ timeout: 20000 });
-
-  // Step to the ayah under test. Seeding lands it there already, so this is a
-  // correction, not the route — and if it cannot get there, that is a failure
-  // rather than "recite whatever is on screen", which is how a previous run
-  // silently recited into the wrong sura.
-  const currentAya = async () =>
-    Number((await page.locator(".verse__ref").textContent())?.match(/(\d+)\s*$/)?.[1] ?? 0);
-  for (let i = 0; i < 40 && (await currentAya()) !== AYA; i++) {
-    const at = await currentAya();
-    await page.locator(".verse__arrow").nth(at < AYA ? 1 : 0).click();
-    await page.waitForTimeout(250);
-  }
-  const ref = await page.locator(".verse__ref").textContent();
-  console.log(`on verse: ${ref?.trim()}  (want ${SURA}:${AYA})`);
-  if ((await currentAya()) !== AYA) {
-    throw new Error(`could not reach ayah ${AYA}; stuck on "${ref?.trim()}"`);
-  }
-  await shot(page, "02-verse");
-
-  await page.locator(".verse__actions .record").click();
+  // THE CENTRE BUTTON IS PRACTICE NOW. There is no separate "Mashq" tab any
+  // more — it was removed for doing the same thing this button does — and with
+  // a place seeded the button resolves that ayah's range and lands straight in
+  // the recite screen, with no reader in between. So this one click both
+  // navigates and exercises the new centre action.
+  //
+  // The old route (practice tab -> reader -> verse mode -> step with arrows to
+  // the right ayah) is gone with the tab. Its careful ayah-stepping loop went
+  // with it, and the check it existed for did not: landing on the wrong ayah
+  // and reciting into it anyway is still the failure to guard against, so the
+  // assertion below is the same assertion, read off the practice header.
+  await page.locator(".tab--center").click();
+  await page.locator(".ayah-nav").waitFor({ timeout: 30000 });
   await page.locator(".ayah__text").first().waitFor({ timeout: 20000 });
+
+  const ref = (await page.locator(".eyebrow__meta").first().innerText()).trim();
+  console.log(`on ayah: ${ref}  (want ${SURA}:${AYA})`);
+  if (!ref.startsWith(`${SURA}:${AYA}`)) {
+    throw new Error(`landed on "${ref}", wanted ${SURA}:${AYA}`);
+  }
   await shot(page, "02-selected");
 
   // Record. The fake device plays the WAV into getUserMedia in REAL TIME, so

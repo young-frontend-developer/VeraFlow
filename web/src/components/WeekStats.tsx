@@ -35,11 +35,7 @@ import { ArchOrnament } from "./Ornament";
  * learner turned them off, and Profile is where that gets changed.
  */
 
-const DAY_KEYS = [
-  "day_mon", "day_tue", "day_wed", "day_thu", "day_fri", "day_sat", "day_sun",
-] as const;
-
-/** Monday-indexed, because the strip in the design starts on Monday. */
+/** Monday-indexed, because the week starts on Monday here. */
 function mondayIndex(d: Date): number {
   return (d.getDay() + 6) % 7;
 }
@@ -69,17 +65,12 @@ export default function WeekStats({
 
   const now = new Date();
   const weekStart = startOfWeek(now);
-  const today = mondayIndex(now);
 
   // Only rows the server timestamped. A legacy row with no created_at leaves
   // its day unmarked rather than landing on an arbitrary one.
   const dated = rows.filter((r) => Boolean(r.created_at));
   const thisWeek = dated.filter(
     (r) => new Date(r.created_at as string) >= weekStart,
-  );
-
-  const activeDays = new Set(
-    thisWeek.map((r) => mondayIndex(new Date(r.created_at as string))),
   );
 
   const verses = new Set(thisWeek.map((r) => `${r.sura}:${r.aya}`)).size;
@@ -140,24 +131,14 @@ export default function WeekStats({
 
   return (
     <section className="stats card">
-      <ol className="week" aria-label={t(lang, "stats_week_label")}>
-        {DAY_KEYS.map((key, i) => (
-          <li
-            key={key}
-            className={[
-              "week__day",
-              activeDays.has(i) ? "week__day--on" : "",
-              i === today ? "week__day--today" : "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            aria-current={i === today ? "date" : undefined}
-          >
-            <span className="week__letter">{t(lang, key)}</span>
-            <span className="week__dot" aria-hidden="true" />
-          </li>
-        ))}
-      </ol>
+      {/* THE WEEK ROW USED TO BE HERE and it has moved out, to WeekRow in
+          Standing.tsx. Both were drawn on the Progress screen, one above the
+          other, saying the same thing in two visual languages — seven dots and
+          then seven glyphs. WeekRow is the better of the two (three shapes, not
+          one shape in two colours, and it distinguishes a day not yet reached
+          from a day missed), so this one goes rather than being kept for
+          continuity. What remains below is what this card alone can say: the
+          month, the trend, and the week's figures. */}
 
       {/* ── THE MONTH ────────────────────────────────────────────────────
              A calendar grid of the last 5 weeks, one cell per day, filled

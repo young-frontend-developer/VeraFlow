@@ -28,6 +28,29 @@ export function dateline(lang: Lang, d = new Date()): string {
 }
 
 /**
+ * The greeting on Home, by hour of the local day.
+ *
+ * FIVE BANDS, NOT THREE, and the extra two are the point. A generic
+ * morning/afternoon/evening split says nothing a clock does not; these are cut
+ * where the day is actually cut for someone praying through it — the hour
+ * around Bomdod gets "Tong muborak" rather than a flat "good morning", and the
+ * late band after ʿIshāʾ is named as night rather than as evening.
+ *
+ * Deliberately NOT computed from prayer times. Those vary by city and by
+ * method, the app does not know the learner's location, and a greeting that
+ * claims to know when Bomdod is would be wrong for most people most days. The
+ * hours below are an honest approximation and nothing more.
+ */
+export function greeting(lang: Lang, now = new Date()): string {
+  const h = now.getHours();
+  if (h < 6) return t(lang, "greet_dawn");
+  if (h < 11) return t(lang, "greet_morning");
+  if (h < 17) return t(lang, "greet_afternoon");
+  if (h < 21) return t(lang, "greet_evening");
+  return t(lang, "greet_night");
+}
+
+/**
  * "Last practiced N ago", from a real timestamp.
  *
  * Coarse on purpose — hours, then days — because the point is orientation, not
@@ -668,6 +691,130 @@ const STRINGS = {
     // generic
     error_generic: "Xatolik yuz berdi. Qayta urinib koʻring.",
     loading: "Yuklanmoqda",
+
+    // ── the restructured navigation ──────────────────────────────────────
+    nav_home: "Bosh sahifa",
+    nav_tutor: "Ustoz",
+    nav_progress: "Natijalar",
+    nav_settings: "Sozlamalar",
+
+    // ── the greeting. Time of day, in the learner's language, and the
+    //    prayer-adjacent hours are named the way people name them here:
+    //    "tong" is the hour around Bomdod, not merely "early". ─────────────
+    greet_dawn: "Tong muborak",
+    greet_morning: "Xayrli tong",
+    greet_afternoon: "Xayrli kun",
+    greet_evening: "Xayrli kech",
+    greet_night: "Xayrli tun",
+
+    // ── the continue card ────────────────────────────────────────────────
+    home_continue_kicker: "DAVOM ETTIRING",
+    home_continue_cta: "Oʻqishni davom ettirish",
+    home_begin_cta: "Birinchi oyatni tanlash",
+
+    // ── the four figures ─────────────────────────────────────────────────
+    stat_streak: "Ketma-ket kun",
+    stat_hasanat: "Hasanat",
+    stat_ayat: "Oʻqilgan oyat",
+    stat_time: "Mashq vaqti",
+    stat_streak_best: "Eng uzuni: {n}",
+    stat_none_yet: "Hali boshlanmagan",
+    stats_kicker_home: "HISOB",
+    stats_title_home: "Sizning hisobingiz",
+    stats_empty_note:
+      "Birinchi oyatni oʻqiganingizdan soʻng bu raqamlar toʻlib boradi. Hozircha hech narsa oʻylab topilmagan.",
+
+    // ── hasanat. The claim and its source travel together; see the card. ──
+    hasanat_kicker: "HASANAT",
+    hasanat_letters: "{n} harf oʻqildi",
+    hasanat_claim:
+      "«Kim Allohning Kitobidan bir harf oʻqisa, unga bir yaxshilik bor; har bir yaxshilik esa oʻn baravar qilib beriladi.»",
+    // Said plainly, and not in small print: a counter cannot know what is
+    // accepted. It knows how many letters were read.
+    hasanat_caveat:
+      "Bu — oʻqilgan harflar hisobi, ajr haqidagi daʼvo emas. Ajr Alloh huzurida.",
+
+    // ── rank ─────────────────────────────────────────────────────────────
+    rank_kicker: "DARAJA",
+    rank_mubtadi: "Mubtadi",
+    rank_tolib: "Tolib",
+    rank_qori: "Qori",
+    rank_mutqin: "Mutqin",
+    rank_mujavvid: "Mujavvid",
+    rank_mubtadi_note: "Yoʻlning boshi. Kuniga bir oyat ham yetarli.",
+    rank_tolib_note: "Muntazam oʻqiyapsiz — odat shakllanmoqda.",
+    rank_qori_note: "Oyatlarni ravon oʻqiyapsiz.",
+    rank_mutqin_note: "Harflar joyida, oʻqish aniq.",
+    rank_mujavvid_note: "Tajvid bilan, goʻzal oʻqish.",
+    rank_to_next: "{name} darajasigacha {n} XP",
+    rank_top: "Eng yuqori daraja",
+    rank_xp: "{n} XP",
+
+    // ── the week strip ───────────────────────────────────────────────────
+    week_kicker: "SHU HAFTA",
+    week_title: "Haftangiz",
+    day_state_done: "oʻqilgan",
+    day_state_missed: "oʻqilmagan",
+    day_state_pending: "hali oldinda",
+
+    // ── suggested next ───────────────────────────────────────────────────
+    journey_next_kicker: "YOʻLINGIZ",
+    journey_next_title: "Keyingi suralar",
+    journey_ayat_n: "{n} oyat",
+
+    // ── the tutor card ───────────────────────────────────────────────────
+    // No persona, no name, no face. It describes what the tutor DOES, which
+    // is built, rather than who it is, which is nobody.
+    tutor_kicker: "AI USTOZ",
+    tutor_title: "Oʻqing — ustoz tinglaydi",
+    tutor_body:
+      "Oyatni ovoz chiqarib oʻqing. Qaysi harfda, qaysi soʻzda xato boʻlganini aniq koʻrsatadi va uni qanday tuzatishni tushuntiradi.",
+    tutor_cta: "Hozir oʻqish",
+    tutor_no_face:
+      "Bu — dastur, inson emas. Shuning uchun bu yerda hech kimning surati yoʻq.",
+
+    // ── the sura picker ──────────────────────────────────────────────────
+    sura_count_n: "{n} ta sura",
+    filter_all: "Barchasi",
+    filter_makki: "Makkiy",
+    filter_madani: "Madaniy",
+    filter_started: "Boshlangan",
+    place_makki: "Makkiy",
+    place_madani: "Madaniy",
+
+    // ── study mode, per sura ─────────────────────────────────────────────
+    study_mode: "Ish turi",
+    study_read: "Oʻqish",
+    study_memorize: "Yodlash",
+    coming_soon: "Tez orada",
+
+    // ── moving between ayat ──────────────────────────────────────────────
+    // prev_ayah / next_ayah are NOT redefined here: the verse-by-verse reader
+    // already has them, with the same words. The practice arrows point at the
+    // same idea and reuse the same strings.
+    exit_practice: "Suralar roʻyxatiga chiqish",
+
+    // ── appearance ───────────────────────────────────────────────────────
+    theme_label: "Koʻrinish",
+    theme_dark: "Tungi",
+    theme_light: "Kunduzgi",
+    theme_help:
+      "Tungi koʻrinish — chuqur zangori fon, tilla yoritish. Kunduzgi — fil suyagi qogʻoz, lojuvard va guruch ranglari.",
+    settings_section: "SOZLAMALAR",
+    lang_label: "Til",
+
+    // ── the long-ayah fallback ───────────────────────────────────────────
+    // Blames the length, explains what the app did, asks nothing. The learner
+    // never chose this and never chooses a chunk — but they are told when the
+    // range on screen is not the whole ayah, because scoring part of an ayah
+    // as though it were all of it is the one thing worse than the old picker.
+    long_ayah_note:
+      "Bu oyat uzun — hozircha uning boshlangʻich qismi ustida ishlaymiz.",
+    long_wait_note: "Bu oyat uzun, biroz vaqt oladi.",
+
+    // ── the comparison, after the result ─────────────────────────────────
+    compare_mine: "Mening oʻqishim",
+    compare_reciter: "Qori oʻqishi",
   },
 
   ru: {
@@ -1187,6 +1334,102 @@ const STRINGS = {
 
     error_generic: "Произошла ошибка. Попробуйте ещё раз.",
     loading: "Загрузка",
+
+    nav_home: "Главная",
+    nav_tutor: "Наставник",
+    nav_progress: "Прогресс",
+    nav_settings: "Настройки",
+
+    greet_dawn: "Благословенного рассвета",
+    greet_morning: "Доброе утро",
+    greet_afternoon: "Добрый день",
+    greet_evening: "Добрый вечер",
+    greet_night: "Доброй ночи",
+
+    home_continue_kicker: "ПРОДОЛЖИТЬ",
+    home_continue_cta: "Продолжить чтение",
+    home_begin_cta: "Выбрать первый аят",
+
+    stat_streak: "Дней подряд",
+    stat_hasanat: "Хасанат",
+    stat_ayat: "Прочитано аятов",
+    stat_time: "Время практики",
+    stat_streak_best: "Лучший: {n}",
+    stat_none_yet: "Ещё не начато",
+    stats_kicker_home: "СЧЁТ",
+    stats_title_home: "Ваш счёт",
+    stats_empty_note:
+      "Эти числа начнут расти после первого прочитанного аята. Пока здесь ничего не придумано.",
+
+    hasanat_kicker: "ХАСАНАТ",
+    hasanat_letters: "Прочитано букв: {n}",
+    hasanat_claim:
+      "«Кто прочитает одну букву из Книги Аллаха, тому — одно доброе дело, а доброе дело воздаётся десятикратно.»",
+    hasanat_caveat:
+      "Это подсчёт прочитанных букв, а не утверждение о награде. Награда — у Аллаха.",
+
+    rank_kicker: "СТУПЕНЬ",
+    rank_mubtadi: "Мубтади",
+    rank_tolib: "Толиб",
+    rank_qori: "Кори",
+    rank_mutqin: "Муткин",
+    rank_mujavvid: "Муджаввид",
+    rank_mubtadi_note: "Начало пути. Достаточно одного аята в день.",
+    rank_tolib_note: "Вы читаете регулярно — привычка складывается.",
+    rank_qori_note: "Аяты читаются уверенно.",
+    rank_mutqin_note: "Буквы на месте, чтение точное.",
+    rank_mujavvid_note: "С таджвидом, красивое чтение.",
+    rank_to_next: "До ступени «{name}» — {n} XP",
+    rank_top: "Высшая ступень",
+    rank_xp: "{n} XP",
+
+    week_kicker: "НА ЭТОЙ НЕДЕЛЕ",
+    week_title: "Ваша неделя",
+    day_state_done: "прочитано",
+    day_state_missed: "не прочитано",
+    day_state_pending: "ещё впереди",
+
+    journey_next_kicker: "ВАШ ПУТЬ",
+    journey_next_title: "Следующие суры",
+    journey_ayat_n: "{n} аятов",
+
+    tutor_kicker: "ИИ-НАСТАВНИК",
+    tutor_title: "Читайте — наставник слушает",
+    tutor_body:
+      "Прочитайте аят вслух. Наставник покажет, в какой букве и в каком слове была ошибка, и объяснит, как её исправить.",
+    tutor_cta: "Читать сейчас",
+    tutor_no_face:
+      "Это программа, а не человек. Поэтому здесь нет ничьего изображения.",
+
+    sura_count_n: "Сур: {n}",
+    filter_all: "Все",
+    filter_makki: "Мекканские",
+    filter_madani: "Мединские",
+    filter_started: "Начатые",
+    place_makki: "Мекканская",
+    place_madani: "Мединская",
+
+    study_mode: "Режим работы",
+    study_read: "Чтение",
+    study_memorize: "Заучивание",
+    coming_soon: "Скоро",
+
+    exit_practice: "Выйти к списку сур",
+
+    theme_label: "Оформление",
+    theme_dark: "Ночное",
+    theme_light: "Дневное",
+    theme_help:
+      "Ночное — глубокий синий фон и золотое свечение. Дневное — цвет слоновой кости, лазурь и латунь.",
+    settings_section: "НАСТРОЙКИ",
+    lang_label: "Язык",
+
+    long_ayah_note:
+      "Этот аят длинный — пока работаем над его начальной частью.",
+    long_wait_note: "Этот аят длинный, потребуется немного времени.",
+
+    compare_mine: "Моё чтение",
+    compare_reciter: "Чтение чтеца",
   },
 } as const;
 

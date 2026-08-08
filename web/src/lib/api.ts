@@ -317,6 +317,19 @@ export type Attempt = {
    * day unmarked — never guessed.
    */
   created_at?: string | null;
+  /**
+   * Arabic letters in the range that was recited, counted BY THE SERVER from
+   * the Uthmani text — see api/tilawah/content/letters.py, which documents
+   * what counts as a letter against the wording of the hadith the hasanat
+   * total rests on.
+   *
+   * Not computed here, and it must not be: the client holds one sura's text at
+   * a time while history spans many, so deriving it in the browser would mean
+   * estimating — and an estimate with a hadith attached to it is exactly the
+   * thing this app does not ship. Absent on rows from a server that predates
+   * the field, and absent means 0, not "about this many".
+   */
+  letters?: number;
 };
 
 // Anonymous until there is a reason to have accounts. Stored locally so the
@@ -352,13 +365,31 @@ export type Sura = {
    * `includes` against the query folded the same way — see `foldQuery`.
    */
   search: string;
+  /**
+   * "makki" | "madani" — where the sura was revealed, for the picker's filter
+   * pills. Follows the designation printed in the standard Cairo mushaf; see
+   * the provenance note in suras.json's `_meta`.
+   *
+   * MAY BE ABSENT OR EMPTY, from a server built before the column existed.
+   * Treat that as unknown: such a sura matches neither Meccan nor Medinan and
+   * is never sorted into one on a guess.
+   */
+  place?: string;
 };
 
 export const listSuras = () => fetch(`${BASE}/api/suras`).then(json<Sura[]>);
 
-/** Strip what a learner will not type: "Ali 'Imran" gets typed "ali imran". */
+/**
+ * Strip what a learner will not type: "Ali 'Imran" gets typed "ali imran".
+ *
+ * ʻ (U+02BB) and ʼ (U+02BC) are in this set because the Uzbek sura names use
+ * the correct Uzbek letters — "Gʻofir", "Aʼrof" — and nobody has those on a
+ * keyboard. THIS LIST MUST MATCH `STRIP` in api/tools/build_suras.py: that one
+ * folds the haystack, this one folds the query, and if they disagree the two
+ * are normalised differently and nine suras quietly stop being findable.
+ */
 export const foldQuery = (q: string) =>
-  q.toLowerCase().replace(/['’`\-–—]/g, "").trim();
+  q.toLowerCase().replace(/['’`ʻʼ\-–—]/g, "").trim();
 
 export type AyahBrief = {
   aya: number;
@@ -633,6 +664,49 @@ export function apiPredatesContract(info: Meta | null): boolean {
   return !!info && !info.error_fields?.length;
 }
 
+/**
+ * FIELDS A STALE SERVER SILENTLY DROPS, detected from the payloads themselves.
+ *
+ * ── WHY THIS EXISTS, AND WHAT IT COST TO LEARN ────────────────────────────
+ *
+ * `staleApiFields` above only inspects what /api/meta DECLARES, and it only
+ * covers the error object. That leaves a whole class of skew invisible: a
+ * server process started before a column was added keeps answering 200s with a
+ * well-formed payload that is simply missing a field, and every feature built
+ * on that field degrades into looking broken rather than looking stale.
+ *
+ * Both of these were reported as bugs and neither was one:
+ *
+ *   suras.place      the Meccan/Medinan pills "did not filter". They filtered
+ *                    perfectly against a field the running server had never
+ *                    heard of.
+ *   attempts.letters the hasanat counter "stayed at 0" after four recitations.
+ *                    It summed a field that was not being sent.
+ *
+ * In both cases the fix was to restart the API, and in both cases the app gave
+ * no hint of that. It does now.
+ *
+ * DETECTED FROM THE DATA, NOT FROM A VERSION STRING. A version number is a
+ * promise about the payload; the payload is the payload. `some` rather than
+ * `every` because one resolvable row is enough to prove the server knows the
+ * field — a legitimately absent value on a single row is not skew.
+ */
+export function missingPayloadFields(
+  suras: Sura[],
+  rows: Attempt[] | null,
+): string[] {
+  const missing: string[] = [];
+  if (suras.length > 0 && !suras.some((s) => s.place)) {
+    missing.push("suras.place");
+  }
+  // `typeof === "number"` and not truthiness: a range that could not be
+  // resolved contributes a real 0, and that must not read as a missing field.
+  if (rows?.length && !rows.some((r) => typeof r.letters === "number")) {
+    missing.push("attempts.letters");
+  }
+  return missing;
+}
+
 export const meta = () => fetch(`${BASE}/api/meta`).then(json<Meta>);
 
 /**
@@ -703,3 +777,17 @@ export type Hadith = {
 
 export const hadithToday = (lang: string) =>
   fetch(`${BASE}/api/hadith/today?lang=${lang}`).then(json<Hadith | null>);
+
+/**
+ * One named hadith, or null.
+ *
+ * For features that rest on a SPECIFIC narration rather than on the daily
+ * rotation — the hasanat counter and its reward-per-letter claim. The claim and
+ * its source travel together or neither is drawn: null here means the card
+ * shows letters recited and makes no claim about reward, which needs no
+ * citation because it asserts nothing.
+ */
+export const hadithById = (id: string, lang: string) =>
+  fetch(`${BASE}/api/hadith/${encodeURIComponent(id)}?lang=${lang}`).then(
+    json<Hadith | null>,
+  );

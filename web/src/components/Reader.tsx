@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import ReciterSelect from "./ReciterSelect";
 import {
   AyahBrief,
-  Reciter,
   Sura,
   SuraAyat,
   expertAudioUrl,
 } from "../lib/api";
 import { Lang, t } from "../lib/i18n";
+import { Mic } from "./Ornament";
 
 /**
  * Reading a sura, in the two shapes people actually read one.
@@ -48,9 +47,7 @@ export default function Reader({
   onBack,
   onOpenSura,
   busy,
-  reciters,
   reciter,
-  onReciter,
 }: {
   lang: Lang;
   sura: Sura;
@@ -62,14 +59,18 @@ export default function Reader({
   /** Where the learner is. Drives both the marker and the verse pane. */
   focusAya: number | null;
   onFocusAya: (aya: number) => void;
-  onPractise: (a: AyahBrief) => void;
+  /**
+   * Practise this ayah. `record` asks the practice screen to begin recording
+   * as soon as it has resolved the range — that is what makes the verse view's
+   * mic feel inline rather than like a link to somewhere else.
+   */
+  onPractise: (a: AyahBrief, record?: boolean) => void;
   onBack: () => void;
   /** Cross a sura boundary: load another sura and land on `aya`. */
   onOpenSura: (sura: Sura, aya: number) => void;
   busy: boolean;
-  reciters: Reciter[];
+  /** Chosen once in Settings. Resolves the listen button's audio only. */
   reciter: string;
-  onReciter: (id: string) => void;
 }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -149,6 +150,40 @@ export default function Reader({
         </span>
       </div>
 
+      {/* ── STUDY MODE ──────────────────────────────────────────────────
+             Two ways to work on a sura, and only one of them is built.
+
+             Yodlash is drawn, disabled, and labelled "Tez orada". That is the
+             deliberate middle between the two bad options: hiding it entirely
+             hides a planned direction from the person using the app, and
+             wiring it to an empty screen is the fabricated-feature failure the
+             Learn tab already refuses to commit. A tab you can see, cannot
+             press, and which says why is honest about both the plan and the
+             state of it.
+
+             It is a BUTTON with `disabled`, not a div — so it is reachable by
+             keyboard and announced as unavailable rather than being invisible
+             to a screen reader. */}
+      <div className="study" role="tablist" aria-label={t(lang, "study_mode")}>
+        <button
+          role="tab"
+          aria-selected={true}
+          className="study__tab study__tab--on"
+        >
+          {t(lang, "study_read")}
+        </button>
+        <button
+          role="tab"
+          aria-selected={false}
+          className="study__tab study__tab--soon"
+          disabled
+          title={t(lang, "coming_soon")}
+        >
+          {t(lang, "study_memorize")}
+          <span className="study__soon">{t(lang, "coming_soon")}</span>
+        </button>
+      </div>
+
       <div className="modes" role="tablist" aria-label={t(lang, "read_mode")}>
         <button
           role="tab"
@@ -226,7 +261,7 @@ export default function Reader({
     <>
       {header}
 
-      <div className="verse">
+      <div className="verse reader--verse">
         <div className="verse__nav">
           {/* RTL text, LTR controls: previous is on the left because the whole
               interface around it is Latin. Arrows point the way the LEARNER
@@ -290,18 +325,12 @@ export default function Reader({
             </span>
             {playing ? t(lang, "pause") : t(lang, "listen")}
           </button>
-          <button className="record" onClick={() => onPractise(current)}>
-            <span className="record__dot" aria-hidden="true" />
-            {t(lang, "practise_this")}
-          </button>
         </div>
 
-        <ReciterSelect
-          lang={lang}
-          reciters={reciters}
-          value={reciter}
-          onChange={onReciter}
-        />
+        {/* THE RECITER PICKER IS GONE FROM HERE. It is one choice, made once,
+            and it now lives in Settings beside the language — it does not need
+            to be on the screen you read from. The play button above stays: that
+            is a reading aid, not a preference. */}
 
         <audio
           ref={audioRef}
@@ -311,6 +340,49 @@ export default function Reader({
           onError={() => setPlaying(false)}
         />
       </div>
+
+      {/* ── RECORD, WITHOUT LEAVING THE VERSE ────────────────────────────
+             There used to be a "Bu oyatni oʻqish" button down here that took
+             the learner to a different screen, where they then pressed a
+             second button to start recording. Two taps and a screen change
+             between reading a verse and reciting it.
+
+             This is the same pinned control the recording screen uses, in the
+             same place on the viewport, and it starts recording on the first
+             press. The screen behind it does change — the analysis needs the
+             practice range resolved — but the learner does not experience a
+             step, because the button they pressed does not move and the ayah
+             they were reading is still the ayah on screen.
+
+             MUSHAF VIEW IS UNTOUCHED: tapping an ayah in continuous text still
+             selects it exactly as before. That flow was never the complaint,
+             and a mushaf page with a mic welded to the bottom would break the
+             one thing it is for, which is uninterrupted reading. */}
+      <MicBar lang={lang} onStart={() => onPractise(current, true)} />
     </>
+  );
+}
+
+/**
+ * The pinned mic, in its pre-recording state, for a screen that does not own
+ * the recorder.
+ *
+ * It draws the same disc as Studio's and sits in the same place, so pressing it
+ * and finding the real one there afterwards reads as one continuous control
+ * rather than as a handoff. It records nothing itself — see onStart.
+ */
+function MicBar({ lang, onStart }: { lang: Lang; onStart: () => void }) {
+  return (
+    <div className="micbar">
+      <button
+        className="mic micbar__mic"
+        onClick={onStart}
+        aria-label={t(lang, "record")}
+      >
+        <span className="mic__ring" aria-hidden="true" />
+        <Mic />
+      </button>
+      <p className="micbar__copy">{t(lang, "studio_idle_primary")}</p>
+    </div>
   );
 }

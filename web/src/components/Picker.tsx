@@ -3,7 +3,6 @@ import Reader, { ReadMode } from "./Reader";
 import {
   AyahBrief,
   PracticeSegment,
-  Reciter,
   Sura,
   SuraAyat,
   ayahSegments,
@@ -31,21 +30,34 @@ import { Blank, Failure, Loading } from "./States";
  */
 
 /**
- * How the browse list is grouped.
+ * ── THE LIST IS IN MUSHAF ORDER. THIS WAS A REAL BUG. ──────────────────────
  *
- * BY LENGTH, because that is the question a learner is actually asking when
- * they open this screen: is this a sura I can read in one sitting? A flat index
- * of 114 answers nothing, and grouping by revelation place (Meccan/Medinan) is
- * scholarship rather than navigation — true, and no help at all in choosing
- * what to practise now.
+ * It used to be grouped into three bands by ayah count — short, medium, long —
+ * on the reasoning that "can I read this in one sitting?" is the question a
+ * learner is really asking, and that a flat index of 114 answers nothing.
  *
- * The bands are stated here rather than computed so they stay stable: a
- * threshold derived from the data would move as the list is filtered.
+ * That reasoning was wrong in a way that is obvious the moment you look at the
+ * screen instead of at the argument. Al-Fatiha has 7 ayat, so it opened the
+ * short band; the next sura with 20 ayat or fewer is number 60. The list
+ * therefore read 1, 60, 61, 62, 63… and every learner who has ever held a
+ * mushaf reads that as broken, because it is. The Qur'an has an order. It is
+ * not a database someone forgot to sort, and the app does not get to reindex
+ * it for browsing convenience.
+ *
+ * The question the bands were trying to answer is real, and it is now answered
+ * where it belongs — by the ayah count printed on every row, and by the filter
+ * pills, which cut the list without reordering it.
  */
-const GROUPS = [
-  { key: "group_short" as const, min: 1, max: 20 },
-  { key: "group_medium" as const, min: 21, max: 75 },
-  { key: "group_long" as const, min: 76, max: 10000 },
+
+/** The pills above the list. `started` is computed from real attempts. */
+type Filter = "all" | "makki" | "madani" | "started";
+
+const FILTERS: { id: Filter; key: "filter_all" | "filter_makki"
+  | "filter_madani" | "filter_started" }[] = [
+  { id: "all", key: "filter_all" },
+  { id: "makki", key: "filter_makki" },
+  { id: "madani", key: "filter_madani" },
+  { id: "started", key: "filter_started" },
 ];
 
 export type Selection = {
@@ -66,6 +78,15 @@ export type Selection = {
    * meaningful subdivision.
    */
   parts: PracticeSegment[];
+  /**
+   * Begin recording as soon as the practice screen mounts.
+   *
+   * Set only by the verse view's pinned mic. Choosing an ayah from the mushaf
+   * or the picker leaves it unset, because those are acts of CHOOSING and
+   * opening a microphone on someone who was browsing is a different thing
+   * entirely from opening one on someone who just pressed record.
+   */
+  autoRecord?: boolean;
 };
 
 type Props = {
@@ -76,9 +97,15 @@ type Props = {
   onPick: (s: Selection) => void;
   mode: ReadMode;
   onMode: (m: ReadMode) => void;
-  reciters: Reciter[];
+  /** Chosen once in Settings; passed through to the reader's listen button. */
   reciter: string;
-  onReciter: (id: string) => void;
+  /**
+   * Sura numbers the learner has actually recited from, for the "Started"
+   * pill. Empty when retention is off — in which case the pill is not drawn at
+   * all rather than drawn and always empty. There is no local guess at which
+   * suras were started; that would be a fabricated history.
+   */
+  started: Set<number>;
 };
 
 export default function Picker({
@@ -88,11 +115,11 @@ export default function Picker({
   onPick,
   mode,
   onMode,
-  reciters,
   reciter,
-  onReciter,
+  started,
 }: Props) {
   const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<Filter>("all");
   const [sura, setSura] = useState<Sura | null>(null);
   const [ayat, setAyat] = useState<SuraAyat | null>(null);
   const [busy, setBusy] = useState(false);
@@ -115,11 +142,24 @@ export default function Picker({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [suras, initial?.sura, initial?.aya]);
 
+  /**
+   * Search AND pill, in that order, and never a reorder.
+   *
+   * `suras` arrives from /api/suras in mushaf order and every step here
+   * preserves it — `filter` keeps relative order by definition. That is the
+   * whole fix for the ordering bug: there is no sort anywhere in this file,
+   * because the correct order is the one the data already has.
+   */
   const filtered = useMemo(() => {
     const q = foldQuery(query);
-    if (!q) return suras;
-    return suras.filter((s) => s.search.includes(q));
-  }, [suras, query]);
+    return suras.filter((s) => {
+      if (q && !s.search.includes(q)) return false;
+      if (filter === "makki") return s.place === "makki";
+      if (filter === "madani") return s.place === "madani";
+      if (filter === "started") return started.has(s.number);
+      return true;
+    });
+  }, [suras, query, filter, started]);
 
   async function openSura(s: Sura, jumpToAya?: number) {
     setSura(s);
@@ -148,7 +188,7 @@ export default function Picker({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang]);
 
-  async function openAyah(s: Sura, a: AyahBrief) {
+  async function openAyah(s: Sura, a: AyahBrief, record = false) {
     setBusy(true);
     setFailed(false);
     try {
@@ -162,6 +202,9 @@ export default function Picker({
         whole: true,
         wholeSegment: got.whole,
         parts: got.parts,
+        // Carried through so the practice screen knows this came from the
+        // verse view's mic and should start listening immediately.
+        autoRecord: record,
       });
     } catch {
       setFailed(true);
@@ -171,13 +214,34 @@ export default function Picker({
   }
 
   // ── sura pane ──────────────────────────────────────────────────────────
+  // The full 114, in order, on a full screen. Not a sheet and not a popover:
+  // this is the app's index and it gets the whole viewport, because choosing
+  // what to recite is a real decision and 114 rows do not fit in a drawer.
   if (!sura) {
+    // The pill is only offered when there is a history to filter against.
+    // Drawn with retention off it would be a control that is permanently
+    // empty and permanently unexplained.
+    const pills = FILTERS.filter(
+      (f) => f.id !== "started" || started.size > 0,
+    );
+
     return (
-      <>
-        <h2 className="section-head">{t(lang, "pick_sura")}</h2>
-        <p className="section-sub">{t(lang, "pick_sura_sub")}</p>
+      <section className="picker">
+        <header className="picker__head">
+          <h2 className="section-title section-title--hero">
+            {t(lang, "pick_sura")}
+          </h2>
+          <p className="picker__count">
+            {t(lang, "sura_count_n").replace("{n}", String(filtered.length))}
+          </p>
+        </header>
+
+        {/* Matches the Arabic name, the standard transliteration and the Uzbek
+            spelling at once — the haystack is prefolded server-side and the
+            query is folded the same way, so "gofir", "Gʻofir" and غافر all
+            land on sura 40. See foldQuery in lib/api.ts. */}
         <input
-          className="search"
+          className="search picker__search"
           type="search"
           inputMode="search"
           value={query}
@@ -185,55 +249,49 @@ export default function Picker({
           aria-label={t(lang, "search_sura")}
           onChange={(e) => setQuery(e.target.value)}
         />
+
+        <div className="pills" role="tablist" aria-label={t(lang, "filter_all")}>
+          {pills.map((f) => (
+            <button
+              key={f.id}
+              role="tab"
+              aria-selected={filter === f.id}
+              className={filter === f.id ? "pill pill--on" : "pill"}
+              onClick={() => setFilter(f.id)}
+            >
+              {t(lang, f.key)}
+            </button>
+          ))}
+        </div>
+
         {filtered.length === 0 ? (
-          // NOT a line of grey text. The learner typed something and got
-          // nothing, so this says what they searched, what was searched, and
-          // gives them the one control that recovers — clearing the query.
+          // NOT a line of grey text. The learner narrowed to nothing, so this
+          // says what they searched and gives them the control that recovers.
+          // Clearing resets the pill too — a "no results" they cannot explain
+          // because a filter three taps ago is still on is worse than none.
           <Blank
             title={t(lang, "no_matches")}
             body={t(lang, "no_matches_body").replace("{q}", query.trim())}
             action={t(lang, "no_matches_clear")}
-            onAction={() => setQuery("")}
+            onAction={() => {
+              setQuery("");
+              setFilter("all");
+            }}
           />
-        ) : query ? (
-          // A search result is a flat ranked list on purpose: grouping results
-          // by length would bury the match the learner is looking straight at.
-          <ul className="list">
+        ) : (
+          <ul className="list list--suras">
             {filtered.map((s) => (
-              <SuraRow key={s.number} lang={lang} sura={s} onOpen={openSura} />
+              <SuraRow
+                key={s.number}
+                lang={lang}
+                sura={s}
+                started={started.has(s.number)}
+                onOpen={openSura}
+              />
             ))}
           </ul>
-        ) : (
-          // THE HIERARCHY THE BROWSE VIEW NEEDS. 114 suras as one flat column
-          // is a system index, not a reading list — and the grouping that
-          // actually matches how people navigate the Quran is length, because
-          // it is what decides whether a sura is a single sitting.
-          GROUPS.map((g) => {
-            const rows = filtered.filter(
-              (s) => s.n_ayat >= g.min && s.n_ayat <= g.max,
-            );
-            if (rows.length === 0) return null;
-            return (
-              <section className="group" key={g.key}>
-                <div className="group__head">
-                  <span className="section-label">{t(lang, g.key)}</span>
-                  <span className="group__count">{rows.length}</span>
-                </div>
-                <ul className="list">
-                  {rows.map((s) => (
-                    <SuraRow
-                      key={s.number}
-                      lang={lang}
-                      sura={s}
-                      onOpen={openSura}
-                    />
-                  ))}
-                </ul>
-              </section>
-            );
-          })
         )}
-      </>
+      </section>
     );
   }
 
@@ -277,38 +335,50 @@ export default function Picker({
       onMode={onMode}
       focusAya={focusAya}
       onFocusAya={setFocusAya}
-      onPractise={(a) => openAyah(sura, a)}
+      onPractise={(a, record) => openAyah(sura, a, record)}
       onBack={() => setSura(null)}
       onOpenSura={(s, aya) => openSura(s, aya)}
       busy={busy}
-      reciters={reciters}
       reciter={reciter}
-      onReciter={onReciter}
     />
   );
 }
 
-/** One sura. Arabic name, transliteration, local name and length — the four
- *  things that identify a sura to someone choosing one. */
+/**
+ * One sura: number in a lit badge, name, where it was revealed, how long it is,
+ * and the Arabic name set large on the right.
+ *
+ * The revelation place is printed on the row and not only used by the pill —
+ * a filter for a fact the rows themselves do not show is a filter people
+ * cannot predict the result of. An unknown place prints nothing rather than a
+ * guess; see the note on Sura.place.
+ */
 function SuraRow({
   lang,
   sura,
+  started,
   onOpen,
 }: {
   lang: Lang;
   sura: Sura;
+  started: boolean;
   onOpen: (s: Sura) => void;
 }) {
   return (
     <li>
-      <button className="row" onClick={() => onOpen(sura)}>
-        <span className="row__num">{sura.number}</span>
+      <button className="row row--sura" onClick={() => onOpen(sura)}>
+        <span className={started ? "sura-badge sura-badge--on" : "sura-badge"}>
+          {sura.number}
+        </span>
         <span className="row__body">
           <span className="row__name">
             {sura.translit}
             <span className="row__alt"> · {sura.uz}</span>
           </span>
           <span className="row__meta">
+            {sura.place === "makki" && t(lang, "place_makki")}
+            {sura.place === "madani" && t(lang, "place_madani")}
+            {sura.place ? " · " : ""}
             {sura.n_ayat} {t(lang, "ayat_count")}
           </span>
         </span>

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Attempt, Reciter, Sura, history, setConsent } from "../lib/api";
 import { Lang, t } from "../lib/i18n";
 import { LEVEL_LABEL, Level, storeLevel, storedLevel } from "../lib/level";
+import { Theme } from "../lib/theme";
 import Achievements from "./Achievements";
 import { award, signalsFrom } from "../lib/achievements";
 import { hasJourney, storedJourney } from "../lib/journey";
@@ -39,6 +40,8 @@ export default function Profile({
   onReciter,
   onConsent,
   onLang,
+  theme,
+  onTheme,
 }: {
   lang: Lang;
   suras: Sura[];
@@ -50,6 +53,8 @@ export default function Profile({
   onReciter: (id: string) => void;
   onConsent: (v: boolean, audio: boolean) => void;
   onLang: (l: Lang) => void;
+  theme: Theme;
+  onTheme: (t: Theme) => void;
 }) {
   const [rows, setRows] = useState<Attempt[] | null>(null);
   const [level, setLevel] = useState<Level | null>(() => storedLevel());
@@ -203,9 +208,14 @@ export default function Profile({
         {t(lang, "profile_settings")}
       </p>
 
+      {/* LANGUAGE LIVES HERE AND ONLY HERE NOW. It used to be a permanent
+          control in the top bar of every screen, which gave a once-a-year
+          decision the same standing as the app's own name. The control itself
+          is unchanged — this is the same toggle it always was, and the one
+          that was removed was the duplicate. */}
       <div className="setting">
         <span className="setting__label">{t(lang, "profile_lang")}</span>
-        <span className="lang">
+        <span className="lang setting__control">
           {(["uz", "ru"] as const).map((code) => (
             <button
               key={code}
@@ -214,6 +224,29 @@ export default function Profile({
               onClick={() => onLang(code)}
             >
               {code === "uz" ? "Oʻz" : "Ру"}
+            </button>
+          ))}
+        </span>
+      </div>
+
+      {/* APPEARANCE. Two named times of day rather than a "dark mode" switch:
+          both are designed systems and neither is the other one dimmed, so
+          neither gets to be the off position of the other. Applies on the tap
+          — one attribute on <html>, no reload. See lib/theme.ts. */}
+      <div className="setting">
+        <span className="setting__label">
+          {t(lang, "theme_label")}
+          <span className="setting__help">{t(lang, "theme_help")}</span>
+        </span>
+        <span className="lang setting__control">
+          {(["dark", "light"] as const).map((mode) => (
+            <button
+              key={mode}
+              className="lang__btn"
+              aria-current={theme === mode}
+              onClick={() => onTheme(mode)}
+            >
+              {t(lang, mode === "dark" ? "theme_dark" : "theme_light")}
             </button>
           ))}
         </span>

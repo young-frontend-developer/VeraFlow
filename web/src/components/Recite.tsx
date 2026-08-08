@@ -1,29 +1,27 @@
 import { useEffect, useRef, useState } from "react";
-import AyahText, { AyahLine, Mark } from "./AyahText";
+import AyahText, { Mark } from "./AyahText";
 import ErrorBoundary from "./ErrorBoundary";
 import Feedback, {
   EMPTY_RUNGS,
   RetryState,
-  SelfPlayback,
+  PlaybackPair,
   cardId,
 } from "./Feedback";
 import { Selection } from "./Picker";
 import { decideRetry } from "../lib/retry";
-import ReciterSelect from "./ReciterSelect";
 import {
   Attempt,
   PracticeRung,
   PracticeSegment,
-  Reciter,
   TajweedError,
   expertAudioUrl,
   submitAttempt,
 } from "../lib/api";
 import { Lang, t } from "../lib/i18n";
+import { Chevron, Close } from "./Ornament";
 import { RecorderHandle, startRecording } from "../lib/recorder";
 import Studio from "./Studio";
 import { Failure } from "./States";
-import { Play } from "./Ornament";
 
 type Phase = "idle" | "recording" | "waiting";
 
@@ -35,21 +33,38 @@ export default function Recite({
   selection,
   onChange,
   onPart,
+  onStep,
+  onAttempt,
+  canStep,
   maxAudioSeconds,
-  reciters,
   reciter,
-  onReciter,
 }: {
   lang: Lang;
   selection: Selection;
+  /** Leave practice entirely, straight out to the full sura list. */
   onChange: () => void;
   /** Narrow the practice range to one part of this ayah, or back to the whole. */
   onPart: (segment: PracticeSegment, whole: boolean) => void;
+  /**
+   * Move to the adjacent ayah of the same sura, -1 or +1.
+   *
+   * The caller resolves the new ayah's practice range and swaps the selection;
+   * this component only says which way. Null at either end of the sura, which
+   * is what disables the arrow — an arrow that is present and does nothing is
+   * worse than one that is visibly unavailable.
+   */
+  onStep: (delta: -1 | 1) => void;
+  /**
+   * A recitation was stored. The caller refetches the attempt history on this,
+   * which is what makes hasanat, the streak and the rank move without a reload.
+   */
+  onAttempt?: () => void;
+  /** Whether stepping is possible in each direction, from the caller's data. */
+  canStep: { prev: boolean; next: boolean };
   /** Engine ceiling in seconds; 0 while /api/meta is still in flight. */
   maxAudioSeconds: number;
-  reciters: Reciter[];
+  /** Chosen once in Settings. Used to resolve the comparison audio only. */
   reciter: string;
-  onReciter: (id: string) => void;
 }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [result, setResult] = useState<Attempt | null>(null);
@@ -68,7 +83,6 @@ export default function Recite({
    * nothing about which of the two very different things had happened.
    */
   const [failure, setFailure] = useState<"mic" | "network" | null>(null);
-  const [pickingPart, setPickingPart] = useState(false);
 
   // The learner's own recording, kept only for as long as this result is on
   // screen. Never uploaded beyond the attempt itself and never persisted —
@@ -101,6 +115,23 @@ export default function Recite({
     retryRef.current = retry;
   }, [retry]);
 
+  /**
+   * Start recording on arrival, once, when the verse view's mic sent us here.
+   *
+   * A ref guard rather than an empty dep array: the effect must not re-fire
+   * when the selection object is replaced by a re-render, and it must not fire
+   * at all for an ayah opened by tapping the mushaf or the picker — those are
+   * acts of choosing, and turning on a microphone because someone browsed to a
+   * verse is not something an app gets to do.
+   */
+  const autoStarted = useRef(false);
+  useEffect(() => {
+    if (!selection.autoRecord || autoStarted.current) return;
+    autoStarted.current = true;
+    start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selection.autoRecord]);
+
   const handleRef = useRef<RecorderHandle | null>(null);
   /**
    * The range the in-flight rung recording will be submitted against, captured
@@ -112,7 +143,6 @@ export default function Recite({
   const rangeRef = useRef<{ start_word: number; num_words: number } | null>(null);
   /** The rung level being recorded, captured for the same reason as the range. */
   const levelRef = useRef<number | null>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
   const cardRefs = useRef<Record<string, HTMLElement | null>>({});
 
   /**
@@ -138,6 +168,48 @@ export default function Recite({
   // duration, so warn with headroom rather than exactly at the line.
   const tooLong =
     maxAudioSeconds > 0 && segment.seconds > maxAudioSeconds * 0.8;
+
+  /**
+   * THE SILENT FALLBACK FOR AYAT THE ENGINE CANNOT HOLD.
+   *
+   * A handful of ayat — 2:282 is the famous one — run to several minutes. The
+   * engine's ceiling is a MEMORY limit, not a preference: attention allocates a
+   * [frames, frames, 64] tensor, so cost is quadratic in length and a long ayah
+   * does not run slowly, it fails. See Settings.max_audio_seconds.
+   *
+   * The old answer was to ask the learner which chunk they wanted. This one
+   * narrows to the opening section automatically, and then SAYS SO. That
+   * sentence is not optional and it is the whole reason this is not the thing
+   * the brief warned against: scoring a fragment while presenting it as the
+   * whole ayah would be a fabricated result, which is a worse failure than the
+   * picker ever was. The learner never chooses a chunk; they are simply told
+   * when one is in play.
+   *
+   * Null on every ayah that fits, which is 99% of them.
+   */
+  const autoNarrowed =
+    maxAudioSeconds > 0 &&
+    selection.wholeSegment.seconds > maxAudioSeconds * 0.8 &&
+    !selection.whole
+      ? segment
+      : null;
+
+  /**
+   * Narrow to the opening section as soon as an over-long ayah is opened.
+   *
+   * Runs on the SELECTION, not on a tap, because the learner never asked for
+   * this — it is the app arranging what it can actually analyse. `parts[0]`
+   * rather than a computed slice: the segmentation is precomputed and legal at
+   * those boundaries, and cutting anywhere else raises PartOfUthmaniWord.
+   */
+  useEffect(() => {
+    if (maxAudioSeconds <= 0) return;
+    if (!selection.whole) return;
+    if (selection.wholeSegment.seconds <= maxAudioSeconds * 0.8) return;
+    const first = parts[0];
+    if (first) onPart(first, false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selection.sura.number, selection.ayah.aya, maxAudioSeconds, parts.length]);
   // Identity of the exact range, so switching parts within one ayah resets
   // too — not just switching ayah.
   const key = `${sura.number}:${ayah.aya}:${segment.start_word}:${segment.num_words}`;
@@ -149,7 +221,6 @@ export default function Recite({
     setResult(null);
     setElapsed(0);
     setFailure(null);
-    setPickingPart(false);
     setOwnRecording(null);
     setActiveCardId(null);
     setRetry({ cardId: null, level: null, phase: null, fixed: [],
@@ -176,7 +247,6 @@ export default function Recite({
     setActiveCardId(null);
     setRetry({ cardId: null, level: null, phase: null, fixed: [],
                stillWrong: null, rungs: {}, tries: {}, accepted: [] });
-    audioRef.current?.pause();
     try {
       handleRef.current = await startRecording();
       setElapsed(0);
@@ -239,6 +309,15 @@ export default function Recite({
 
   /** Keep the last real figures for the dark card. Only from a judged take. */
   function remember(out: Attempt) {
+    // TELL THE APP FIRST, and tell it about every stored attempt. The counters
+    // on Home are built from the attempt history, and the history is only
+    // refetched when something says it changed. This is that something.
+    //
+    // Deliberately OUTSIDE the guard below: a retry-worthy recording is still a
+    // row on the server, and the streak counts days practised rather than days
+    // practised well. Gating this on `analysable` would mean a learner whose
+    // takes were all too noisy to judge kept a streak that never advanced.
+    onAttempt?.();
     if (out.status !== "ok" || !out.analysable) return;
     setLastSeconds(out.duration_s);
     setLastScore(out.score ?? null);
@@ -427,9 +506,53 @@ export default function Recite({
         </span>
       </div>
 
-      <button className="crumb crumb--change" onClick={onChange}>
-        {t(lang, "change_selection")}
-      </button>
+      {/* ── LEAVING, AND MOVING ALONG ────────────────────────────────────
+             Two different intentions that used to share one control.
+
+             "Boshqa oyat tanlash" was a text link that dropped you back into
+             the picker at the sura you were already in — so getting to the
+             next ayah meant leaving practice, finding your place in the
+             reader, and tapping the ayah below the one you just did. Three
+             steps to go one verse forward.
+
+             Now the two are separate and shaped like what they do: an X that
+             LEAVES, straight out to the full 114-sura list, and arrows that
+             MOVE, to the ayah either side without unwinding anything. The
+             arrows are the common action and sit under the thumb on the right;
+             the X is the rare one and sits where a close control always is. */}
+      <div className="ayah-nav">
+        <button
+          className="ayah-nav__close"
+          aria-label={t(lang, "exit_practice")}
+          onClick={onChange}
+        >
+          <Close />
+        </button>
+
+        {/* NO LABEL BETWEEN THEM. The first draft put "Al-Fatiha · 1:1" here
+            and it landed directly beneath the heading, which already says
+            "1. Al-Fatiha" and "1:1" — the same two facts twice, eight pixels
+            apart. The heading is the title; this row is chrome, and chrome
+            that repeats the title is just noise with a border. */}
+        <div className="ayah-nav__steps">
+          <button
+            className="ayah-nav__arrow"
+            aria-label={t(lang, "prev_ayah")}
+            disabled={!canStep.prev || phase !== "idle"}
+            onClick={() => onStep(-1)}
+          >
+            <Chevron size={16} />
+          </button>
+          <button
+            className="ayah-nav__arrow ayah-nav__arrow--next"
+            aria-label={t(lang, "next_ayah")}
+            disabled={!canStep.next || phase !== "idle"}
+            onClick={() => onStep(1)}
+          >
+            <Chevron size={16} />
+          </button>
+        </div>
+      </div>
 
       <AyahText
         uthmani={segment.uthmani}
@@ -453,103 +576,41 @@ export default function Recite({
         {t(lang, "estimate")} ≈ {estimate(segment.seconds)}
       </p>
 
+      {/* THE ONE SENTENCE THE FALLBACK OWES THE LEARNER. Shown when the app
+          has narrowed a long ayah on its own, so the range on screen is
+          explained rather than merely different from the ayah they chose.
+          Blames the length, never the learner, and does not ask anything. */}
+      {autoNarrowed && (
+        <p className="estimate estimate--warn">{t(lang, "long_ayah_note")}</p>
+      )}
+
       {/* Said BEFORE recording. Inference runs ~10x realtime, so learning this
           from the result would mean waiting minutes for a rejection. The
           ceiling is the engine's memory limit, not a judgement about the
-          learner, so the wording blames the length and offers the way out. */}
-      {tooLong && (
+          learner, so the wording blames the length. */}
+      {tooLong && !autoNarrowed && (
         <p className="estimate estimate--warn">{t(lang, "too_long_hint")}</p>
       )}
 
-      {/* Practising part of an ayah is a CHOICE, offered only where the ayah
-          genuinely divides. It is never taken for the learner, and the whole
-          ayah is always one tap away again. */}
-      {parts.length > 1 && (
-        <div className="parts">
-          {selection.whole ? (
-            <button
-              className="linkish"
-              disabled={phase !== "idle"}
-              onClick={() => setPickingPart((v) => !v)}
-            >
-              {t(lang, "practise_part")}
-            </button>
-          ) : (
-            <button
-              className="linkish"
-              disabled={phase !== "idle"}
-              onClick={() => {
-                setPickingPart(false);
-                onPart(selection.wholeSegment, true);
-              }}
-            >
-              {t(lang, "practise_whole")}
-            </button>
-          )}
+      {/* ── THE SEGMENT PICKER IS GONE, AND SO IS THE CONCEPT ────────────
+             There used to be a "practise part of this ayah" control here that
+             opened a list of numbered chunks. It is removed: a learner opening
+             an ayah should record the ayah, and "which 12-second slice of this
+             verse would you like" is a question about the engine's memory
+             budget wearing the costume of a feature.
 
-          {pickingPart && (
-            <ul className="list list--parts">
-              {parts.map((p) => (
-                <li key={p.index}>
-                  <button
-                    className="row"
-                    aria-current={
-                      p.start_word === segment.start_word &&
-                      p.num_words === segment.num_words
-                    }
-                    onClick={() => {
-                      setPickingPart(false);
-                      onPart(p, false);
-                    }}
-                  >
-                    <span className="row__num">{p.index + 1}</span>
-                    <span className="row__body">
-                      <AyahLine uthmani={p.uthmani} />
-                      <span className="row__meta">
-                        {t(lang, "words")} {p.start_word + 1}–
-                        {p.start_word + p.num_words} · {estimate(p.seconds)}
-                      </span>
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
+             The segmentation itself is NOT gone — see `autoNarrowed` above and
+             ranges.py. It still runs, silently, on the ~60 ayat whose full
+             length exceeds what the engine can hold, and it says so in one
+             plain sentence instead of asking. Everywhere else, which is 99% of
+             the Qur'an, the whole ayah is simply what gets recorded.
 
-      {/* everyayah serves whole-ayah files only. Offering playback against a
-          part would request a file that does not exist — which is exactly why
-          reciter audio "died on long suras" while they were force-split. */}
-      {selection.whole && (
-        <>
-          <button
-            className="listen"
-            disabled={phase !== "idle"}
-            onClick={() => audioRef.current?.play()}
-          >
-            <span className="listen__glyph" aria-hidden="true">
-              <Play size={12} />
-            </span>
-            {t(lang, "listen")}
-          </button>
-          <audio
-            ref={audioRef}
-            src={expertAudioUrl(sura.number, ayah.aya, reciter)}
-            preload="none"
-          />
-          {/* Offered next to the thing it changes. Switching reciter mid-drill
-              is a normal thing to want — one voice is easier to follow than
-              another, and a muallim recording repeats each phrase. */}
-          <ReciterSelect
-            lang={lang}
-            reciters={reciters}
-            value={reciter}
-            onChange={onReciter}
-            disabled={phase !== "idle"}
-          />
-        </>
-      )}
+             THE RECITER CONTROLS ARE GONE FROM HERE TOO. The picker and the
+             "listen first" button both moved: the choice is one setting in
+             Profile, and the listening now happens AFTER the result, next to
+             the learner's own recording, where the two can be compared. Before
+             recording, hearing a perfect reading is as likely to be a thing to
+             imitate from memory as a thing to learn from. */}
 
       {/* THE ONE DARK SURFACE IN THE APP. It carries the whole recording and
           analysing experience — waveform, stats, button, copy — and disappears
@@ -570,6 +631,22 @@ export default function Recite({
         lastSeconds={lastSeconds}
         lastScore={lastScore}
         disabled={failure === "mic"}
+        longWait={tooLong}
+        /**
+         * PINNED UNTIL THERE IS SOMETHING TO READ.
+         *
+         * While idle, recording or analysing, the mic is the whole point of
+         * the screen and has to be reachable without a scroll hunt — that is
+         * item 5 and it is why this card fixes itself to the viewport.
+         *
+         * The moment a result lands, that stops being true and starts being
+         * harmful: the card floats over the top of the feedback, and the first
+         * thing it covers is the playback comparison sitting directly under
+         * the verdict. So it returns to the flow, above the results, where
+         * scrolling back up finds it. Re-recording is one scroll away; reading
+         * what you were just told is not behind anything.
+         */
+        pinned={!result}
         onStart={start}
         onStop={stop}
       />
@@ -626,10 +703,23 @@ export default function Recite({
             </div>
           }
         >
-          {/* Hearing yourself back is how a learner judges whether a flagged
-              error is real. Session-only: the blob lives in memory until the
-              next take replaces it. */}
-          <SelfPlayback lang={lang} blob={ownRecording} />
+          {/* YOUR READING AND THE RECITER'S, SIDE BY SIDE. Hearing yourself
+              back is how a learner judges whether a flagged error is real, and
+              hearing it against the reciter is how they judge what to do about
+              it. Session-only on our side: the blob lives in memory until the
+              next take replaces it.
+              The reciter file is whole-ayah only on everyayah, so a range that
+              was auto-narrowed offers no comparison rather than requesting a
+              file that does not exist. */}
+          <PlaybackPair
+            lang={lang}
+            blob={ownRecording}
+            reciterUrl={
+              selection.whole
+                ? expertAudioUrl(sura.number, ayah.aya, reciter)
+                : ""
+            }
+          />
           <Feedback
             lang={lang}
             attempt={result}

@@ -44,6 +44,8 @@ export default function Studio({
   /** Accuracy of the previous attempt, 0–1. Null to omit — never invent one. */
   lastScore,
   disabled,
+  longWait,
+  pinned = true,
   onStart,
   onStop,
 }: {
@@ -54,14 +56,37 @@ export default function Studio({
   lastSeconds: number;
   lastScore: number | null;
   disabled?: boolean;
+  /** This range is long enough that the wait needs naming. See the copy below. */
+  longWait?: boolean;
+  /**
+   * Fixed to the viewport. True while recording is the screen's job; false
+   * once a result is on screen, so this card stops covering the feedback.
+   */
+  pinned?: boolean;
   onStart: () => void;
   onStop: () => void;
 }) {
   const live = phase === "recording";
   const thinking = phase === "analyzing";
 
+  /**
+   * PINNED TO THE VIEWPORT WHILE IN USE.
+   *
+   * An ayah can be a screen and a half of Arabic, and the mic sat underneath
+   * all of it — so on anything longer than about four lines the control the
+   * whole screen exists for was below the fold, and reciting began with a
+   * scroll hunt. While recording or analysing it is worse: the state of the
+   * thing you are doing is off-screen.
+   *
+   * So the card fixes itself to the bottom of the viewport. It is a
+   * SCREEN-LOCAL element and deliberately NOT merged into the global tab bar —
+   * that bar navigates between screens and this button records; putting a
+   * destructive-feeling stop control into the navigation chrome would be a
+   * category error. It sits above the bar, clear of it, and the page reserves
+   * room so the last card never hides underneath.
+   */
   return (
-    <section className="studio">
+    <section className={`studio${pinned ? " studio--pinned" : ""}`}>
       <p className="studio__head">
         {live
           ? t(lang, "studio_live")
@@ -133,7 +158,15 @@ export default function Studio({
             {live
               ? t(lang, "studio_live_secondary")
               : thinking
-                ? t(lang, "studio_thinking_secondary")
+                ? // A LONG AYAH GETS ITS OWN WAIT LINE. Inference runs about
+                  // ten times realtime, so a two-minute recitation is a
+                  // twenty-minute wait — and the generic "this takes a moment"
+                  // copy, read at minute four, is indistinguishable from a
+                  // hang. Naming the length is the difference between waiting
+                  // and wondering whether it broke.
+                  longWait
+                  ? t(lang, "long_wait_note")
+                  : t(lang, "studio_thinking_secondary")
                 : t(lang, "studio_idle_secondary")}
           </p>
         </div>

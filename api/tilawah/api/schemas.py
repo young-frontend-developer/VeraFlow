@@ -37,6 +37,15 @@ class SuraOut(BaseModel):
     uz: str
     n_ayat: int
     search: str
+    # makki | madani, for the picker's filter pills.
+    #
+    # Defaulted rather than required, so a server running against a suras.json
+    # built before this column existed answers with an empty string instead of
+    # failing validation on all 114 rows. The client treats "" as "unknown" and
+    # such a sura simply does not match either filter - it is never guessed
+    # into one. See the provenance note in suras.json's _meta: this follows the
+    # Cairo mushaf's designation and is compiled, not reviewed.
+    place: str = ""
 
 
 class AyahBriefOut(BaseModel):
@@ -198,6 +207,20 @@ class AttemptOut(BaseModel):
     # never sent. None on legacy rows written before it was populated, and the
     # client omits the day rather than guessing one.
     created_at: datetime | None = None
+    # HOW MANY ARABIC LETTERS WERE IN WHAT THEY RECITED.
+    #
+    # The hasanat total on Home is built on this and on nothing else. It is
+    # computed on the server from the Uthmani text of the stored range - see
+    # content/letters.py, which documents what does and does not count as a
+    # letter, and why, against the wording of the hadith it rests on.
+    #
+    # Sent rather than derived in the browser because the client only ever
+    # holds one sura's text at a time while history spans many; deriving it
+    # there would have meant estimating, and an estimated number with a hadith
+    # attached to it is the one thing this must not be.
+    #
+    # 0 on a range that cannot be resolved. Never a guess.
+    letters: int = 0
 
 
 class HadithOut(BaseModel):

@@ -234,7 +234,29 @@
       "Bash(python3 -)",
       "Bash(echo \"--- exit: $? ---\")",
       "Bash(node \"C:/Users/RAHMAT~1/AppData/Local/Temp/claude/C--Users-Rahmatulloh-Desktop-Tilawah/fe8208e6-1027-45a8-98f6-9fdb3c8b68b7/scratchpad/verify.mjs\")",
-      "Bash(python3 \"C:/Users/RAHMAT~1/AppData/Local/Temp/claude/C--Users-Rahmatulloh-Desktop-Tilawah/fe8208e6-1027-45a8-98f6-9fdb3c8b68b7/scratchpad/keys.py\")"
+      "Bash(python3 \"C:/Users/RAHMAT~1/AppData/Local/Temp/claude/C--Users-Rahmatulloh-Desktop-Tilawah/fe8208e6-1027-45a8-98f6-9fdb3c8b68b7/scratchpad/keys.py\")",
+      "Bash(grep -n \"#[0-9a-fA-F]\\\\{3,8\\\\}\\\\b\\\\|rgba\\(\" index.css)",
+      "Bash(grep -v \"^\\\\s*/\\\\*\")",
+      "Bash(grep -n \"^  ru: {\\\\|^  },\\\\|^} as const\\\\|^export function t\\\\|^export type Key\" i18n.ts)",
+      "Bash(sed -n '/^  ru: {/,/nav_library/p' i18n.ts)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(VITE_API_URL=http://localhost:8011 npx vite build --outDir \"C:/Users/Rahmatulloh/AppData/Local/Temp/claude/C--Users-Rahmatulloh-Desktop-Tilawah/3c0d3642-d899-4867-9888-003502a34945/scratchpad/dist-shots\" --emptyOutDir)",
+      "Bash(cp -r \"C:/Users/Rahmatulloh/Desktop/Tilawah/web/node_modules\" ./node_modules)",
+      "Bash(node shoot-home.mjs)",
+      "Bash(cp \"C:/Users/RAHMAT~1/AppData/Local/Temp/claude/C--Users-Rahmatulloh-Desktop-Tilawah/3c0d3642-d899-4867-9888-003502a34945/scratchpad/shoot-home.mjs\" ./_shoot-home.mjs)",
+      "Bash(node _shoot-home.mjs)",
+      "Bash(node _verify-fixes.mjs)",
+      "Bash(grep -n \"Mashq\\\\|tab\\\\\", { hasText\\\\|locator\\(\\\\\".tab\" e2e-recite.mjs)",
+      "Bash(node _verify-ladder.mjs)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('place present:', 'place' in d[0]\\); print\\('sample:', d[0].get\\('place','MISSING'\\)\\); print\\('translit 60:', [s['translit'] for s in d if s['number']==60]\\)\")",
+      "Bash(sed -i 's/^  SelfPlayback,$/  PlaybackPair,/' src/components/Recite.tsx)",
+      "Bash(sed -i '/^import ReciterSelect from \".\\\\/ReciterSelect\";$/d' src/components/Recite.tsx)",
+      "Bash(python -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\('place:',d[0].get\\('place'\\),'| translit60:',[s['translit'] for s in d if s['number']==60]\\)\")",
+      "Bash(node _verify-round3.mjs)",
+      "Bash(node _verify-results.mjs)",
+      "Bash(mv _verify-round3.mjs e2e-shell.mjs)",
+      "Bash(mv _verify-results.mjs e2e-results.mjs)",
+      "Bash(rm -rf shots)"
     ]
   }
 }

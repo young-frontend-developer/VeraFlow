@@ -617,6 +617,21 @@ function Play() {
   );
 }
 
+function Pause() {
+  return (
+    <svg
+      width="10"
+      height="10"
+      viewBox="0 0 12 12"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <rect x="2.6" y="1.6" width="2.8" height="8.8" rx="0.6" />
+      <rect x="6.6" y="1.6" width="2.8" height="8.8" rx="0.6" />
+    </svg>
+  );
+}
+
 function WrongFlag({ lang, attemptId }: { lang: Lang; attemptId: number | null }) {
   const [done, setDone] = useState(false);
   if (attemptId === null) return null;
@@ -643,10 +658,45 @@ function WrongFlag({ lang, attemptId }: { lang: Lang; attemptId: number | null }
  * it one would be the wrong trade for a feature whose whole point is letting
  * the learner check our work.
  */
-export function SelfPlayback({ lang, blob }: { lang: Lang; blob: Blob | null }) {
+/**
+ * THE COMPARISON. Your reading, and the reciter's, side by side.
+ *
+ * ── WHY THE PAIR, AND WHY HERE ─────────────────────────────────────────────
+ *
+ * These two controls used to live at opposite ends of the flow: a "listen to
+ * the reciter" button sat above the record button, before the attempt, and the
+ * learner's own playback appeared alone after it. That put the model recitation
+ * at the moment it is least useful — hearing a perfect reading immediately
+ * before reciting invites imitation from short-term memory — and left the
+ * playback afterwards with nothing to be compared against.
+ *
+ * Together, after the result, they are the thing a learner actually wants: I
+ * was told my ص was thin; here is mine, here is his, in two taps.
+ *
+ * EQUAL WEIGHT, DELIBERATELY. Same shape, same size, same treatment, sharing a
+ * row. Making the reciter the "correct" answer with more visual weight, or the
+ * learner's own the primary with the reciter tucked beside it, both editorialise
+ * about which recording matters. The comparison is the point, so neither wins.
+ *
+ * ONE AT A TIME. Starting either stops the other — two recitations of the same
+ * ayah playing over each other is noise, and it is the obvious thing to do by
+ * accident with two buttons this close together.
+ */
+export function PlaybackPair({
+  lang,
+  blob,
+  reciterUrl,
+}: {
+  lang: Lang;
+  /** The learner's own take. Session-only; never uploaded unless consented. */
+  blob: Blob | null;
+  /** The reciter's audio for this ayah, or "" when there is none to offer. */
+  reciterUrl: string;
+}) {
   const [url, setUrl] = useState<string>("");
-  const ref = useRef<HTMLAudioElement>(null);
-  const [playing, setPlaying] = useState(false);
+  const mine = useRef<HTMLAudioElement>(null);
+  const theirs = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState<"mine" | "theirs" | null>(null);
 
   useEffect(() => {
     if (!blob) {
@@ -660,32 +710,66 @@ export function SelfPlayback({ lang, blob }: { lang: Lang; blob: Blob | null }) 
     return () => URL.revokeObjectURL(next);
   }, [blob]);
 
-  if (!url) return null;
+  function toggle(which: "mine" | "theirs") {
+    const el = which === "mine" ? mine.current : theirs.current;
+    const other = which === "mine" ? theirs.current : mine.current;
+    if (!el) return;
+    if (other) {
+      other.pause();
+      other.currentTime = 0;
+    }
+    if (playing === which) {
+      el.pause();
+      el.currentTime = 0;
+    } else {
+      el.play().catch(() => {});
+    }
+  }
+
+  // Neither source available: draw nothing rather than one lonely half of a
+  // comparison that is only meaningful as a pair.
+  if (!url && !reciterUrl) return null;
+
   return (
-    <div className="selfplay">
-      <button
-        className="selfplay__btn"
-        onClick={() => {
-          const a = ref.current;
-          if (!a) return;
-          if (playing) {
-            a.pause();
-            a.currentTime = 0;
-          } else {
-            a.play().catch(() => {});
-          }
-        }}
-      >
-        <Play />
-        {playing ? t(lang, "hear_yourself_stop") : t(lang, "hear_yourself")}
-      </button>
+    <div className="compare">
+      {url && (
+        <button
+          className={`compare__btn${playing === "mine" ? " is-playing" : ""}`}
+          onClick={() => toggle("mine")}
+        >
+          <span className="compare__glyph" aria-hidden="true">
+            {playing === "mine" ? <Pause /> : <Play />}
+          </span>
+          {t(lang, "compare_mine")}
+        </button>
+      )}
+      {reciterUrl && (
+        <button
+          className={`compare__btn${playing === "theirs" ? " is-playing" : ""}`}
+          onClick={() => toggle("theirs")}
+        >
+          <span className="compare__glyph" aria-hidden="true">
+            {playing === "theirs" ? <Pause /> : <Play />}
+          </span>
+          {t(lang, "compare_reciter")}
+        </button>
+      )}
+
       <audio
-        ref={ref}
+        ref={mine}
         src={url}
         preload="none"
-        onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-        onEnded={() => setPlaying(false)}
+        onPlay={() => setPlaying("mine")}
+        onPause={() => setPlaying((p) => (p === "mine" ? null : p))}
+        onEnded={() => setPlaying((p) => (p === "mine" ? null : p))}
+      />
+      <audio
+        ref={theirs}
+        src={reciterUrl}
+        preload="none"
+        onPlay={() => setPlaying("theirs")}
+        onPause={() => setPlaying((p) => (p === "theirs" ? null : p))}
+        onEnded={() => setPlaying((p) => (p === "theirs" ? null : p))}
       />
     </div>
   );

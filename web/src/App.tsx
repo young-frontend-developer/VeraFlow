@@ -16,24 +16,32 @@ import Profile from "./components/Profile";
 import { ReadMode } from "./components/Reader";
 import Recite from "./components/Recite";
 import Review from "./components/Review";
-import { Learn, Memorize } from "./components/Soon";
-import { Bookmark, StarOrnament } from "./components/Ornament";
+import { Learn } from "./components/Soon";
+import Progress from "./components/Progress";
+import { Flame, Gear } from "./components/Ornament";
 import TabBar, { Tab } from "./components/TabBar";
 import Today from "./components/Today";
 import { Failure, Loading } from "./components/States";
 import {
+  Attempt,
   Ayah,
   Meta,
   Reciter,
   Sura,
   apiPredatesContract,
+  ayahSegments,
+  history,
   listAyat,
   listReciters,
   listSuras,
   meta,
+  missingPayloadFields,
   setConsent,
   staleApiFields,
+  suraAyat,
 } from "./lib/api";
+import { streak } from "./lib/progress";
+import { Theme, applyTheme, storedTheme } from "./lib/theme";
 import { Lang, t } from "./lib/i18n";
 
 const LANG_KEY = "tilawah_lang";
@@ -120,7 +128,14 @@ function ReviewApp() {
 
 function LearnerApp() {
   const [lang, setLang] = useState<Lang>(initialLang);
-  const [tab, setTab] = useState<Tab>("today");
+  /**
+   * Dark or light. Read from storage on the first render rather than in an
+   * effect, so the very first paint is already the chosen theme — setting it
+   * after mount is what produces the flash of the wrong palette on every
+   * launch.
+   */
+  const [theme, setTheme] = useState<Theme>(storedTheme);
+  const [tab, setTab] = useState<Tab>("home");
   const [ayat, setAyat] = useState<Ayah[]>([]);
   const [current, setCurrent] = useState<Ayah | null>(null);
   const [suras, setSuras] = useState<Sura[]>([]);
@@ -173,6 +188,19 @@ function LearnerApp() {
   );
   const [info, setInfo] = useState<Meta | null>(null);
   const [failed, setFailed] = useState(false);
+  /**
+   * The learner's attempt history, LIFTED OUT OF Today.
+   *
+   * It was fetched inside Today, which was correct while Today was the only
+   * screen that counted anything. Three now read it — Home's figures, the
+   * Progress tab, and the streak chip in the header that is on screen on every
+   * tab — and three copies of the same fetch means three chances for them to
+   * disagree about how long the streak is. One fetch, one answer, passed down.
+   *
+   * Null while loading; [] with retention declined, which is a real answer and
+   * not a failure.
+   */
+  const [rows, setRows] = useState<Attempt[] | null>(null);
 
   useEffect(() => {
     // The catalogue is what Practice runs on; failing to load it is fatal to
@@ -217,6 +245,30 @@ function LearnerApp() {
         }),
       );
   }, []);
+
+  /**
+   * Bumped every time a recitation is stored, to re-run the fetch below.
+   *
+   * WITHOUT THIS, NOTHING ON HOME EVER MOVES. The history was fetched on mount
+   * and on a consent change, and on nothing else — so a learner could recite
+   * four ayat, walk back to Home, and find hasanat still reading 0, the streak
+   * unchanged and the rank frozen. Every one of those numbers was correct for
+   * the rows the app had; it just never asked for the new ones. Reported as
+   * "hasanat not accumulating", and it was really "Home is showing you the
+   * history it loaded when the app opened".
+   */
+  const [historyEpoch, setHistoryEpoch] = useState(0);
+
+  useEffect(() => {
+    // Declined retention means there is nothing stored to fetch, and asking
+    // anyway would be a request for data the learner has said not to keep.
+    if (!consented) return setRows([]);
+    history(200)
+      .then(setRows)
+      .catch(() => setRows([]));
+  }, [consented, historyEpoch]);
+
+  useEffect(() => applyTheme(theme), [theme]);
 
   useEffect(() => {
     localStorage.setItem(LANG_KEY, lang);
@@ -411,36 +463,119 @@ function LearnerApp() {
     );
   }
 
+  /**
+   * The centre button: recite the thing you already chose, with nothing in
+   * between.
+   *
+   * It resolves the ayah's practice range itself rather than routing through
+   * the picker, because a "start reciting" button that lands on a chooser has
+   * not started anything. With no stored place there is nothing to resolve and
+   * it falls through to the chooser, which is the only honest thing it can do —
+   * and if resolving fails it does the same, rather than sitting silent.
+   */
+  async function startRecite() {
+    if (!place) {
+      setSelection(null);
+      setTab("practice");
+      return;
+    }
+    setTab("practice");
+    try {
+      const found = suras.find((s) => s.number === place.sura);
+      const got = await ayahSegments(place.sura, place.aya);
+      const brief = (await suraAyat(place.sura, lang)).ayat.find(
+        (a) => a.aya === place.aya,
+      );
+      if (!found || !brief) throw new Error("no such ayah");
+      setSelection({
+        sura: found,
+        ayah: brief,
+        segment: got.whole,
+        whole: true,
+        wholeSegment: got.whole,
+        parts: got.parts,
+      });
+    } catch {
+      setSelection(null);
+    }
+  }
+
+  /**
+   * Step to the ayah either side of the one being practised.
+   *
+   * Resolves the new range the same way Picker does, so the learner lands in a
+   * fully-formed practice state rather than in a half-selected one. A failure
+   * leaves the current selection alone — being stuck on the ayah you were
+   * already on is a far better outcome than being dumped out of practice.
+   */
+  async function stepAyah(delta: -1 | 1) {
+    if (!selection) return;
+    const aya = selection.ayah.aya + delta;
+    const sura = selection.sura;
+    if (aya < 1 || aya > sura.n_ayat) return;
+    try {
+      const [got, list] = await Promise.all([
+        ayahSegments(sura.number, aya),
+        suraAyat(sura.number, lang),
+      ]);
+      const brief = list.ayat.find((a) => a.aya === aya);
+      if (!brief) return;
+      setPlace({ sura: sura.number, aya });
+      setSelection({
+        sura,
+        ayah: brief,
+        segment: got.whole,
+        whole: true,
+        wholeSegment: got.whole,
+        parts: got.parts,
+      });
+    } catch {
+      /* keep the current ayah */
+    }
+  }
+
+  const run = streak(rows ?? []);
+
+  /**
+   * Suras the learner has actually recited from, for the picker's "Started"
+   * pill. Built from real attempt rows and nothing else — with retention off
+   * this is empty and the pill is not offered.
+   */
+  const started = new Set((rows ?? []).map((r) => r.sura));
+
   return (
-    <div className="app">
-      {/* The top bar: wordmark left, utilities right.
-          THE AVATAR IS NOT A LOGGED-IN USER. There are no accounts — see
-          Auth.tsx — so it carries the app's own mark rather than initials,
-          which would imply a person and a session that do not exist. It opens
-          Profile, which is the real destination behind it.
-          The bookmark opens the picker at the stored place, which is what a
-          bookmark in this app actually means. */}
+    // The pinned recording card needs the page to reserve room beneath it,
+    // and only while it is actually mounted — every other screen would
+    // otherwise carry 200px of dead space at the bottom.
+    <div className={`app${tab === "practice" && selection ? " app--recording" : ""}`}>
+      {/* The top bar: wordmark left, streak right. That is all.
+          THE STREAK CHIP IS NOT DECORATION AND NOT ALWAYS THERE. It appears
+          only once there is a real run of days behind it — a flame showing "0"
+          on a screen that has just told someone to start is a scold, and a
+          flame that is always lit stops meaning anything. It is the one
+          gamification element allowed outside Home, because it is the one that
+          is about today.
+
+          THE LANGUAGE TOGGLE IS GONE FROM HERE. It sat in this bar on every
+          screen, which gave a once-a-year decision the same permanent real
+          estate as the app's own name — and put a control that reloads all
+          content one mis-tap from the streak. Language is chosen during
+          onboarding and changed in Profile, which is now a tab rather than
+          something behind a gear. The toggle itself is unchanged and still
+          mounted there; only this instance was removed.
+
+          The gear went with it. Profile is item five in the bar now, so a
+          second route to the same screen would be two controls for one
+          destination — the exact duplication the centre button just fixed. */}
       <header className="app__header">
         <h1 className="wordmark">{BRAND}</h1>
         <div className="app__tools">
-          <LangToggle lang={lang} onChange={setLang} />
-          <button
-            className="icon-btn"
-            aria-label={t(lang, "nav_bookmark")}
-            onClick={() => {
-              setSelection(null);
-              setTab("practice");
-            }}
-          >
-            <Bookmark />
-          </button>
-          <button
-            className="avatar"
-            aria-label={t(lang, "nav_profile")}
-            onClick={() => setTab("profile")}
-          >
-            <StarOrnament size={18} />
-          </button>
+          {consented && run.current > 0 && (
+            <span className="streak-chip" title={t(lang, "stat_streak")}>
+              <Flame size={15} />
+              {run.current}
+            </span>
+          )}
         </div>
       </header>
 
@@ -450,15 +585,22 @@ function LearnerApp() {
           bug — every card throws and the error boundary quietly replaces all
           of them. This says which fields are missing and what to do, so the
           failure diagnoses itself instead of looking like broken cards. */}
-      {(staleApiFields(info).length > 0 || apiPredatesContract(info)) && (
+      {(staleApiFields(info).length > 0 ||
+        apiPredatesContract(info) ||
+        missingPayloadFields(suras, rows).length > 0) && (
         <div className="notice notice--stale" role="alert">
           <p className="notice__title">{t(lang, "api_stale_title")}</p>
           <p className="notice__body">{t(lang, "api_stale_body")}</p>
           <p className="notice__body">
             <code>
-              {apiPredatesContract(info)
-                ? "error_fields: —"
-                : staleApiFields(info).join(", ")}
+              {[
+                apiPredatesContract(info)
+                  ? "error_fields: —"
+                  : staleApiFields(info).join(", "),
+                ...missingPayloadFields(suras, rows),
+              ]
+                .filter(Boolean)
+                .join(", ")}
             </code>
           </p>
         </div>
@@ -479,7 +621,7 @@ function LearnerApp() {
             body={t(lang, "api_stale_body")}
             onRetry={() => window.location.reload()}
           />
-        ) : tab === "today" ? (
+        ) : tab === "home" ? (
           suras.length === 0 ? (
             <Loading rows={5} />
           ) : (
@@ -498,17 +640,31 @@ function LearnerApp() {
                 setSelection(null);
                 setTab("practice");
               }}
+              onOpenSura={(sura) => {
+                setPlace({ sura, aya: 1 });
+                setSelection(null);
+                setTab("practice");
+              }}
               onBrowse={() => {
                 setSelection(null);
                 setTab("practice");
               }}
-              onViewAchievements={() => setTab("profile")}
+              onViewAchievements={() => setTab("progress")}
             />
           )
         ) : tab === "learn" ? (
           <Learn lang={lang} />
-        ) : tab === "memorize" ? (
-          <Memorize lang={lang} />
+        ) : tab === "progress" ? (
+          <Progress
+            lang={lang}
+            suras={suras}
+            rows={rows}
+            consented={consented}
+            onBrowse={() => {
+              setSelection(null);
+              setTab("practice");
+            }}
+          />
         ) : tab === "practice" ? (
           suras.length === 0 ? (
             <Loading rows={6} />
@@ -516,14 +672,32 @@ function LearnerApp() {
             <Recite
               lang={lang}
               selection={selection}
-              onChange={() => setSelection(null)}
+              // The X exits to the FULL SURA LIST, not to the reader for the
+              // sura you were in. Clearing `place` as well as `selection` is
+              // what makes that true: Picker restores to `initial` on mount,
+              // so leaving it set would reopen the reader one step short of
+              // the list the close button is supposed to reach.
+              onChange={() => {
+                setSelection(null);
+                setPlace(null);
+              }}
               onPart={(segment, whole) =>
                 setSelection((s) => (s ? { ...s, segment, whole } : s))
               }
+              onStep={stepAyah}
+              // Every stored attempt invalidates the numbers on Home and
+              // Progress. Fired on the analysed result rather than on the
+              // upload, so the refetch sees the row the server actually wrote.
+              onAttempt={() => setHistoryEpoch((n) => n + 1)}
+              canStep={{
+                prev: selection.ayah.aya > 1,
+                next: selection.ayah.aya < selection.sura.n_ayat,
+              }}
               maxAudioSeconds={info?.max_audio_seconds ?? 0}
-              reciters={reciters}
+              // The LIST and the setter are gone: choosing a reciter is a
+              // Settings decision now. The id still comes through, because the
+              // comparison playback has to resolve a file.
               reciter={reciter}
-              onReciter={setReciter}
             />
           ) : (
             <Picker
@@ -533,9 +707,8 @@ function LearnerApp() {
               onPick={setSelection}
               mode={mode}
               onMode={setMode}
-              reciters={reciters}
               reciter={reciter}
-              onReciter={setReciter}
+              started={started}
             />
           )
         ) : (
@@ -553,11 +726,20 @@ function LearnerApp() {
               setConsented(v);
               setAudioConsented(a);
             }}
+            theme={theme}
+            onTheme={setTheme}
           />
         )}
       </main>
 
-      <TabBar tab={tab} onChange={setTab} lang={lang} />
+      {/* The centre item is an ACTION, not a destination, so it is intercepted
+          here rather than routed to a screen of its own. Everything else is a
+          plain tab change. */}
+      <TabBar
+        tab={tab}
+        onChange={(next) => (next === "tutor" ? startRecite() : setTab(next))}
+        lang={lang}
+      />
     </div>
   );
 }

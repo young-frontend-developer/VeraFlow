@@ -1,46 +1,62 @@
 import { Lang, t } from "../lib/i18n";
 import { TabIcon } from "./Ornament";
 
-export type Tab = "today" | "practice" | "learn" | "memorize" | "profile";
+/**
+ * The five destinations.
+ *
+ * `practice` is still a Tab because it is still a SCREEN — the sura list and
+ * the recite flow both live under it — but it is no longer an item in the bar.
+ * The centre button goes there directly, which is what made the separate tab
+ * redundant: two controls, side by side, that opened the same thing.
+ *
+ * `memorize` is gone and stays gone as a tab. Memorisation now appears where it
+ * actually belongs — as a study mode on a sura, marked "Tez orada" — rather
+ * than as a whole tab leading to an apology.
+ */
+export type Tab = "home" | "practice" | "tutor" | "progress" | "learn" | "profile";
 
 /**
- * The floating pill. A dark charcoal capsule that sits ABOVE the page with real
- * space beneath it, rather than a bar welded to the bottom edge.
+ * A glass capsule floating clear of the device edge, with the centre action
+ * BREAKING OUT of it — see the `.tabbar` block in index.css for the visual
+ * construction.
  *
- * That gap is the whole idea: a bar flush to the edge belongs to the device, a
- * capsule floating clear of it belongs to the app. The page reserves room for
- * it (`.app` bottom padding) so nothing ever scrolls underneath and hides.
+ * ── THE ORDER IS THE DESIGN, and the previous one had a duplicate ──────────
  *
- * DARK, WHILE EVERY PAGE IS IVORY — and this is the one exception to the "one
- * dark surface" rule that the recording card otherwise owns. It is legitimate
- * because the nav is chrome rather than content: it never sits inside the
- * reading column, it never changes, and a light pill on a light ground would
- * need a border heavy enough to fight the hairlines everywhere else.
+ * The bar used to carry both a "Mashq" tab and a centre mic, and they did the
+ * same thing: open practice. Two controls one thumb-width apart, leading to the
+ * same place, one of them shaped like the app's primary action. The separate
+ * tab is gone and the centre keeps the job AND the name — it is Mashq now, not
+ * "Ustoz", because that is what pressing it does. Naming the button after the
+ * feature behind it rather than after what it opens is how you get a nav item
+ * nobody can predict.
  *
- * Icons are hairline and 20px, labels are 10.5px — small enough that the
- * capsule reads as one object rather than as five buttons.
+ * That freed a slot, and the two moves after it are consequences: Oʻrganish
+ * takes the empty second position, and Profil takes the fifth. Profil had been
+ * hiding behind a gear in the top bar, which is a fine place for settings right
+ * up until settings is also where the language lives — and language is not a
+ * setting people find by hunting for a gear.
+ *
+ *   Bosh sahifa · Oʻrganish · [ Mashq ] · Natijalar · Profil
  */
 
-const LABEL: Record<Tab, Parameters<typeof t>[1]> = {
-  today: "nav_today",
-  practice: "nav_practice",
+const LABEL: Record<Exclude<Tab, "practice">, Parameters<typeof t>[1]> = {
+  home: "nav_home",
   learn: "nav_learn",
-  memorize: "nav_memorize",
+  tutor: "nav_practice",
+  progress: "nav_progress",
   profile: "nav_profile",
 };
 
-/**
- * THE ORDER IS THE DESIGN, not an implementation detail.
- *
- * Practice sits in the MIDDLE — third of five — because it is the thing the app
- * is for, and a floating pill puts its primary action under the thumb at the
- * centre. It was previously second, which put Learn and Memorize to one side of
- * it and made the row read as a list rather than as a shape with a centre.
- */
-const ORDER: Tab[] = ["today", "learn", "practice", "memorize", "profile"];
+const ORDER: Exclude<Tab, "practice">[] = [
+  "home",
+  "learn",
+  "tutor",
+  "progress",
+  "profile",
+];
 
-/** The centre item, rendered as the pill's primary action. */
-const CENTER: Tab = "practice";
+/** The centre item, rendered as the bar's primary action. */
+const CENTER: Tab = "tutor";
 
 export default function TabBar({
   tab,
@@ -53,17 +69,24 @@ export default function TabBar({
 }) {
   return (
     <nav className="tabbar" aria-label={t(lang, "nav_label")}>
-      {ORDER.map((key) => (
-        <button
-          key={key}
-          className={key === CENTER ? "tab tab--center" : "tab"}
-          aria-current={tab === key ? "page" : undefined}
-          onClick={() => onChange(key)}
-        >
-          <span className="tab__glyph">{TabIcon[key]}</span>
-          {t(lang, LABEL[key])}
-        </button>
-      ))}
+      {ORDER.map((key) => {
+        // The practice SCREEN has no item of its own any more, so the centre
+        // stays lit while you are on it — that is the button you pressed to
+        // get there, and a bar with nothing marked leaves you unsure which
+        // part of the app you are standing in.
+        const current = tab === key || (key === CENTER && tab === "practice");
+        return (
+          <button
+            key={key}
+            className={key === CENTER ? "tab tab--center" : "tab"}
+            aria-current={current ? "page" : undefined}
+            onClick={() => onChange(key)}
+          >
+            <span className="tab__glyph">{TabIcon[key]}</span>
+            {t(lang, LABEL[key])}
+          </button>
+        );
+      })}
     </nav>
   );
 }

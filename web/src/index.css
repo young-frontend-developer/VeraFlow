@@ -1,17 +1,44 @@
 /* Tilawah — one visual system, applied everywhere.
  *
- * Warm ivory ground, deep charcoal text, forest green as the single accent,
- * sage and beige as its quiet relatives. Serif for anything that speaks,
- * grotesque for anything that instructs, and a real Quranic face for the text
- * itself. Cards float on the ground rather than stacking against it.
+ * ── THE DIRECTION: DUSK OVER SAMARKAND ─────────────────────────────────────
  *
- * THE ONE DELIBERATE CONTRAST is the recording and analysing state: a dark
- * navy card with an amber waveform. The learner enters it to recite and comes
- * straight back out to the ivory. That palette appears nowhere else, which is
- * what makes it read as a moment rather than as a theme.
+ * A dark, warm, atmospheric ground — near-black falling through deep
+ * ultramarine into indigo — with warm brass as the one glowing accent and
+ * jade as its quiet second. It is painted, not photographed. There is no
+ * photographic backdrop anywhere in this app and there will not be one: a
+ * stock mosque at dusk dates the moment it ships, belongs to whoever took it,
+ * and is the single most-copied move in this category. A gradient, a geometry
+ * and a glow are ours, and they age.
  *
- * ONE RED IS ALSO GONE. A misread letter is marked in warm terracotta, never
- * in alarm red: the mark is guidance about a letter, not a verdict on the
+ * ── FOUR LAYERS, AND YOU SHOULD BE ABLE TO COUNT THEM ──────────────────────
+ *
+ *   1  the ground        a fixed gradient plus two off-centre light sources,
+ *                        so the page has a direction the eye can find
+ *   2  the pattern       the app's own eight-point khatam, tessellated, at 4%.
+ *                        Same mark as Ornament.tsx — the background is the
+ *                        logo's geometry repeated, not a bought tile
+ *   3  the glass         cards are translucent and blurred. This only works
+ *                        BECAUSE of layers 1 and 2: frosted glass over flat
+ *                        ivory is a texture with nothing behind it, frosted
+ *                        glass over a lit gradient is depth
+ *   4  the glow          brass light — halos, inner rims, luminous Arabic
+ *
+ * ── THE TOKEN NAMES ARE HISTORICAL, THE VALUES ARE NOT ─────────────────────
+ *
+ * `--green` was forest green and is now brass; `--sage` was sage and is now
+ * jade; `--ivory` was the paper and is now the night. The names are kept
+ * because forty screens address the system through them, and renaming every
+ * call site would have meant touching every file for no visual gain. Read them
+ * as ROLES, not as colours:
+ *
+ *   --ivory   the ground            --green  the primary accent (brass)
+ *   --card    the panel             --sage   the secondary accent (jade)
+ *   --ink     the reading colour    --terra  the correction colour
+ *
+ * ── ONE RED IS STILL GONE ──────────────────────────────────────────────────
+ *
+ * A misread letter is marked in warm terracotta, lifted here so it reads on a
+ * dark ground. The mark is guidance about a letter, not a verdict on the
  * person reciting.
  */
 
@@ -23,36 +50,75 @@
 @import "@fontsource/amiri-quran/400.css";
 
 :root {
-  /* ── ground ─────────────────────────────────────────────────────────── */
-  --ivory: #faf8f4;
-  --ivory-sunk: #f6f3ee;
-  --ivory-lift: #f7f5f1;
-  --beige: #ede7dd;
-  --card: #ffffff;
-  --border: #ece8e2;
+  /* ── the ground ─────────────────────────────────────────────────────── */
+  /* Near-black → deep ultramarine → indigo. `--ivory` is the page ground and
+     keeps its name; see the note above. */
+  --ground-0: #070a12;
+  --ground-1: #0b0f1a;
+  --ground-2: #121a30;
+  --ground-3: #1a2138;
+  --ultramarine: #1c2f66;
+  --ivory: var(--ground-1);
+
+  /* Sunk and lifted surfaces, as translucency rather than as paint — anything
+     opaque here would punch a hole in the layering. */
+  --ivory-sunk: rgba(7, 10, 18, 0.42);
+  --ivory-lift: rgba(255, 255, 255, 0.055);
+  --beige: rgba(255, 255, 255, 0.06);
+
+  /* ── the glass ──────────────────────────────────────────────────────── */
+  /* A panel is a gradient of two very low-alpha whites, not a flat wash: the
+     top edge catches more light than the bottom, which is what makes it read
+     as a pane rather than as a rectangle of fog. */
+  --card: linear-gradient(
+    158deg,
+    rgba(255, 255, 255, 0.075) 0%,
+    rgba(255, 255, 255, 0.028) 46%,
+    rgba(255, 255, 255, 0.014) 100%
+  );
+  --card-solid: rgba(20, 26, 44, 0.72);
+  --blur: blur(20px) saturate(135%);
+  /* The hairline is BRASS-TINTED, never neutral grey. It is the quietest
+     place the accent appears and it is what ties a card to the palette. */
+  --border: rgba(212, 168, 83, 0.16);
+  --border-soft: rgba(255, 255, 255, 0.07);
 
   /* ── ink ────────────────────────────────────────────────────────────── */
-  --ink: #222222;
-  --ink-2: #7e7e7e;
-  --ink-3: #a7a7a7;
+  /* Warm white, then two muted warm greys. Never pure #fff — a cold white on
+     a warm indigo ground reads as a rendering error. */
+  --ink: #f4efe4;
+  --ink-2: rgba(244, 239, 228, 0.62);
+  --ink-3: rgba(244, 239, 228, 0.4);
 
-  /* ── accent ─────────────────────────────────────────────────────────── */
-  --green: #1d5a46;
-  --green-soft: rgba(29, 90, 70, 0.08);
-  --sage: #a9b99d;
-  --sage-soft: rgba(169, 185, 157, 0.22);
+  /* ── the primary accent: brass ──────────────────────────────────────── */
+  --green: #d4a853;
+  --gold: #d4a853;
+  --gold-lift: #ecca85;
+  --gold-deep: #9c7530;
+  --green-soft: rgba(212, 168, 83, 0.12);
+  --gold-glow: rgba(212, 168, 83, 0.34);
+  /* What sits ON brass. Dark, because ivory text on a gold fill is unreadable
+     at body size — the one contrast rule this palette cannot bend. */
+  --on-gold: #0d1220;
 
-  /* The correction colour. Warm terracotta, deliberately desaturated — this
-   * marks a letter to work on, and an alarm red would make it a failure. */
-  --terra: #a9603f;
-  --terra-lift: #92502f;
-  --terra-soft: rgba(169, 96, 63, 0.1);
+  /* ── the secondary accent: jade ─────────────────────────────────────── */
+  --sage: #3fa287;
+  --jade: #3fa287;
+  --jade-lift: #5cc4a6;
+  --sage-soft: rgba(63, 162, 135, 0.18);
 
-  /* The dark moment. Recording and analysing only. */
-  --night: #10161c;
-  --night-2: #1b2530;
-  --amber: #d9a441;
-  --amber-soft: rgba(217, 164, 65, 0.28);
+  /* The correction colour, lifted for a dark ground. */
+  --terra: #d98b62;
+  --terra-lift: #eda87f;
+  --terra-soft: rgba(217, 139, 98, 0.16);
+
+  /* The recording surface. It used to be the app's one dark moment; the whole
+     app is dark now, so it earns its separation by going DEEPER than the page
+     rather than darker in kind. */
+  --night: #05070d;
+  --night-2: #0e1526;
+  --amber: #ecca85;
+  --amber-soft: rgba(212, 168, 83, 0.3);
 
   /* ── type ───────────────────────────────────────────────────────────── */
   --serif: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
@@ -60,14 +126,16 @@
   --arabic: "Amiri Quran", serif;
 
   /* ── form ───────────────────────────────────────────────────────────── */
-  --pad: 24px;
+  --pad: 22px;
   --r-card: 26px;
   --r-soft: 18px;
   --r-chip: 999px;
-  /* Near-invisible. A card is separated from the ground by a hairline and a
-   * breath of shadow, never by weight. */
-  --lift: 0 2px 8px rgba(0, 0, 0, 0.03);
-  --lift-2: 0 6px 22px rgba(0, 0, 0, 0.05);
+  /* On a dark ground a shadow cannot separate a card from the page — the page
+     is already darker than the shadow. So a panel is lifted by an INNER top
+     rim of light plus a deep soft drop, and the rim is doing most of the work. */
+  --rim: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --lift: var(--rim), 0 12px 28px rgba(0, 0, 0, 0.34);
+  --lift-2: var(--rim), 0 22px 54px rgba(0, 0, 0, 0.46);
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
   --t: 200ms;
 }
@@ -84,9 +152,21 @@ body,
   min-height: 100%;
 }
 
+/* ══ LAYER 1 — THE GROUND ═════════════════════════════════════════════════
+ *
+ * A vertical fall from near-black to indigo, with two off-centre light
+ * sources laid over it: a cool ultramarine high on the right and a warm brass
+ * bloom low on the left. Two lights rather than one, because a single centred
+ * glow reads as a vignette; two off-centre ones read as a sky with a direction
+ * in it.
+ *
+ * FIXED, not scrolled. The content moves through the atmosphere; the
+ * atmosphere does not slide up with it. `background-attachment: fixed` is
+ * unreliable on iOS, so the gradient lives on a pinned pseudo-element instead.
+ */
 body {
   margin: 0;
-  background: var(--ivory);
+  background: var(--ground-1);
   color: var(--ink);
   font-family: var(--sans);
   font-size: 16px;
@@ -94,6 +174,67 @@ body {
   letter-spacing: 0.005em;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(
+      120% 82% at 78% -6%,
+      rgba(28, 47, 102, 0.72) 0%,
+      rgba(28, 47, 102, 0) 58%
+    ),
+    radial-gradient(
+      96% 62% at 6% 104%,
+      rgba(154, 108, 42, 0.3) 0%,
+      rgba(154, 108, 42, 0) 62%
+    ),
+    linear-gradient(
+      177deg,
+      var(--ground-0) 0%,
+      var(--ground-1) 26%,
+      var(--ground-2) 66%,
+      var(--ground-3) 100%
+    );
+}
+
+/* ══ LAYER 2 — THE PATTERN ════════════════════════════════════════════════
+ *
+ * The app's own eight-point khatam — two overlapping squares, the same figure
+ * StarOrnament draws — tessellated on a 132px lattice with the connecting ribs
+ * that make a girih read as one continuous line rather than as scattered
+ * stars. Drawn here as geometry, not imported as an image: it is the logo's
+ * construction repeated, so the background and the mark share an origin.
+ *
+ * AT 4%, AND MASKED. It is texture, not decoration — you should notice it on
+ * the second look and never on the first. The mask fades it out of the top
+ * third so it never competes with the greeting and the hero card, which is
+ * where the eye lands.
+ */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.042;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='132' height='132' viewBox='0 0 132 132'%3E%3Cg fill='none' stroke='%23d4a853' stroke-width='1.15'%3E%3Crect x='42' y='42' width='48' height='48'/%3E%3Crect x='42' y='42' width='48' height='48' transform='rotate(45 66 66)'/%3E%3Crect x='-24' y='-24' width='48' height='48'/%3E%3Crect x='-24' y='-24' width='48' height='48' transform='rotate(45 0 0)'/%3E%3Crect x='108' y='-24' width='48' height='48'/%3E%3Crect x='108' y='-24' width='48' height='48' transform='rotate(45 132 0)'/%3E%3Crect x='-24' y='108' width='48' height='48'/%3E%3Crect x='-24' y='108' width='48' height='48' transform='rotate(45 0 132)'/%3E%3Crect x='108' y='108' width='48' height='48'/%3E%3Crect x='108' y='108' width='48' height='48' transform='rotate(45 132 132)'/%3E%3Cpath d='M33.9 0H98.1M33.9 132H98.1M0 33.9V98.1M132 33.9V98.1M66 0V32.1M66 99.9V132M0 66H32.1M99.9 66H132'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 132px 132px;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.35) 22%,
+    #000 52%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.35) 22%,
+    #000 52%
+  );
 }
 
 button,
@@ -176,8 +317,8 @@ ol {
   max-width: 560px;
   margin: 0 auto;
   padding: 0 var(--pad);
-  /* Room for the floating nav to sit clear of the last card. */
-  padding-bottom: 132px;
+  /* Room for the floating nav AND the centre button that rises out of it. */
+  padding-bottom: 148px;
 }
 
 .app__header {
@@ -187,12 +328,19 @@ ol {
   padding: 30px 0 22px;
 }
 
+/* The logotype. Brass, and lit — a soft warm bloom behind the letterforms so
+   the wordmark sits in the same light as everything else rather than being
+   painted on top of it. */
 .wordmark {
   font-family: var(--serif);
   font-size: 25px;
   font-weight: 500;
   letter-spacing: 0.06em;
-  color: var(--green);
+  background: linear-gradient(168deg, var(--gold-lift) 0%, var(--gold) 62%, #b8873a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 14px rgba(212, 168, 83, 0.28));
 }
 
 .app__main {
@@ -302,6 +450,10 @@ ol {
 
 /* ══ buttons ══════════════════════════════════════════════════════════════ */
 
+/* THE PRIMARY BUTTON IS A LIGHT SOURCE. Brushed brass — a gradient rather
+   than a flat fill, so it has a highlight running across it — dark ink on
+   top, a bright top rim, and a soft warm halo cast onto the ground beneath.
+   That halo is the difference between a gold button and a glowing one. */
 .btn-primary {
   display: inline-flex;
   align-items: center;
@@ -310,20 +462,27 @@ ol {
   width: 100%;
   padding: 17px 24px;
   border-radius: var(--r-chip);
-  background: var(--green);
-  color: #fbfaf7;
+  background: linear-gradient(160deg, var(--gold-lift) 0%, var(--gold) 52%, #c1913f 100%);
+  color: var(--on-gold);
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.012em;
-  transition: opacity var(--t) var(--ease);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 6px 22px rgba(212, 168, 83, 0.28);
+  transition: box-shadow var(--t) var(--ease), transform var(--t) var(--ease);
 }
 
-.btn-primary:hover {
-  opacity: 0.9;
+.btn-primary:hover:not(:disabled) {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 8px 30px rgba(212, 168, 83, 0.42);
+  transform: translateY(-1px);
 }
 
 .btn-primary:disabled {
-  opacity: 0.35;
+  opacity: 0.32;
+  box-shadow: none;
 }
 
 .btn-quiet {
@@ -334,22 +493,25 @@ ol {
   padding: 15px 24px;
   border-radius: var(--r-chip);
   border: 1px solid var(--border);
-  background: var(--card);
+  background: var(--ivory-lift);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
   font-size: 15px;
   color: var(--ink);
-  transition: background var(--t) var(--ease);
+  transition: background var(--t) var(--ease), border-color var(--t) var(--ease);
 }
 
 .btn-quiet:hover {
-  background: var(--ivory-lift);
+  background: rgba(255, 255, 255, 0.095);
+  border-color: rgba(212, 168, 83, 0.3);
 }
 
 .linkish {
   font-size: 14px;
-  color: var(--green);
+  color: var(--gold);
   text-underline-offset: 4px;
   text-decoration: underline;
-  text-decoration-color: var(--sage);
+  text-decoration-color: rgba(212, 168, 83, 0.4);
 }
 
 .crumb {
@@ -374,9 +536,23 @@ ol {
 
 /* ══ card ═════════════════════════════════════════════════════════════════ */
 
+/* ══ LAYER 3 — THE GLASS ══════════════════════════════════════════════════
+ *
+ * A soft-glass pane: a two-stop translucent gradient, a real backdrop blur, a
+ * brass hairline, and an inner rim of light along the top edge. The rim is the
+ * detail that matters — it is what a pane of glass does when light falls on
+ * it, and without it the card is just a lighter rectangle.
+ *
+ * `isolation: isolate` so a card's own glows composite against the card rather
+ * than bleeding into the ground behind it.
+ */
 .card,
 .panel {
+  position: relative;
+  isolation: isolate;
   background: var(--card);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
   border: 1px solid var(--border);
   border-radius: var(--r-card);
   box-shadow: var(--lift);
@@ -385,38 +561,89 @@ ol {
   animation: rise var(--t) var(--ease) both;
 }
 
+/* THE IMPORTANT CARD. Not a different shape and not a different size — a
+   brighter rim, a warmer hairline and a brass bloom sitting behind the top-left
+   corner, as though the pane were nearer the light. Reserved for the one card
+   on a screen that is the answer to "what now": the hero on Home.
+   Two of these on one screen and neither is primary.
+   NOT `--lit`, which Feedback.tsx already owns and which means "this content
+   has been reviewed" — a modifier that means one thing on a correction card
+   and another on the hero is a modifier that means nothing. */
+.card--hero {
+  border-color: rgba(212, 168, 83, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.13),
+    inset 0 0 60px rgba(212, 168, 83, 0.06),
+    0 22px 54px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(212, 168, 83, 0.06);
+}
+
+.card--hero::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -34%;
+  left: -18%;
+  width: 78%;
+  height: 88%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    rgba(212, 168, 83, 0.24) 0%,
+    rgba(212, 168, 83, 0) 100%
+  );
+  pointer-events: none;
+}
+
 /* ══ floating tab bar ═════════════════════════════════════════════════════ */
 
+/* A glass capsule floating clear of the device edge, with the centre action
+   BREAKING OUT of it. The gap beneath is the whole idea: a bar welded to the
+   bottom edge belongs to the phone, a capsule floating above it belongs to the
+   app. The page reserves room (`.app` bottom padding) so nothing scrolls
+   underneath and hides. */
 .tabbar {
   position: fixed;
   left: 50%;
-  bottom: 26px;
+  bottom: 22px;
   transform: translateX(-50%);
   z-index: 40;
   display: flex;
-  gap: 2px;
-  padding: 7px;
-  border-radius: var(--r-chip);
-  background: #191f24;
-  box-shadow: 0 10px 30px rgba(16, 22, 28, 0.18);
+  align-items: flex-end;
+  width: calc(100% - 32px);
+  max-width: 420px;
+  padding: 9px 8px;
+  border-radius: 30px;
+  border: 1px solid var(--border);
+  background: linear-gradient(
+    170deg,
+    rgba(24, 31, 52, 0.86) 0%,
+    rgba(11, 15, 26, 0.9) 100%
+  );
+  -webkit-backdrop-filter: blur(26px) saturate(150%);
+  backdrop-filter: blur(26px) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 18px 44px rgba(0, 0, 0, 0.55);
 }
 
 .tab {
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 9px 15px 8px;
-  border-radius: var(--r-chip);
-  font-size: 10.5px;
-  letter-spacing: 0.05em;
-  color: rgba(250, 248, 244, 0.5);
-  transition: color var(--t) var(--ease), background var(--t) var(--ease);
+  gap: 4px;
+  padding: 8px 4px 6px;
+  border-radius: 20px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+  transition: color var(--t) var(--ease);
 }
 
 .tab[aria-current="page"] {
-  color: #faf8f4;
-  background: rgba(250, 248, 244, 0.11);
+  color: var(--gold);
 }
 
 .tab__glyph {
@@ -424,29 +651,110 @@ ol {
   line-height: 0;
 }
 
-/* THE CENTRE ITEM. Practice is the app's primary action and sits third of
-   five, so it gets a lifted disc inside the pill rather than a heavier weight
-   or a larger label — the row has to keep reading as one object. Active state
-   still comes from aria-current, so the two do not fight. */
+/* The active marker is a lit dot under the label, not a filled pill behind the
+   whole item — a pill inside a capsule is two nested capsules and the row
+   stops reading as one object. */
+.tab::after {
+  content: "";
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: transparent;
+  transition: background var(--t) var(--ease), box-shadow var(--t) var(--ease);
+}
+
+.tab[aria-current="page"]::after {
+  background: var(--gold);
+  box-shadow: 0 0 9px var(--gold-glow);
+}
+
+/* ── THE CENTRE ACTION ────────────────────────────────────────────────────
+   It is not a fifth icon that happens to be in the middle. It is the app's
+   primary action — open the tutor and speak — and it breaks OUT of the bar:
+   raised above the nav line, half again the size of the others, brushed brass
+   with a halo ring around it. At a glance the bar has one obvious thing to
+   press, which is exactly the point of putting it under the thumb. */
+.tab--center {
+  flex: 0 0 auto;
+  gap: 7px;
+  padding-inline: 12px;
+}
+
 .tab--center .tab__glyph {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  margin-top: -2px;
+  width: 58px;
+  height: 58px;
+  /* The break-out. Negative margin so the disc rises past the bar's top edge
+     without the bar having to grow around it. */
+  margin-top: -30px;
+  margin-bottom: 1px;
   border-radius: 50%;
-  background: rgba(250, 248, 244, 0.12);
-  transition: background var(--t) var(--ease);
+  color: var(--on-gold);
+  background: linear-gradient(158deg, var(--gold-lift) 0%, var(--gold) 50%, #b8873a 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 0 0 5px rgba(11, 15, 26, 0.92),
+    0 0 0 6px rgba(212, 168, 83, 0.38),
+    0 10px 30px rgba(212, 168, 83, 0.34),
+    0 14px 34px rgba(0, 0, 0, 0.5);
+  transition: box-shadow var(--t) var(--ease), transform var(--t) var(--ease);
+}
+
+/* The halo. A brass ring breathing slowly outward — the same gesture the mic
+   button makes while listening, so the two read as the same action in two
+   places. Slow enough to be atmosphere rather than an alert. */
+.tab--center .tab__glyph::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1px solid rgba(212, 168, 83, 0.5);
+  animation: halo 3.6s var(--ease) infinite;
+  pointer-events: none;
+}
+
+@keyframes halo {
+  0% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1.34);
+  }
+}
+
+.tab--center:hover .tab__glyph {
+  transform: translateY(-2px);
 }
 
 .tab--center[aria-current="page"] {
-  background: none;
+  color: var(--gold);
 }
 
 .tab--center[aria-current="page"] .tab__glyph {
-  background: var(--sage);
-  color: var(--night);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 0 0 5px rgba(11, 15, 26, 0.92),
+    0 0 0 7px rgba(212, 168, 83, 0.62),
+    0 10px 38px rgba(212, 168, 83, 0.5),
+    0 14px 34px rgba(0, 0, 0, 0.5);
+}
+
+/* The centre item carries its own ring; a second dot under it is noise. */
+.tab--center::after {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab--center .tab__glyph::after {
+    animation: none;
+    opacity: 0.4;
+  }
 }
 
 /* ══ onboarding ═══════════════════════════════════════════════════════════ */
@@ -489,7 +797,8 @@ ol {
   width: 46px;
   height: 46px;
   margin-bottom: 32px;
-  color: var(--sage);
+  color: var(--gold);
+  filter: drop-shadow(0 0 16px var(--gold-glow));
 }
 
 /* Language as an editorial choice, not a dropdown: two full-width plates,
@@ -516,8 +825,9 @@ ol {
 }
 
 .choice__item[aria-pressed="true"] {
-  border-color: var(--green);
+  border-color: rgba(212, 168, 83, 0.55);
   background: var(--green-soft);
+  box-shadow: 0 0 22px rgba(212, 168, 83, 0.12);
 }
 
 .choice__name {
@@ -562,11 +872,12 @@ ol {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--border);
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .onboard__dot--on {
-  background: var(--sage);
+  background: var(--gold);
+  box-shadow: 0 0 10px var(--gold-glow);
 }
 
 .onboard__skip {
@@ -605,7 +916,8 @@ ol {
 .gate__none {
   padding: 20px 22px;
   border-radius: var(--r-soft);
-  background: var(--beige);
+  border: 1px solid var(--border-soft);
+  background: var(--ivory-sunk);
   margin-bottom: 22px;
 }
 
@@ -647,7 +959,7 @@ ol {
   margin-top: 3px;
   width: 17px;
   height: 17px;
-  accent-color: var(--green);
+  accent-color: var(--gold);
   flex: 0 0 auto;
 }
 
@@ -684,10 +996,11 @@ ol {
   width: 100%;
   padding: 17px 24px;
   border-radius: var(--r-chip);
-  background: var(--green);
-  color: #fbfaf7;
+  background: linear-gradient(160deg, var(--gold-lift) 0%, var(--gold) 52%, #c1913f 100%);
+  color: var(--on-gold);
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 6px 22px rgba(212,168,83,.28);
 }
 
 .gate__quiet {
@@ -741,13 +1054,24 @@ ol {
   color: var(--ink-2);
 }
 
+.hero__ar,
+.verse__ar,
+.mushaf__body,
+.ayah__text,
+.reflect__ar,
+.opening__basmala {
+  color: var(--ink);
+  text-shadow:
+    0 0 26px rgba(212, 168, 83, 0.26),
+    0 0 60px rgba(212, 168, 83, 0.12);
+}
+
 .hero__ar {
   font-family: var(--arabic);
-  font-size: 27px;
-  line-height: 2.5;
+  font-size: 30px;
+  line-height: 2.45;
   text-align: right;
-  color: var(--ink);
-  margin-bottom: 20px;
+  margin-bottom: 22px;
 }
 
 .hero__ref {
@@ -776,17 +1100,21 @@ ol {
 
 /* A hairline progress rule, not a bar with a fill colour. */
 .progress {
-  height: 2px;
-  border-radius: 2px;
-  background: var(--beige);
+  height: 5px;
+  border-radius: var(--r-chip);
+  background: rgba(0, 0, 0, 0.34);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
   overflow: hidden;
   margin-bottom: 8px;
 }
 
 .progress__fill {
+  display: block;
   height: 100%;
-  background: var(--sage);
-  transition: width var(--t) var(--ease);
+  border-radius: var(--r-chip);
+  background: linear-gradient(90deg, var(--gold-deep) 0%, var(--gold) 55%, var(--gold-lift) 100%);
+  box-shadow: 0 0 12px var(--gold-glow);
+  transition: width 420ms var(--ease);
 }
 
 .progress__text {
@@ -854,12 +1182,15 @@ ol {
   width: 100%;
   padding: 17px 4px;
   text-align: left;
-  border-bottom: 1px solid var(--border);
-  transition: background var(--t) var(--ease);
+  border-bottom: 1px solid var(--border-soft);
+  border-radius: 12px;
+  transition: background var(--t) var(--ease),
+    border-color var(--t) var(--ease);
 }
 
 .row:hover {
   background: var(--ivory-lift);
+  border-bottom-color: rgba(212, 168, 83, 0.3);
 }
 
 .row__num {
@@ -905,8 +1236,8 @@ ol {
 }
 
 .row__ar--name {
-  font-size: 22px;
-  color: var(--green);
+  font-size: 23px;
+  color: var(--gold);
 }
 
 .row__mark {
@@ -933,16 +1264,21 @@ ol {
   font-variant-numeric: tabular-nums;
 }
 
+/* A glass input: sunk rather than raised, so it reads as a well cut into the
+   panel. The focus state lights the brass rim instead of drawing a ring. */
 .search {
   width: 100%;
   padding: 15px 20px;
   margin-bottom: 22px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-soft);
   border-radius: var(--r-chip);
-  background: var(--card);
+  background: var(--ivory-sunk);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
   font-size: 15px;
   color: var(--ink);
-  transition: border-color var(--t) var(--ease);
+  transition: border-color var(--t) var(--ease), box-shadow var(--t) var(--ease);
 }
 
 .search::placeholder {
@@ -951,13 +1287,31 @@ ol {
 
 .search:focus {
   outline: none;
-  border-color: var(--sage);
+  border-color: rgba(212, 168, 83, 0.5);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.3),
+    0 0 0 3px rgba(212, 168, 83, 0.1);
 }
 
 /* ══ reader ═══════════════════════════════════════════════════════════════ */
 
+/* The sura's Latin name and its Arabic, on one line.
+   These used to stack with a gap between them, because `.section-head` was
+   later redefined as a flex container for the Home headers — which made the
+   h2 inside here a flex box of its own and left the Arabic below it as a
+   block sibling. Declaring the row explicitly is the fix; the two names
+   belong on the same baseline, as they are on every row of the picker. */
 .reader__head {
-  margin-bottom: 20px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.reader__head .section-head {
+  display: block;
+  margin: 0;
 }
 
 .reader__ar {
@@ -975,7 +1329,8 @@ ol {
   padding: 3px;
   margin-bottom: 26px;
   border-radius: var(--r-chip);
-  background: var(--beige);
+  border: 1px solid var(--border-soft);
+  background: var(--ivory-sunk);
 }
 
 .modes__tab {
@@ -987,9 +1342,9 @@ ol {
 }
 
 .modes__tab.is-on {
-  background: var(--card);
-  color: var(--ink);
-  box-shadow: var(--lift);
+  background: var(--green-soft);
+  color: var(--gold);
+  box-shadow: inset 0 0 0 1px var(--border);
 }
 
 /* Continuous reading. Book-like: one column, justified to the right, with the
@@ -1027,19 +1382,20 @@ ol {
   height: 25px;
   margin: 0 5px;
   padding: 0 5px;
-  border: 1px solid var(--sage);
+  border: 1px solid rgba(212, 168, 83, 0.45);
   border-radius: 50%;
   font-family: var(--sans);
   font-size: 11px;
   line-height: 1;
-  color: var(--green);
+  color: var(--gold);
   vertical-align: middle;
   font-variant-numeric: tabular-nums;
   transition: background var(--t) var(--ease);
 }
 
 .mushaf__mark:hover {
-  background: var(--sage-soft);
+  background: var(--green-soft);
+  box-shadow: 0 0 14px var(--gold-glow);
 }
 
 /* Verse-by-verse. One ayah, centred, translation beneath in quieter type. */
@@ -1125,7 +1481,7 @@ ol {
 }
 
 .mushaf__aya:focus-visible {
-  outline: 1px solid var(--sage);
+  outline: 1px solid var(--gold);
   outline-offset: 3px;
 }
 
@@ -1140,15 +1496,16 @@ ol {
   width: 100%;
   padding: 17px 24px;
   border-radius: var(--r-chip);
-  background: var(--green);
-  color: #fbfaf7;
+  background: linear-gradient(160deg, var(--gold-lift) 0%, var(--gold) 52%, #c1913f 100%);
+  color: var(--on-gold);
   font-size: 16px;
-  font-weight: 500;
-  transition: opacity var(--t) var(--ease);
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 6px 22px rgba(212,168,83,.28);
+  transition: box-shadow var(--t) var(--ease);
 }
 
 .record:hover:not(:disabled) {
-  opacity: 0.9;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 8px 30px rgba(212,168,83,.42);
 }
 
 .record:disabled {
@@ -1242,7 +1599,8 @@ ol {
   height: 26px;
   border-radius: 50%;
   background: var(--green-soft);
-  color: var(--green);
+  box-shadow: inset 0 0 0 1px var(--border);
+  color: var(--gold);
 }
 
 .reciter {
@@ -1264,9 +1622,10 @@ ol {
   flex: 1 1 auto;
   min-width: 0;
   padding: 12px 14px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-soft);
   border-radius: var(--r-soft);
-  background: var(--card);
+  background: var(--card-solid);
+  color-scheme: dark;
   font-size: 14px;
   color: var(--ink);
 }
@@ -1279,6 +1638,8 @@ ol {
   border: 1px solid var(--border);
   border-radius: var(--r-card);
   background: var(--card);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
   box-shadow: var(--lift);
   margin-bottom: 18px;
 }
@@ -1324,7 +1685,9 @@ ol {
   white-space: nowrap;
   padding: 1px 7px;
   border-radius: var(--r-chip);
-  background: var(--ivory);
+  background: rgba(11, 15, 26, 0.92);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
   border: 1px solid var(--border);
   font-size: 10.5px;
   letter-spacing: 0.04em;
@@ -1353,8 +1716,9 @@ ol {
   padding: 30px 26px 26px;
   margin-bottom: 18px;
   background: linear-gradient(168deg, var(--night-2) 0%, var(--night) 78%);
-  box-shadow: 0 14px 40px rgba(16, 22, 28, 0.22);
-  color: #f2efe9;
+  border: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 22px 54px rgba(0, 0, 0, 0.62);
+  color: var(--ink);
   animation: rise var(--t) var(--ease) both;
 }
 
@@ -1362,7 +1726,7 @@ ol {
   font-size: 12px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(242, 239, 233, 0.42);
+  color: var(--ink-3);
   margin-bottom: 22px;
 }
 
@@ -1388,12 +1752,12 @@ ol {
 }
 
 .wave__bar--idle {
-  background: rgba(217, 164, 65, 0.32);
+  background: rgba(212, 168, 83, 0.34);
 }
 
 .studio__rule {
   height: 1px;
-  background: rgba(242, 239, 233, 0.1);
+  background: var(--border-soft);
   margin-bottom: 18px;
 }
 
@@ -1408,7 +1772,7 @@ ol {
   font-size: 10.5px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(242, 239, 233, 0.38);
+  color: var(--ink-3);
 }
 
 .studio__stat-value {
@@ -1416,7 +1780,7 @@ ol {
   font-family: var(--serif);
   font-size: 21px;
   font-weight: 500;
-  color: #f2efe9;
+  color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1436,10 +1800,11 @@ ol {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: #f7f4ee;
-  color: var(--green);
-  box-shadow: 0 0 0 1px rgba(169, 185, 157, 0.35),
-    0 0 28px rgba(169, 185, 157, 0.24);
+  background: linear-gradient(158deg, var(--gold-lift) 0%, var(--gold) 50%, #b8873a 100%);
+  color: var(--on-gold);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.5),
+    0 0 0 1px rgba(212, 168, 83, 0.4),
+    0 0 34px rgba(212, 168, 83, 0.34);
   transition: transform var(--t) var(--ease);
 }
 
@@ -1451,7 +1816,7 @@ ol {
   position: absolute;
   inset: -6px;
   border-radius: 50%;
-  border: 1px solid rgba(169, 185, 157, 0.5);
+  border: 1px solid rgba(212, 168, 83, 0.55);
   opacity: 0;
 }
 
@@ -1483,12 +1848,12 @@ ol {
 @keyframes breathe {
   0%,
   100% {
-    box-shadow: 0 0 0 1px rgba(169, 185, 157, 0.35),
-      0 0 22px rgba(169, 185, 157, 0.18);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 0 0 1px rgba(212, 168, 83, 0.35),
+      0 0 24px rgba(212, 168, 83, 0.2);
   }
   50% {
-    box-shadow: 0 0 0 1px rgba(169, 185, 157, 0.55),
-      0 0 40px rgba(169, 185, 157, 0.34);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 0 0 1px rgba(212, 168, 83, 0.6),
+      0 0 46px rgba(212, 168, 83, 0.42);
   }
 }
 
@@ -1501,13 +1866,13 @@ ol {
   font-size: 21px;
   font-weight: 500;
   line-height: 1.3;
-  color: #f7f4ee;
+  color: var(--ink);
 }
 
 .studio__secondary {
   font-size: 13.5px;
   line-height: 1.55;
-  color: rgba(242, 239, 233, 0.5);
+  color: var(--ink-2);
   margin-top: 3px;
 }
 
@@ -1542,6 +1907,8 @@ ol {
   border: 1px solid var(--border);
   border-radius: var(--r-card);
   background: var(--card);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
   box-shadow: var(--lift);
   margin-bottom: 18px;
 }
@@ -1550,7 +1917,8 @@ ol {
   width: 34px;
   height: 34px;
   margin-bottom: 16px;
-  color: var(--sage);
+  color: var(--jade);
+  filter: drop-shadow(0 0 16px rgba(63, 162, 135, 0.4));
 }
 
 .clear__flame {
@@ -1577,11 +1945,12 @@ ol {
 
 .card--broken,
 .card--fixed {
-  background: var(--ivory-lift);
+  background: var(--card);
 }
 
 .card--active {
-  border-color: var(--sage);
+  border-color: rgba(212, 168, 83, 0.5);
+  box-shadow: var(--rim), 0 0 26px rgba(212, 168, 83, 0.1);
 }
 
 .card__kicker {
@@ -1622,6 +1991,7 @@ ol {
   margin-top: 14px;
   padding: 18px 20px;
   border-radius: var(--r-soft);
+  border: 1px solid var(--border-soft);
   background: var(--ivory-sunk);
   color: var(--ink-2);
   font-size: 14.5px;
@@ -1699,6 +2069,7 @@ ol {
   margin-top: 16px;
   padding: 16px 20px;
   border-radius: var(--r-soft);
+  border: 1px solid var(--border-soft);
   background: var(--ivory-sunk);
 }
 
@@ -1728,13 +2099,13 @@ ol {
 .card__draft-chip {
   flex: 0 0 auto;
   padding: 3px 10px;
-  border: 1px solid var(--sage);
+  border: 1px solid rgba(63, 162, 135, 0.5);
   border-radius: var(--r-chip);
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--green);
+  color: var(--jade-lift);
 }
 
 .card__teacher,
@@ -1808,9 +2179,9 @@ ol {
 }
 
 .rung--done::before {
-  border-color: var(--green);
-  background: var(--green);
-  color: #f7f4ee;
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--on-gold);
 }
 
 .rung--locked {
@@ -1934,6 +2305,7 @@ ol {
   margin: 16px 0;
   padding: 18px 20px;
   border-radius: var(--r-soft);
+  border: 1px solid var(--border-soft);
   background: var(--ivory-sunk);
 }
 
@@ -1977,13 +2349,13 @@ ol {
   height: 4px;
   border-radius: 2px;
   background: transparent;
-  box-shadow: inset 0 0 0 1px var(--border);
+  box-shadow: inset 0 0 0 1px var(--border-soft);
   transition: background var(--t) var(--ease);
 }
 
 .meter__tick--good.meter__tick--lit {
-  background: var(--sage);
-  box-shadow: none;
+  background: var(--jade);
+  box-shadow: 0 0 8px rgba(63, 162, 135, 0.5);
 }
 
 .meter__tick--said.meter__tick--lit {
@@ -2028,24 +2400,26 @@ ol {
 /* ══ notices, loading, empty, error ═══════════════════════════════════════ */
 
 .notice {
-  padding: 26px;
+  padding: 24px;
   border: 1px solid var(--border);
   border-radius: var(--r-card);
   background: var(--card);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
   box-shadow: var(--lift);
   margin-bottom: 18px;
   animation: rise var(--t) var(--ease) both;
 }
 
 .notice--warm {
-  background: var(--beige);
-  border-color: transparent;
+  background: var(--ivory-sunk);
+  border-color: var(--border-soft);
   box-shadow: none;
 }
 
 .notice--stale {
   background: var(--terra-soft);
-  border-color: transparent;
+  border-color: rgba(217, 139, 98, 0.34);
   box-shadow: none;
 }
 
@@ -2093,7 +2467,7 @@ ol {
   top: 10px;
   width: 4px;
   height: 1px;
-  background: var(--sage);
+  background: var(--gold);
 }
 
 /* The long wait. A calm line of type and a slow sage pulse — never a spinner,
@@ -2126,9 +2500,9 @@ ol {
   border-radius: 7px;
   background: linear-gradient(
     90deg,
-    var(--beige) 0%,
-    var(--ivory-lift) 50%,
-    var(--beige) 100%
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(212, 168, 83, 0.14) 50%,
+    rgba(255, 255, 255, 0.04) 100%
   );
   background-size: 220% 100%;
   animation: shimmer 1.8s var(--ease) infinite;
@@ -2154,7 +2528,8 @@ ol {
   width: 40px;
   height: 40px;
   margin: 0 auto 20px;
-  color: var(--sage);
+  color: var(--gold);
+  filter: drop-shadow(0 0 16px rgba(212, 168, 83, 0.28));
 }
 
 .blank__title {
@@ -2199,12 +2574,12 @@ ol {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  border: 1px solid var(--sage);
+  border: 1px solid var(--border);
   background: var(--card);
   font-family: var(--serif);
   font-size: 25px;
   font-weight: 500;
-  color: var(--green);
+  color: var(--gold);
   letter-spacing: 0.04em;
 }
 
@@ -2317,7 +2692,7 @@ ol {
 }
 
 .log__dot--clear {
-  background: var(--sage);
+  background: var(--jade);
   opacity: 1;
 }
 
@@ -2342,7 +2717,8 @@ ol {
   width: 54px;
   height: 54px;
   margin: 0 auto 26px;
-  color: var(--sage);
+  color: var(--gold);
+  filter: drop-shadow(0 0 20px rgba(212, 168, 83, 0.3));
 }
 
 .soon__title {
@@ -2377,10 +2753,13 @@ ol {
   display: flex;
   gap: 13px;
   align-items: flex-start;
-  padding: 18px 20px;
-  margin-bottom: 26px;
+  padding: 16px 18px;
+  margin-bottom: 22px;
   border-radius: var(--r-soft);
-  background: var(--beige);
+  border: 1px solid var(--border-soft);
+  background: var(--ivory-sunk);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
 }
 
 .pilot__mark {
@@ -2389,11 +2768,12 @@ ol {
   height: 7px;
   margin-top: 7px;
   border-radius: 50%;
-  border: 1px solid var(--sage);
+  border: 1px solid var(--jade);
 }
 
 .pilot--draft .pilot__mark {
-  background: var(--sage);
+  background: var(--jade);
+  box-shadow: 0 0 8px rgba(63, 162, 135, 0.6);
 }
 
 .pilot__title {
@@ -2409,7 +2789,7 @@ ol {
 }
 
 .pilot__mark {
-  color: var(--sage);
+  color: var(--jade);
 }
 
 /* ══ language toggle ══════════════════════════════════════════════════════ */
@@ -2419,7 +2799,8 @@ ol {
   gap: 2px;
   padding: 3px;
   border-radius: var(--r-chip);
-  background: var(--beige);
+  border: 1px solid var(--border-soft);
+  background: var(--ivory-sunk);
 }
 
 .lang__btn {
@@ -2434,9 +2815,9 @@ ol {
 
 .lang__btn[aria-current="true"],
 .lang__chip {
-  background: var(--card);
-  color: var(--ink);
-  box-shadow: var(--lift);
+  background: var(--green-soft);
+  color: var(--gold);
+  box-shadow: inset 0 0 0 1px var(--border);
 }
 
 .level {
@@ -2452,9 +2833,9 @@ ol {
 
 .review__progress,
 .review__bar {
-  height: 2px;
-  border-radius: 2px;
-  background: var(--beige);
+  height: 3px;
+  border-radius: var(--r-chip);
+  background: rgba(0, 0, 0, 0.34);
   overflow: hidden;
   margin-bottom: 10px;
 }
@@ -2462,7 +2843,7 @@ ol {
 .review__meter,
 .review__meter-fill {
   height: 100%;
-  background: var(--sage);
+  background: var(--gold);
 }
 
 .review__counts,
@@ -2499,6 +2880,8 @@ ol {
   border: 1px solid var(--border);
   border-radius: var(--r-card);
   background: var(--card);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
   margin-bottom: 20px;
 }
 
@@ -2513,9 +2896,10 @@ ol {
 .review__edit {
   width: 100%;
   padding: 12px 14px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-soft);
   border-radius: var(--r-soft);
-  background: var(--card);
+  background: var(--ivory-sunk);
+  color-scheme: dark;
   font-size: 14px;
   line-height: 1.6;
   resize: vertical;
@@ -2689,7 +3073,7 @@ button.plan__hit:hover {
   right: 20px;
   font-family: var(--serif);
   font-size: 22px;
-  color: var(--beige);
+  color: rgba(212, 168, 83, 0.2);
   font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
@@ -2735,7 +3119,8 @@ button.plan__hit:hover {
 
 .reflect__mark {
   display: inline-flex;
-  color: var(--sage);
+  color: var(--gold);
+  filter: drop-shadow(0 0 18px rgba(212, 168, 83, 0.3));
   margin-bottom: 16px;
 }
 
@@ -2794,27 +3179,28 @@ button.plan__hit:hover {
 }
 
 .week__dot {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: var(--beige);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 /* A day with real attempts on it. */
 .week__day--on .week__dot {
-  background: var(--sage);
+  background: var(--jade);
+  box-shadow: 0 0 10px rgba(63, 162, 135, 0.6);
 }
 
 /* Today. Marked whether or not anything was recited: it is a position in the
    week, not a claim about activity. */
 .week__day--today .week__letter {
-  color: var(--green);
+  color: var(--gold);
   font-weight: 600;
 }
 
 .week__day--today .week__dot {
-  background: var(--green);
-  box-shadow: 0 0 0 3px var(--green-soft);
+  background: var(--gold);
+  box-shadow: 0 0 0 3px var(--green-soft), 0 0 12px var(--gold-glow);
 }
 
 .stats__rule {
@@ -2872,8 +3258,14 @@ button.plan__hit:hover {
   transition: background var(--t) var(--ease);
 }
 
+.icon-btn {
+  border: 1px solid transparent;
+}
+
 .icon-btn:hover {
-  background: var(--ivory-sunk);
+  background: var(--ivory-lift);
+  border-color: var(--border);
+  color: var(--ink);
 }
 
 /* NOT a user photo and not initials: there are no accounts, so it carries the
@@ -2882,16 +3274,17 @@ button.plan__hit:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
+  border: 1px solid var(--border);
   background: var(--green-soft);
-  color: var(--green);
-  transition: opacity var(--t) var(--ease);
+  color: var(--gold);
+  transition: background var(--t) var(--ease);
 }
 
 .avatar:hover {
-  opacity: 0.75;
+  background: rgba(212, 168, 83, 0.2);
 }
 
 /* ── the account screen ───────────────────────────────────────────────── */
@@ -2916,7 +3309,8 @@ button.plan__hit:hover {
 
 .auth__mark {
   display: inline-flex;
-  color: var(--sage);
+  color: var(--gold);
+  filter: drop-shadow(0 0 18px rgba(212, 168, 83, 0.3));
   margin-bottom: 12px;
 }
 
@@ -2939,6 +3333,7 @@ button.plan__hit:hover {
   gap: 4px;
   padding: 4px;
   border-radius: var(--r-chip);
+  border: 1px solid var(--border-soft);
   background: var(--ivory-sunk);
   margin-bottom: 18px;
 }
@@ -2954,9 +3349,9 @@ button.plan__hit:hover {
 }
 
 .auth__tab.is-on {
-  background: var(--card);
-  color: var(--ink);
-  box-shadow: var(--lift);
+  background: var(--green-soft);
+  color: var(--gold);
+  box-shadow: inset 0 0 0 1px var(--border);
 }
 
 /* Stated before the fields, not under them. */
@@ -3002,11 +3397,12 @@ button.plan__hit:hover {
 
 .field__input:focus {
   outline: none;
-  border-color: var(--sage);
+  border-color: rgba(212, 168, 83, 0.5);
+  box-shadow: 0 0 0 3px rgba(212, 168, 83, 0.1);
 }
 
 .field__input:disabled {
-  background: var(--ivory-sunk);
+  background: rgba(0, 0, 0, 0.28);
   color: var(--ink-3);
 }
 
@@ -3116,22 +3512,23 @@ button.plan__hit:hover {
 .month__cell {
   aspect-ratio: 1;
   border-radius: 5px;
-  background: var(--ivory-sunk);
+  background: rgba(255, 255, 255, 0.045);
 }
 
 .month__cell--on {
-  background: var(--sage);
+  background: linear-gradient(150deg, var(--jade-lift), var(--jade));
+  box-shadow: 0 0 10px rgba(63, 162, 135, 0.35);
 }
 
 /* Days that have not happened yet. Fainter, so the grid does not read as a
    month of misses. */
 .month__cell--future {
   background: transparent;
-  box-shadow: inset 0 0 0 1px var(--border);
+  box-shadow: inset 0 0 0 1px var(--border-soft);
 }
 
 .month__cell--today {
-  box-shadow: inset 0 0 0 1.5px var(--green);
+  box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 10px var(--gold-glow);
 }
 
 .trend {
@@ -3144,8 +3541,8 @@ button.plan__hit:hover {
 
 .trend__bar {
   flex: 1;
-  border-radius: 2px 2px 0 0;
-  background: var(--sage-soft);
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(180deg, var(--gold) 0%, rgba(212, 168, 83, 0.18) 100%);
 }
 
 /* ══ the entry experience ═════════════════════════════════════════════════ */
@@ -3160,7 +3557,9 @@ button.plan__hit:hover {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--ivory);
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(28, 47, 102, 0.6) 0%, rgba(28, 47, 102, 0) 60%),
+    linear-gradient(177deg, var(--ground-0) 0%, var(--ground-1) 40%, var(--ground-2) 100%);
   padding: 40px;
   transition: opacity 420ms var(--ease);
 }
@@ -3224,8 +3623,9 @@ button.plan__hit:hover {
 /* Selection is never colour alone: border, background AND a check mark, plus
    aria-pressed for anyone reading none of them. */
 .choice__item.is-on {
-  border-color: var(--green);
+  border-color: rgba(212, 168, 83, 0.55);
   background: var(--green-soft);
+  box-shadow: 0 0 22px rgba(212, 168, 83, 0.12);
 }
 
 .choice__item.is-on .choice__tick {
@@ -3339,8 +3739,11 @@ button.plan__hit:hover {
   gap: 13px;
   padding: 14px 16px;
   border-radius: var(--r-soft);
+  border: 1px solid var(--border-soft);
   background: var(--card);
-  box-shadow: var(--lift);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow: var(--rim);
 }
 
 .badges--row .badge {
@@ -3355,28 +3758,30 @@ button.plan__hit:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   flex: none;
   border-radius: 50%;
   background: var(--ivory-sunk);
+  box-shadow: inset 0 0 0 1px var(--border-soft);
   color: var(--ink-3);
 }
 
 /* Earned: emerald mark, a hairline of gold. Restrained — a quiet mark of
    something done, not a trophy. */
 .badge--earned .badge__mark {
-  background: var(--green-soft);
-  color: var(--green);
-  box-shadow: inset 0 0 0 1px var(--amber-soft);
+  background: radial-gradient(closest-side, rgba(212, 168, 83, 0.28), rgba(212, 168, 83, 0.08));
+  color: var(--gold-lift);
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 83, 0.42), 0 0 18px rgba(212, 168, 83, 0.22);
 }
 
 .badge--earned {
-  box-shadow: var(--lift), inset 0 0 0 1px var(--amber-soft);
+  border-color: var(--border);
+  box-shadow: var(--rim), 0 0 24px rgba(212, 168, 83, 0.08);
 }
 
 .badge--blocked {
-  opacity: 0.62;
+  opacity: 0.5;
 }
 
 .badge__text {
@@ -3405,5 +3810,1332 @@ button.plan__hit:hover {
 
 /* A section-header action that is a button but must read as a link. */
 button.link {
-  color: var(--green);
+  color: var(--gold);
+}
+
+/* ══ THE REBUILT HOME ═════════════════════════════════════════════════════
+ *
+ * Additive. Every colour, radius, shadow and type size below comes from the
+ * tokens at the top of this file — nothing here introduces a new one.
+ */
+
+/* ── the greeting ───────────────────────────────────────────────────────── */
+/* The one block of type that sits DIRECTLY on the atmosphere, with no pane
+   under it. That is what makes the hero beneath it read as the first layer of
+   glass rather than as the first item in a list. */
+
+.greet {
+  padding: 4px 2px 22px;
+  animation: rise var(--t) var(--ease) both;
+}
+
+.greet__line {
+  font-family: var(--serif);
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 1.18;
+  letter-spacing: 0.004em;
+  color: var(--ink);
+}
+
+.greet__meta {
+  margin-top: 6px;
+  font-size: 12.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.greet__since {
+  text-transform: none;
+  letter-spacing: 0.04em;
+}
+
+/* ── the streak chip, in the top bar ────────────────────────────────────── */
+
+.streak-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px 5px 9px;
+  border-radius: var(--r-chip);
+  border: 1px solid var(--border);
+  background: var(--green-soft);
+  color: var(--gold-lift);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: lining-nums tabular-nums;
+  box-shadow: 0 0 16px rgba(212, 168, 83, 0.14);
+}
+
+/* ── the continue card ──────────────────────────────────────────────────── */
+
+.hero__label {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+
+.hero__name {
+  font-family: var(--serif);
+  font-size: 29px;
+  font-weight: 500;
+  line-height: 1.15;
+  margin: 8px 0 2px;
+  color: var(--ink);
+}
+
+.hero__meaning {
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+/* The sura's Arabic name as the card's mark. Brass, unlit — the ayah below is
+   the thing that glows, and two glowing things in one card is neither. */
+.hero__sura-ar {
+  flex: 0 0 auto;
+  font-family: var(--arabic);
+  font-size: 27px;
+  line-height: 1.9;
+  color: var(--gold);
+  opacity: 0.92;
+}
+
+.hero .progress-row {
+  margin-top: 4px;
+}
+
+.hero__go {
+  margin-top: 20px;
+}
+
+.hero__go-mark {
+  display: inline-flex;
+  opacity: 0.7;
+}
+
+/* ── the four figures ───────────────────────────────────────────────────── */
+/* 2x2 rather than 4-across. Four tiles across a 380px phone gives each one
+   about 80px, which is not enough for "Mashq vaqti" to sit under a figure
+   without the row turning into a wall of hyphenation. */
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.stat-tile {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 18px 18px 16px;
+  border-radius: var(--r-soft);
+  border: 1px solid var(--border);
+  background: var(--card);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow: var(--lift);
+  animation: rise var(--t) var(--ease) both;
+}
+
+.stat-tile__mark {
+  display: inline-flex;
+  margin-bottom: 8px;
+  color: var(--gold);
+  filter: drop-shadow(0 0 12px rgba(212, 168, 83, 0.4));
+}
+
+.stat-tile__value {
+  font-family: var(--serif);
+  font-size: 33px;
+  font-weight: 500;
+  line-height: 1.05;
+  color: var(--ink);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.stat-tile__label {
+  font-size: 10.5px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.stat-tile__note {
+  font-size: 11.5px;
+  color: var(--ink-3);
+  margin-top: 5px;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* A ZERO IS STYLED, NOT BROKEN. The figure dims and the mark loses its glow;
+   the tile keeps its full size, border and padding. A counter that has not
+   started should look like a counter that has not started — not like a card
+   that failed to load, and not like a smaller card than its neighbours. */
+.stat-tile--empty .stat-tile__value {
+  color: var(--ink-3);
+}
+
+.stat-tile--empty .stat-tile__mark {
+  color: var(--ink-3);
+  filter: none;
+}
+
+.stat-grid__note {
+  margin-top: 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-3);
+}
+
+/* ── the rank card ──────────────────────────────────────────────────────── */
+
+.rank {
+  margin-top: 18px;
+}
+
+.rank__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.rank__name {
+  font-family: var(--serif);
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1.15;
+  margin-top: 7px;
+  background: linear-gradient(168deg, var(--gold-lift) 0%, var(--gold) 68%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.rank__mark {
+  flex: 0 0 auto;
+  display: inline-flex;
+  color: var(--gold);
+  opacity: 0.55;
+  filter: drop-shadow(0 0 16px rgba(212, 168, 83, 0.35));
+}
+
+.rank__note {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  margin-bottom: 18px;
+}
+
+.rank__foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 10px;
+  font-size: 12.5px;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.rank__xp {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.rank__next {
+  color: var(--ink-3);
+  text-align: right;
+}
+
+/* ── the week strip ─────────────────────────────────────────────────────── */
+
+.week-strip {
+  padding: 20px 14px 16px;
+}
+
+.week-strip__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 2px;
+}
+
+.week-cell {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.week-cell__glyph {
+  display: inline-flex;
+  line-height: 0;
+}
+
+.week-cell__letter {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+}
+
+/* Three states, three shapes — the colour is a second signal, never the only
+   one. See the note in Ornament.tsx. */
+.week-cell--done .week-cell__glyph {
+  color: var(--jade);
+  filter: drop-shadow(0 0 10px rgba(63, 162, 135, 0.45));
+}
+
+.week-cell--missed .week-cell__glyph {
+  color: rgba(244, 239, 228, 0.22);
+}
+
+.week-cell--pending .week-cell__glyph {
+  color: var(--ink-3);
+}
+
+.week-cell--today .week-cell__letter {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.week-cell--today.week-cell--pending .week-cell__glyph {
+  color: var(--gold);
+  filter: drop-shadow(0 0 10px var(--gold-glow));
+}
+
+/* ── the journey rail ───────────────────────────────────────────────────── */
+/* Bleeds to the screen edge so the last card is visibly cut. That cut is the
+   only honest signal that a horizontal list continues — a fade or an arrow is
+   decoration standing in for the thing itself. */
+
+.rail {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  margin: 0 calc(var(--pad) * -1);
+  padding: 4px var(--pad) 8px;
+  /* WITHOUT THIS THE FIRST CARD IS CLIPPED. A snap target aligns to the
+     SCROLLPORT edge, which ignores the container's own padding, so the browser
+     parked card one at x=0 and ate its left border — the rail looked
+     mid-scroll before anyone had touched it. scroll-padding moves the snap
+     line in to match the page margin. */
+  scroll-padding-left: var(--pad);
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.rail::-webkit-scrollbar {
+  display: none;
+}
+
+.rail__card {
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 148px;
+  padding: 16px 16px 18px;
+  text-align: left;
+  border-radius: var(--r-soft);
+  border: 1px solid var(--border);
+  background: var(--card);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow: var(--lift);
+  transition: border-color var(--t) var(--ease), transform var(--t) var(--ease);
+}
+
+.rail__card:hover {
+  border-color: rgba(212, 168, 83, 0.4);
+  transform: translateY(-2px);
+}
+
+/* The sura number in a soft glowing badge — the same treatment the practice
+   list uses, so a sura is recognisably the same object in both places. */
+.rail__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 7px;
+  margin-bottom: 12px;
+  border-radius: var(--r-chip);
+  background: var(--green-soft);
+  box-shadow: inset 0 0 0 1px var(--border), 0 0 14px rgba(212, 168, 83, 0.12);
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.rail__ar {
+  font-family: var(--arabic);
+  font-size: 23px;
+  line-height: 2;
+  color: var(--gold);
+  align-self: flex-end;
+}
+
+.rail__name {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--ink);
+  margin-top: 6px;
+}
+
+.rail__meta {
+  font-size: 12px;
+  color: var(--ink-3);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* ── the tutor card ─────────────────────────────────────────────────────── */
+/* The one card with a deliberately WARMER ground: a brass bloom rising from
+   the bottom-left, so it reads as lit from within rather than lit from above
+   like the hero. Two lit cards on one screen have to be lit differently or
+   they compete. */
+
+.card--tutor {
+  position: relative;
+  overflow: hidden;
+  padding: 28px 26px 24px;
+}
+
+.card--tutor::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: -20%;
+  bottom: -46%;
+  width: 90%;
+  height: 96%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    rgba(212, 168, 83, 0.18) 0%,
+    rgba(212, 168, 83, 0) 100%
+  );
+  pointer-events: none;
+}
+
+.tutor__mark {
+  display: inline-flex;
+  margin-bottom: 16px;
+  color: var(--gold-lift);
+}
+
+.tutor__title {
+  font-family: var(--serif);
+  font-size: 25px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--ink);
+  margin: 8px 0 10px;
+}
+
+.tutor__body {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--ink-2);
+  max-width: 38ch;
+}
+
+.tutor__cta {
+  margin-top: 20px;
+}
+
+.tutor__disclosure {
+  margin-top: 14px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--ink-3);
+}
+
+/* ── narrow phones ──────────────────────────────────────────────────────── */
+
+@media (max-width: 359px) {
+  .stat-grid {
+    gap: 9px;
+  }
+
+  .stat-tile {
+    padding: 15px 13px 13px;
+  }
+
+  .stat-tile__value {
+    font-size: 28px;
+  }
+
+  .greet__line {
+    font-size: 29px;
+  }
+
+  .hero__name {
+    font-size: 25px;
+  }
+}
+
+/* ══ THE SURA PICKER — FULL SCREEN ════════════════════════════════════════ */
+
+.picker {
+  animation: fade var(--t) var(--ease) both;
+}
+
+.picker__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 4px 0 18px;
+}
+
+.picker__count {
+  flex: none;
+  font-size: 12.5px;
+  color: var(--ink-3);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.picker__search {
+  margin-bottom: 14px;
+}
+
+/* ── the filter pills ───────────────────────────────────────────────────
+   A horizontal rail rather than a wrapped row: four pills fit on a wide phone
+   and three plus a stub on a narrow one, and a row that reflows to two lines
+   pushes the list down by 40px on exactly the devices with least room. */
+
+.pills {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin: 0 calc(var(--pad) * -1) 18px;
+  padding: 2px var(--pad) 6px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.pills::-webkit-scrollbar {
+  display: none;
+}
+
+.pill {
+  flex: 0 0 auto;
+  padding: 9px 17px;
+  border-radius: var(--r-chip);
+  border: 1px solid var(--border);
+  background: var(--ivory-lift);
+  font-size: 13.5px;
+  color: var(--ink-2);
+  transition: background var(--t) var(--ease), color var(--t) var(--ease),
+    border-color var(--t) var(--ease);
+}
+
+.pill:hover {
+  color: var(--ink);
+  border-color: rgba(212, 168, 83, 0.34);
+}
+
+/* Gold when active, and filled rather than outlined — an active filter has to
+   be readable in peripheral vision, because the whole list changed under it. */
+.pill--on {
+  background: linear-gradient(160deg, var(--gold-lift) 0%, var(--gold) 100%);
+  border-color: transparent;
+  color: var(--on-gold);
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(212, 168, 83, 0.26);
+}
+
+/* ── the rows ───────────────────────────────────────────────────────────── */
+
+.list--suras {
+  padding-bottom: 8px;
+}
+
+.row--sura {
+  gap: 14px;
+  padding: 15px 6px;
+}
+
+/* The sura number in a soft glowing badge — same object as the one on the
+   Home rail, so a sura looks like a sura wherever it appears. */
+.sura-badge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  border-radius: var(--r-chip);
+  background: var(--green-soft);
+  box-shadow: inset 0 0 0 1px var(--border), 0 0 14px rgba(212, 168, 83, 0.1);
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: lining-nums tabular-nums;
+  transition: background var(--t) var(--ease), box-shadow var(--t) var(--ease);
+}
+
+/* A sura the learner has actually recited from. Filled rather than outlined —
+   the badge is already the row's strongest mark, so "started" makes it solid
+   instead of adding a second marker somewhere else on the row. */
+.sura-badge--on {
+  background: linear-gradient(160deg, var(--gold-lift) 0%, var(--gold) 100%);
+  color: var(--on-gold);
+  box-shadow: 0 0 18px rgba(212, 168, 83, 0.34);
+}
+
+/* ══ STUDY MODE — reading vs memorisation ═════════════════════════════════ */
+
+.study {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 14px;
+  border-radius: var(--r-chip);
+  border: 1px solid var(--border-soft);
+  background: var(--ivory-sunk);
+}
+
+.study__tab {
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 14px;
+  border-radius: var(--r-chip);
+  font-size: 14.5px;
+  color: var(--ink-2);
+  transition: background var(--t) var(--ease), color var(--t) var(--ease);
+}
+
+.study__tab--on {
+  background: var(--green-soft);
+  color: var(--gold);
+  font-weight: 500;
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+/* NOT BUILT, AND IT SAYS SO. Dimmed and non-interactive, with the reason
+   printed on the tab itself rather than hidden in a tooltip nobody on a phone
+   can open. `cursor: not-allowed` is deliberate: the pointer answers the
+   question before the tap does. */
+.study__tab--soon {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.study__soon {
+  padding: 2px 8px;
+  border-radius: var(--r-chip);
+  border: 1px solid var(--border-soft);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ══ AYAH NAVIGATION — leave, or move along ═══════════════════════════════ */
+
+.ayah-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.ayah-nav__close {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--ivory-lift);
+  color: var(--ink-2);
+  transition: background var(--t) var(--ease), color var(--t) var(--ease);
+}
+
+.ayah-nav__close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--ink);
+}
+
+.ayah-nav__steps {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 8px;
+}
+
+.ayah-nav__arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--ivory-lift);
+  color: var(--gold);
+  transition: background var(--t) var(--ease), opacity var(--t) var(--ease);
+}
+
+/* One glyph, rotated, rather than two icons — a chevron pointing back and a
+   chevron pointing forward should be the same shape or the pair looks
+   hand-assembled. */
+.ayah-nav__arrow:not(.ayah-nav__arrow--next) svg {
+  transform: rotate(180deg);
+}
+
+.ayah-nav__arrow:hover:not(:disabled) {
+  background: var(--green-soft);
+}
+
+.ayah-nav__arrow:disabled {
+  opacity: 0.3;
+  color: var(--ink-3);
+  cursor: default;
+}
+
+/* ══ SETTINGS — appearance and language ═══════════════════════════════════ */
+
+.setting__control {
+  flex: 0 0 auto;
+}
+
+
+/* ══ THE PINNED MIC ═══════════════════════════════════════════════════════
+ *
+ * The recording card fixes itself to the bottom of the viewport, above the
+ * global nav and clear of it. An ayah can be a screen and a half of Arabic,
+ * and the control the whole screen exists for was underneath all of it.
+ *
+ * SCREEN-LOCAL, NOT PART OF THE NAV. The tab bar navigates between screens;
+ * this records. They are stacked, never merged — putting a stop-recording
+ * control inside navigation chrome would make the two mean the same thing.
+ *
+ * Centred on the same 560px column as the page, so on a wide viewport it sits
+ * over the content rather than spanning the whole window.
+ */
+.studio--pinned {
+  position: fixed;
+  /* CENTRED BY AUTO MARGINS, NOT BY A TRANSFORM. `.studio` carries
+     `animation: rise ... both`, and `rise` animates `transform` to `none` —
+     so a `translateX(-50%)` here is silently overwritten the moment the
+     animation settles, and the card lands half a screen to the right. This
+     was visible only in a screenshot; every geometry assertion about its
+     VERTICAL position passed while it hung off the right edge. */
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  /* CLEAR OF THE NAV'S RAISED BUTTON, not merely of the bar.
+     The bar sits 22px off the edge and stands ~74px tall, so its top edge is
+     at 96px — but the centre action breaks 30px out of it, reaching 126px.
+     Stopping at 112 put a gold stop-button and a gold mic-button in contact
+     with each other, which reads as one malformed control rather than two.
+     138 leaves a real gap between them. */
+  bottom: 138px;
+  z-index: 35;
+  width: calc(100% - 2 * var(--pad));
+  max-width: calc(560px - 2 * var(--pad));
+  margin-bottom: 0;
+  /* Compact: pinned, it is chrome rather than a card being read. The waveform
+     and stats stay, because they are the state of the thing in progress. */
+  padding: 18px 20px 16px;
+}
+
+/* Room for it, so the last card is never trapped underneath. The tab bar's
+   allowance already covers its own height; this adds the studio's. */
+.app--recording {
+  padding-bottom: 356px;
+}
+
+.studio--pinned .wave {
+  height: 40px;
+  margin-bottom: 14px;
+}
+
+.studio--pinned .studio__head {
+  margin-bottom: 12px;
+}
+
+.studio--pinned .studio__stats {
+  margin-bottom: 16px;
+}
+
+.studio--pinned .mic {
+  width: 64px;
+  height: 64px;
+}
+
+/* ── the reader's mic bar ────────────────────────────────────────────────
+ * The same disc, in the same place, on a screen that does not own the
+ * recorder. Pressing it selects the ayah and starts recording, so the real
+ * Studio appears with its button exactly where this one was — the handoff is
+ * invisible because nothing moves.
+ */
+.micbar {
+  position: fixed;
+  /* Same reason as .studio--pinned: this one animates in too. */
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  bottom: 138px;
+  z-index: 35;
+  width: calc(100% - 2 * var(--pad));
+  max-width: calc(560px - 2 * var(--pad));
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 16px 20px;
+  border-radius: var(--r-card);
+  border: 1px solid var(--border);
+  /* AN OVERLAY NEEDS MORE BACKING THAN AN INLINE CARD. `--card` is a 7%-white
+     gradient, which is right for a pane with page behind it and wrong for one
+     floating over live text: the verse translation read straight through this
+     bar and the two collided into an unreadable stripe. Same construction as
+     the tab bar, which solved this already — the ground at high alpha, with
+     the glass gradient over it. */
+  background:
+    var(--card),
+    linear-gradient(170deg, rgba(24, 31, 52, 0.9) 0%, rgba(11, 15, 26, 0.94) 100%);
+  -webkit-backdrop-filter: blur(26px) saturate(150%);
+  backdrop-filter: blur(26px) saturate(150%);
+  box-shadow: var(--lift-2);
+  animation: rise var(--t) var(--ease) both;
+}
+
+.micbar__mic {
+  width: 60px;
+  height: 60px;
+  flex: 0 0 auto;
+}
+
+.micbar__copy {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+/* The verse pane reserves room for it. */
+/* Room for the pinned bar, plus the listen button beneath the translation —
+   which was being clipped in half by it. */
+.reader--verse {
+  padding-bottom: 210px;
+}
+
+/* ══ THE COMPARISON — your reading and the reciter's ══════════════════════
+ *
+ * Two buttons, one row, EQUAL WEIGHT. Same width, same height, same
+ * treatment. Neither is the primary: making the reciter's the louder of the
+ * two would frame it as the correct answer and the learner's as the attempt,
+ * which is a judgement the app does not get to make in a control.
+ */
+.compare {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.compare__btn {
+  flex: 1 1 0;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 14px 12px;
+  border-radius: var(--r-chip);
+  border: 1px solid var(--border);
+  background: var(--card);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow: var(--rim);
+  font-size: 14px;
+  color: var(--ink);
+  transition: border-color var(--t) var(--ease), background var(--t) var(--ease);
+}
+
+.compare__btn:hover {
+  border-color: rgba(212, 168, 83, 0.4);
+}
+
+.compare__btn.is-playing {
+  border-color: var(--gold);
+  background: var(--green-soft);
+  color: var(--gold);
+}
+
+.compare__glyph {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--green-soft);
+  box-shadow: inset 0 0 0 1px var(--border);
+  color: var(--gold);
+}
+
+@media (max-width: 359px) {
+  .compare__btn {
+    font-size: 13px;
+    padding: 13px 8px;
+  }
+}
+
+/* ══ LIGHT MODE — THE SAME SYSTEM, RE-HUED ════════════════════════════════
+ *
+ * ── WHAT THIS IS, AND WHAT IT REPLACED ────────────────────────────────────
+ *
+ * The first light mode was a different design: opaque paper cards, shadow
+ * instead of glow, no blur, a lapis primary. It was coherent, and it was
+ * wrong — set beside dark mode it read as the simpler, flatter, cheaper of the
+ * two, which makes choosing it feel like a downgrade.
+ *
+ * This one is a LITERAL RECOLOR. Every structural decision is the dark one:
+ * the same four layers, the same backdrop blur on the same panes, the same
+ * inner rim of light, the same halo on the centre button, the same bloom
+ * behind the hero, the same luminous treatment on the Arabic. Only hue moves.
+ *
+ *   brass  →  deep emerald.   Everywhere gold glowed, green glows.
+ *   night  →  warm off-white. The ground keeps its gradient and its two
+ *             off-centre light sources; they are simply light instead of dark.
+ *
+ * ── THE ONE THING THAT CANNOT BE COPIED VERBATIM ──────────────────────────
+ *
+ * Emission. On a dark ground a glow is lighter than what it sits on, so it
+ * reads as light. On a light ground nothing can be lighter than near-white, so
+ * a "glow" drawn the same way is invisible — and drawn stronger it is a grey
+ * smudge. The technique is therefore kept and inverted: a glow here is a soft
+ * SATURATED SHADOW in the accent hue, tight and low-alpha, which is what a lit
+ * object actually does to a pale surface near it. Same device, same placement,
+ * same intensity ramp between states; the light travels the other way.
+ *
+ * Contrast rules also flip: `--on-gold` must now be a warm white, because the
+ * accent went from a light brass to a dark emerald.
+ */
+
+:root[data-theme="light"] {
+  /* ── the ground: warm, layered, never flat white ──────────────────────── */
+  --ground-0: #fdfbf7;
+  --ground-1: #f7f3ec;
+  --ground-2: #efeade;
+  --ground-3: #e6dfd0;
+  /* The cool far light. Sage-tinted rather than blue, so it belongs to the
+     green accent the way the dark theme's ultramarine belongs to brass. */
+  --ultramarine: #cddbd0;
+  --ivory: var(--ground-1);
+
+  --ivory-sunk: rgba(90, 74, 48, 0.055);
+  --ivory-lift: rgba(255, 255, 255, 0.72);
+  --beige: rgba(90, 74, 48, 0.075);
+
+  /* ── the glass: STILL GLASS ───────────────────────────────────────────
+     Same two-stop translucent gradient, same blur, same top-edge-catches-more
+     construction. White at low alpha over a warm ground reads as frosted, and
+     the blur has the layered gradient and the pattern beneath it to work on —
+     which is exactly the condition the dark theme's glass needed too. */
+  --card: linear-gradient(
+    158deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(255, 255, 255, 0.66) 46%,
+    rgba(255, 255, 255, 0.5) 100%
+  );
+  --card-solid: rgba(253, 251, 247, 0.94);
+  --blur: blur(20px) saturate(125%);
+  /* The hairline is EMERALD-TINTED, the counterpart of the brass hairline. */
+  --border: rgba(24, 92, 66, 0.16);
+  --border-soft: rgba(60, 50, 35, 0.09);
+
+  /* ── ink ──────────────────────────────────────────────────────────────
+     Warm near-black, then two muted warm greys — the mirror of the dark
+     theme's warm white and its two muted whites. */
+  --ink: #17211c;
+  --ink-2: rgba(23, 33, 28, 0.62);
+  --ink-3: rgba(23, 33, 28, 0.42);
+
+  /* ── the primary accent: deep emerald, where dark uses brass ──────────── */
+  --green: #14603f;
+  --gold: #14603f;
+  --gold-lift: #1e7d54;
+  --gold-deep: #0d4530;
+  --green-soft: rgba(20, 96, 63, 0.09);
+  --gold-glow: rgba(20, 96, 63, 0.26);
+  /* Emerald is dark, so what sits on it is warm white — the inverse of dark
+     mode, where brass is light and takes near-black. */
+  --on-gold: #fbf9f4;
+
+  /* ── the secondary accent ─────────────────────────────────────────────
+     Dark mode pairs brass with jade. Light mode pairs emerald with brass, so
+     the two palettes share both pigments and simply trade which one leads. */
+  --sage: #9a6f2c;
+  --jade: #9a6f2c;
+  --jade-lift: #bb8c42;
+  --sage-soft: rgba(154, 111, 44, 0.16);
+
+  /* The correction colour, darkened for a light ground. */
+  --terra: #a9603f;
+  --terra-lift: #8c4a2c;
+  --terra-soft: rgba(169, 96, 63, 0.12);
+
+  /* The recording surface stays dark in BOTH themes. It is the one moment the
+     app deliberately changes register, and in light mode that contrast is
+     stronger rather than weaker. Its accent stays brass, because emerald on
+     near-black loses the glow that state depends on. */
+  --night: #10161c;
+  --night-2: #1b2530;
+  --amber: #d9a441;
+  --amber-soft: rgba(217, 164, 65, 0.28);
+
+  /* ── depth: SAME CONSTRUCTION, INVERTED LIGHT ────────────────────────
+     The dark theme lifts a pane with an inner rim of light plus a deep drop.
+     Both survive here: the rim becomes a white top edge (a pale pane still
+     catches light on its upper lip) and the drop becomes a warm, tinted
+     shadow rather than a neutral black one — neutral shadow on a warm ground
+     is the single thing that makes a light UI look cheap. */
+  --rim: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --lift: var(--rim), 0 1px 2px rgba(58, 46, 28, 0.05),
+    0 10px 26px rgba(58, 46, 28, 0.07);
+  --lift-2: var(--rim), 0 2px 4px rgba(58, 46, 28, 0.06),
+    0 20px 48px rgba(58, 46, 28, 0.1);
+}
+
+/* ── layer 1: the ground ────────────────────────────────────────────────
+   Structurally identical to the dark ground — same two off-centre radial
+   light sources over the same directional linear fall. Sage-green high on the
+   right, warm brass low on the left, exactly where the dark theme puts its
+   ultramarine and its brass. */
+:root[data-theme="light"] body {
+  background: var(--ground-1);
+}
+
+:root[data-theme="light"] body::before {
+  background:
+    radial-gradient(
+      120% 82% at 78% -6%,
+      rgba(120, 160, 134, 0.34) 0%,
+      rgba(120, 160, 134, 0) 58%
+    ),
+    radial-gradient(
+      96% 62% at 6% 104%,
+      rgba(186, 146, 74, 0.26) 0%,
+      rgba(186, 146, 74, 0) 62%
+    ),
+    linear-gradient(
+      177deg,
+      var(--ground-0) 0%,
+      var(--ground-1) 26%,
+      var(--ground-2) 66%,
+      var(--ground-3) 100%
+    );
+}
+
+/* ── layer 2: the pattern ───────────────────────────────────────────────
+   The same khatam lattice, the same 132px tile, the same top-fade mask. Drawn
+   in emerald, and at a lower alpha because dark ink on a pale ground reads
+   heavier than pale ink on a dark one — 3% here matches 4.2% there. */
+:root[data-theme="light"] body::after {
+  opacity: 0.032;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='132' height='132' viewBox='0 0 132 132'%3E%3Cg fill='none' stroke='%2314603f' stroke-width='1.15'%3E%3Crect x='42' y='42' width='48' height='48'/%3E%3Crect x='42' y='42' width='48' height='48' transform='rotate(45 66 66)'/%3E%3Crect x='-24' y='-24' width='48' height='48'/%3E%3Crect x='-24' y='-24' width='48' height='48' transform='rotate(45 0 0)'/%3E%3Crect x='108' y='-24' width='48' height='48'/%3E%3Crect x='108' y='-24' width='48' height='48' transform='rotate(45 132 0)'/%3E%3Crect x='-24' y='108' width='48' height='48'/%3E%3Crect x='-24' y='108' width='48' height='48' transform='rotate(45 0 132)'/%3E%3Crect x='108' y='108' width='48' height='48'/%3E%3Crect x='108' y='108' width='48' height='48' transform='rotate(45 132 132)'/%3E%3Cpath d='M33.9 0H98.1M33.9 132H98.1M0 33.9V98.1M132 33.9V98.1M66 0V32.1M66 99.9V132M0 66H32.1M99.9 66H132'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* ── layer 3: the glass ─────────────────────────────────────────────────
+   NOTHING TO OVERRIDE. `--card`, `--blur`, `--border` and `--lift` are
+   redefined above, and every pane in the sheet already reads them. The blur
+   stays on, the rim stays on, the gradient stays a gradient. That is what
+   makes this a recolor rather than a second design.
+
+   The hero keeps its bloom — see below — and the tutor card keeps its
+   bottom-left warmth, both in the accent hue. */
+
+:root[data-theme="light"] .card--hero {
+  border-color: rgba(20, 96, 63, 0.3);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 0 60px rgba(20, 96, 63, 0.035),
+    0 20px 48px rgba(58, 46, 28, 0.12),
+    0 0 0 1px rgba(20, 96, 63, 0.05);
+}
+
+:root[data-theme="light"] .card--hero::before {
+  background: radial-gradient(
+    closest-side,
+    rgba(20, 96, 63, 0.13) 0%,
+    rgba(20, 96, 63, 0) 100%
+  );
+}
+
+:root[data-theme="light"] .card--tutor::after {
+  background: radial-gradient(
+    closest-side,
+    rgba(154, 111, 44, 0.16) 0%,
+    rgba(154, 111, 44, 0) 100%
+  );
+}
+
+/* ── layer 4: emission, inverted ────────────────────────────────────────
+   Every glow in the dark sheet has a counterpart here. Same element, same
+   role, same relative intensity between resting and active — expressed as a
+   tight saturated shadow rather than as a bright halo. */
+
+/* THE ARABIC. Dark mode gives it a brass bloom so it reads as lit. A bloom
+   behind dark glyphs on a pale ground would read as a printing fault, so the
+   same "this text is luminous" cue becomes a soft emerald cast beneath the
+   letterforms — depth off the page rather than light out of it. */
+:root[data-theme="light"] .hero__ar,
+:root[data-theme="light"] .verse__ar,
+:root[data-theme="light"] .mushaf__body,
+:root[data-theme="light"] .ayah__text,
+:root[data-theme="light"] .reflect__ar,
+:root[data-theme="light"] .opening__basmala {
+  color: var(--ink);
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85),
+    0 2px 14px rgba(20, 96, 63, 0.14);
+}
+
+/* The wordmark and the rank name keep the gradient-fill device; only the stops
+   change, and the drop-shadow becomes a tight tinted one. */
+:root[data-theme="light"] .wordmark {
+  background: linear-gradient(168deg, var(--gold-lift) 0%, var(--gold) 62%, #0d4530 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 1px 6px rgba(20, 96, 63, 0.22));
+}
+
+:root[data-theme="light"] .rank__name {
+  background: linear-gradient(168deg, var(--gold-lift) 0%, var(--gold) 68%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* The primary button keeps its brushed gradient, its bright top rim and its
+   cast halo — the halo is now an emerald-tinted shadow. */
+:root[data-theme="light"] .btn-primary,
+:root[data-theme="light"] .gate__primary,
+:root[data-theme="light"] .record {
+  background: linear-gradient(160deg, var(--gold-lift) 0%, var(--gold) 52%, #0f4f34 100%);
+  color: var(--on-gold);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 6px 22px rgba(20, 96, 63, 0.3);
+}
+
+:root[data-theme="light"] .btn-primary:hover:not(:disabled),
+:root[data-theme="light"] .record:hover:not(:disabled) {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 8px 30px rgba(20, 96, 63, 0.42);
+}
+
+/* Marks and ornaments keep their drop-shadow glow, re-hued and tightened. */
+:root[data-theme="light"] .stat-tile__mark,
+:root[data-theme="light"] .rank__mark,
+:root[data-theme="light"] .blank__ornament,
+:root[data-theme="light"] .soon__ornament,
+:root[data-theme="light"] .onboard__ornament,
+:root[data-theme="light"] .reflect__mark,
+:root[data-theme="light"] .auth__mark,
+:root[data-theme="light"] .tutor__mark {
+  filter: drop-shadow(0 1px 5px rgba(20, 96, 63, 0.26));
+}
+
+:root[data-theme="light"] .clear__mark,
+:root[data-theme="light"] .week-cell--done .week-cell__glyph {
+  filter: drop-shadow(0 1px 5px rgba(154, 111, 44, 0.32));
+}
+
+/* The progress fill keeps its gradient and its cast light. */
+:root[data-theme="light"] .progress {
+  background: rgba(58, 46, 28, 0.1);
+  box-shadow: inset 0 1px 2px rgba(58, 46, 28, 0.12);
+}
+
+:root[data-theme="light"] .progress__fill {
+  background: linear-gradient(90deg, var(--gold-deep) 0%, var(--gold) 55%, var(--gold-lift) 100%);
+  box-shadow: 0 0 10px rgba(20, 96, 63, 0.34);
+}
+
+:root[data-theme="light"] .streak-chip {
+  color: var(--gold);
+  box-shadow: 0 1px 8px rgba(20, 96, 63, 0.14);
+}
+
+/* ── the nav bar ────────────────────────────────────────────────────────
+   Same glass capsule, same raised centre disc, same breathing halo ring. The
+   ring is KEPT — dropping it was the previous version's clearest tell that
+   light mode had been built as the lesser of the two. */
+:root[data-theme="light"] .tabbar {
+  background: linear-gradient(
+    170deg,
+    rgba(255, 255, 255, 0.88) 0%,
+    rgba(247, 243, 236, 0.92) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 2px 6px rgba(58, 46, 28, 0.06),
+    0 16px 40px rgba(58, 46, 28, 0.13);
+}
+
+:root[data-theme="light"] .tab[aria-current="page"]::after {
+  box-shadow: 0 0 8px rgba(20, 96, 63, 0.5);
+}
+
+:root[data-theme="light"] .tab--center .tab__glyph {
+  background: linear-gradient(158deg, var(--gold-lift) 0%, var(--gold) 50%, #0f4f34 100%);
+  color: var(--on-gold);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 0 0 5px rgba(250, 247, 241, 0.95),
+    0 0 0 6px rgba(20, 96, 63, 0.28),
+    0 10px 26px rgba(20, 96, 63, 0.34),
+    0 14px 30px rgba(58, 46, 28, 0.14);
+}
+
+:root[data-theme="light"] .tab--center[aria-current="page"] .tab__glyph {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 0 0 5px rgba(250, 247, 241, 0.95),
+    0 0 0 7px rgba(20, 96, 63, 0.44),
+    0 10px 34px rgba(20, 96, 63, 0.46),
+    0 14px 30px rgba(58, 46, 28, 0.14);
+}
+
+:root[data-theme="light"] .tab--center .tab__glyph::after {
+  border-color: rgba(20, 96, 63, 0.42);
+}
+
+/* ── sunk surfaces and inputs ───────────────────────────────────────────
+   A well is darker than its pane in both themes; here that is a warm tint
+   rather than black. Focus lights the accent rim exactly as it does in dark. */
+:root[data-theme="light"] .search,
+:root[data-theme="light"] .field__input {
+  box-shadow: inset 0 1px 3px rgba(58, 46, 28, 0.07);
+}
+
+:root[data-theme="light"] .search:focus,
+:root[data-theme="light"] .field__input:focus {
+  border-color: rgba(20, 96, 63, 0.45);
+  box-shadow:
+    inset 0 1px 3px rgba(58, 46, 28, 0.07),
+    0 0 0 3px rgba(20, 96, 63, 0.11);
+}
+
+/* The active pill keeps its filled accent and its cast light. */
+:root[data-theme="light"] .pill--on {
+  box-shadow: 0 4px 14px rgba(20, 96, 63, 0.28);
+}
+
+:root[data-theme="light"] .sura-badge--on {
+  box-shadow: 0 0 14px rgba(20, 96, 63, 0.3);
+}
+
+:root[data-theme="light"] .sura-badge {
+  box-shadow: inset 0 0 0 1px var(--border), 0 0 10px rgba(20, 96, 63, 0.07);
+}
+
+/* Skeletons shimmer through the accent, as in dark. */
+:root[data-theme="light"] .skeleton__line {
+  background: linear-gradient(
+    90deg,
+    rgba(58, 46, 28, 0.06) 0%,
+    rgba(20, 96, 63, 0.14) 50%,
+    rgba(58, 46, 28, 0.06) 100%
+  );
+  background-size: 220% 100%;
+}
+
+:root[data-theme="light"] .plan__ordinal {
+  color: rgba(20, 96, 63, 0.16);
+}
+
+:root[data-theme="light"] .mushaf__mark {
+  border-color: rgba(20, 96, 63, 0.4);
+  color: var(--gold);
+}
+
+:root[data-theme="light"] .mushaf__mark:hover {
+  box-shadow: 0 0 12px rgba(20, 96, 63, 0.28);
+}
+
+:root[data-theme="light"] .badge--earned .badge__mark {
+  background: radial-gradient(closest-side, rgba(20, 96, 63, 0.2), rgba(20, 96, 63, 0.05));
+  color: var(--gold);
+  box-shadow: inset 0 0 0 1px rgba(20, 96, 63, 0.34), 0 0 14px rgba(20, 96, 63, 0.16);
+}
+
+:root[data-theme="light"] .badge--earned {
+  box-shadow: var(--rim), 0 0 20px rgba(20, 96, 63, 0.09);
+}
+
+:root[data-theme="light"] .week__day--on .week__dot,
+:root[data-theme="light"] .month__cell--on {
+  background: linear-gradient(150deg, var(--jade-lift), var(--jade));
+  box-shadow: 0 0 8px rgba(154, 111, 44, 0.4);
+}
+
+:root[data-theme="light"] .month__cell--today {
+  box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 8px rgba(20, 96, 63, 0.3);
+}
+
+:root[data-theme="light"] .month__cell {
+  background: rgba(58, 46, 28, 0.07);
+}
+
+:root[data-theme="light"] .week__dot {
+  background: rgba(58, 46, 28, 0.12);
+}
+
+/* THE RECORDING SURFACE IS UNCHANGED IN BOTH THEMES. It is deliberately the
+   one dark card in light mode, and its brass mic and amber timer stay brass
+   and amber — an emerald mic on near-black would lose exactly the glow that
+   makes the live state readable. */
+:root[data-theme="light"] .micbar {
+  background:
+    var(--card),
+    linear-gradient(170deg, rgba(255, 255, 255, 0.92) 0%, rgba(247, 243, 236, 0.95) 100%);
+}
+
+:root[data-theme="light"] .mic {
+  background: linear-gradient(158deg, #ecca85 0%, #d4a853 50%, #b8873a 100%);
+  color: #0d1220;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 0 0 1px rgba(212, 168, 83, 0.4),
+    0 0 34px rgba(212, 168, 83, 0.34);
+}
+
+:root[data-theme="light"] .mic__ring {
+  border-color: rgba(212, 168, 83, 0.55);
+}
+
+:root[data-theme="light"] .studio__timer {
+  color: var(--amber);
 }

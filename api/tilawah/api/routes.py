@@ -11,7 +11,7 @@ from sqlmodel import Session, select
 
 from .. import content
 from ..config import settings
-from ..content import coaching, hadith
+from ..content import coaching, hadith, letters
 from ..db import delete_stored_audio, get_session
 from ..db.models import Attempt, User
 from ..engine import cards
@@ -439,6 +439,27 @@ def hadith_today(lang: str = "uz") -> HadithOut | None:
     return HadithOut(**got) if got else None
 
 
+@router.get("/hadith/{hadith_id}", response_model=HadithOut | None)
+def hadith_by_id(hadith_id: str, lang: str = "uz") -> HadithOut | None:
+    """One named hadith, or null.
+
+    THIS EXISTS FOR THE HASANAT CARD and for anything like it. That card makes
+    a claim about reward per letter, and a claim like that carries its source or
+    it does not ship. The source is not a string in a TSX file: it is an entry
+    in hadith.json, under the same review gate as everything else, fetched by
+    id so that the card and the reviewer are looking at the same words.
+
+    The consequence is deliberate: in production, where nothing is reviewed
+    yet, this returns null and the hasanat card draws its citation line as
+    absent - which means the client must not draw the reward claim either. A
+    reward figure with no citation beside it is precisely the failure the whole
+    content-gate exists to prevent.
+    """
+    got = hadith.by_id(hadith_id, lang,
+                       show_unreviewed=settings.show_unreviewed)
+    return HadithOut(**got) if got else None
+
+
 @router.get("/attempts", response_model=list[AttemptOut])
 def history(device_id: str, limit: int = 20,
             session: Session = Depends(get_session)) -> list[AttemptOut]:
@@ -459,5 +480,13 @@ def history(device_id: str, limit: int = 20,
                        # strip and its "last practiced" line are drawn from
                        # these and from nothing else - a missing timestamp
                        # leaves a day unmarked rather than guessed.
-                       created_at=r.created_at)
+                       created_at=r.created_at,
+                       # num_words == 0 means the whole ayah - see the column
+                       # comment on Attempt.num_words. Resolving it to the real
+                       # word count here rather than passing 0 through is what
+                       # keeps a whole-ayah attempt from counting as no letters
+                       # at all.
+                       letters=letters.in_range(
+                           r.sura, r.aya, r.start_word,
+                           r.num_words or n_words(r.sura, r.aya)))
             for r in rows]

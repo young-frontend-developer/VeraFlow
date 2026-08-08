@@ -46,3 +46,6 @@ web/e2e-shots/
 
 # Playwright screenshots from web/e2e-screens.mjs — artifacts, not source.
 web/screens/
+
+# Playwright screenshots from web/e2e-picker.mjs — artifacts, not source.
+web/shots/

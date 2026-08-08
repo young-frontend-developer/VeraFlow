@@ -87,6 +87,34 @@ def today(lang: str = "uz", *, show_unreviewed: bool = False,
     }
 
 
+def by_id(hadith_id: str, lang: str = "uz", *,
+          show_unreviewed: bool = False) -> dict | None:
+    """One named hadith, or None.
+
+    Used where a FEATURE rests on a specific narration rather than on whatever
+    the rotation lands on today - the hasanat counter and its reward-per-letter
+    claim being the case this was written for. Same gate as `today`: an entry
+    this deployment is not allowed to show is not shown, and None means the
+    caller must draw neither the citation nor the claim that needed it.
+    """
+    entry = next((h for h in available(show_unreviewed)
+                  if h.get("id") == hadith_id), None)
+    if not entry:
+        return None
+    body = entry.get(lang) or entry.get("uz") or ""
+    if not body:
+        return None
+    return {
+        "id": entry.get("id", ""),
+        "ar": entry.get("ar", ""),
+        "text": body,
+        "collection": entry.get("collection", ""),
+        "ref": entry.get("ref", ""),
+        "grading": entry.get("grading", ""),
+        "draft": entry.get("status") != "reviewed",
+    }
+
+
 def unsourced() -> list[str]:
     """Entries missing a collection or a reference number.
 
