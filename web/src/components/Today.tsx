@@ -13,6 +13,8 @@ import DailyHadith from "./DailyHadith";
 import JourneyRail from "./JourneyRail";
 import TutorCard from "./TutorCard";
 import { RankCard, StatsRow, WeekRow } from "./Standing";
+import { GoalCard } from "./Goal";
+import { Goal } from "../lib/goals";
 import { RecentAchievements } from "./Achievements";
 import { recent, signalsFrom } from "../lib/achievements";
 import { totals as totalsOf } from "../lib/progress";
@@ -81,6 +83,8 @@ export default function Today({
   onOpenSura,
   onBrowse,
   onViewAchievements,
+  goal,
+  onOpenGoal,
 }: {
   lang: Lang;
   suras: Sura[];
@@ -93,6 +97,10 @@ export default function Today({
   onBrowse: () => void;
   /** Open the full achievement wall, which lives in Profile. */
   onViewAchievements: () => void;
+  /** The learner's one goal, or null. Owned by App; drawn here. */
+  goal: Goal | null;
+  /** Open the full-screen goal editor. */
+  onOpenGoal: () => void;
 }) {
   const [ayah, setAyah] = useState<AyahBrief | null>(null);
   const [next, setNext] = useState<AyahBrief | null>(null);
@@ -249,6 +257,18 @@ export default function Today({
           <WeekRow lang={lang} rows={rows} />
         </>
       )}
+
+      {/* ── 2b. THE GOAL ────────────────────────────────────────────────
+             Directly under the figures, because it is the one thing on this
+             screen that is about the NEXT week rather than the last one —
+             everything above reports, this one commits. Either an invitation
+             or the live goal with its bar; see GoalCard. */}
+      <GoalCard
+        lang={lang}
+        goal={goal}
+        rows={rows}
+        onOpen={onOpenGoal}
+      />
 
       {/* ── 3. YOUR JOURNEY ─────────────────────────────────────────────── */}
       <JourneyRail

@@ -18,9 +18,15 @@ import {
   submitAttempt,
 } from "../lib/api";
 import { Lang, t } from "../lib/i18n";
+import AyahBadge from "./AyahBadge";
+import RuleBadges from "./RuleBadges";
 import { Chevron, Close } from "./Ornament";
-import { RecorderHandle, startRecording } from "../lib/recorder";
-import Studio from "./Studio";
+import {
+  RecorderHandle,
+  claimShared,
+  startRecording,
+} from "../lib/recorder";
+import Recorder, { useElapsed } from "./Recorder";
 import { Failure } from "./States";
 
 type Phase = "idle" | "recording" | "waiting";
@@ -38,6 +44,7 @@ export default function Recite({
   canStep,
   maxAudioSeconds,
   reciter,
+  showUnreviewed,
 }: {
   lang: Lang;
   selection: Selection;
@@ -65,10 +72,11 @@ export default function Recite({
   maxAudioSeconds: number;
   /** Chosen once in Settings. Used to resolve the comparison audio only. */
   reciter: string;
+  /** Pilot builds show draft rule content, labelled. Production shows none. */
+  showUnreviewed: boolean;
 }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [result, setResult] = useState<Attempt | null>(null);
-  const [elapsed, setElapsed] = useState(0);
   /**
    * WHY the last action failed, not merely THAT it did.
    *
@@ -116,7 +124,18 @@ export default function Recite({
   }, [retry]);
 
   /**
-   * Start recording on arrival, once, when the verse view's mic sent us here.
+   * ADOPT the recording that is already running, when the reader's mic sent us
+   * here.
+   *
+   * The press on the previous screen called `startShared()` — getUserMedia was
+   * issued at that instant, and audio has been arriving ever since, through the
+   * range fetch and through this component mounting. Claiming it continues that
+   * one recording. Calling `start()` here instead would throw the learner's
+   * first second away and open a second microphone stream to replace it.
+   *
+   * `startRecording()` is the fallback for the case where nothing was parked,
+   * which should not happen on this path but must not leave a live-looking
+   * screen with no recorder behind it.
    *
    * A ref guard rather than an empty dep array: the effect must not re-fire
    * when the selection object is replaced by a re-render, and it must not fire
@@ -128,7 +147,15 @@ export default function Recite({
   useEffect(() => {
     if (!selection.autoRecord || autoStarted.current) return;
     autoStarted.current = true;
-    start();
+    (async () => {
+      try {
+        const inFlight = claimShared();
+        handleRef.current = inFlight ? await inFlight : await startRecording();
+        setPhase("recording");
+      } catch {
+        setFailure("mic");
+      }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selection.autoRecord]);
 
@@ -146,22 +173,18 @@ export default function Recite({
   const cardRefs = useRef<Record<string, HTMLElement | null>>({});
 
   /**
-   * The two figures on the dark card's stats row: how long the last take ran
-   * and what it scored.
+   * The clock under the disc, ticking from the handle's own start time.
    *
-   * Taken from the last COMPLETED attempt in this session and nowhere else. Not
-   * from history — that would need consent the learner may not have given — and
-   * never invented. Both start empty, and Studio omits the whole row until
-   * there is something true to put in it, because a stat slot showing a dash
-   * is an invitation for someone to fill it later with a plausible number.
+   * Reads `startedAt` rather than counting from when this screen mounted, which
+   * is what makes the timer continuous across the handoff: a recording begun on
+   * the reader's mic shows the seconds it has actually been running, not the
+   * seconds since the practice screen appeared.
+   *
+   * THE LAST-TAKE STATS ARE GONE with the card that held them. "Last: 0:14 ·
+   * 92%" filled the dark panel's spare width, and the results screen states
+   * both properly the moment analysis lands.
    */
-  const [lastSeconds, setLastSeconds] = useState(0);
-  const [lastScore, setLastScore] = useState<number | null>(null);
-
-  // Whole ayat run to nearly four minutes, and "193.9 s" is not a duration a
-  // person can feel. Past a minute, read it as minutes.
-  const estimate = (s: number) =>
-    s >= 60 ? mmss(s) : `${s.toFixed(1)} ${t(lang, "seconds_short")}`;
+  const elapsed = useElapsed(phase === "recording", handleRef.current?.startedAt);
 
   const { sura, ayah, segment, parts } = selection;
   // `seconds` is the median-reciter estimate and the gate is on real recorded
@@ -219,7 +242,6 @@ export default function Recite({
     handleRef.current = null;
     setPhase("idle");
     setResult(null);
-    setElapsed(0);
     setFailure(null);
     setOwnRecording(null);
     setActiveCardId(null);
@@ -229,18 +251,6 @@ export default function Recite({
 
   useEffect(() => () => handleRef.current?.cancel(), []);
 
-  // The elapsed clock. Studio draws the waveform itself from the same handle,
-  // at frame rate and straight to the DOM — this only has to keep the timer
-  // honest, so it ticks four times a second rather than sixty.
-  useEffect(() => {
-    if (phase !== "recording") return;
-    const id = window.setInterval(() => {
-      const h = handleRef.current;
-      if (h) setElapsed((Date.now() - h.startedAt) / 1000);
-    }, 250);
-    return () => window.clearInterval(id);
-  }, [phase]);
-
   async function start() {
     setResult(null);
     setFailure(null);
@@ -249,7 +259,6 @@ export default function Recite({
                stillWrong: null, rungs: {}, tries: {}, accepted: [] });
     try {
       handleRef.current = await startRecording();
-      setElapsed(0);
       setPhase("recording");
     } catch {
       // getUserMedia rejects for a denied permission, a missing device and a
@@ -307,7 +316,14 @@ export default function Recite({
     }
   }
 
-  /** Keep the last real figures for the dark card. Only from a judged take. */
+  /**
+   * Tell the app a recording was stored.
+   *
+   * It used to also stash the take's duration and score for the recording
+   * card's stats row. That row went with the card — the results the learner is
+   * about to read state both properly, and a second copy of them under the mic
+   * was the panel filling its own spare width.
+   */
   function remember(out: Attempt) {
     // TELL THE APP FIRST, and tell it about every stored attempt. The counters
     // on Home are built from the attempt history, and the history is only
@@ -318,9 +334,6 @@ export default function Recite({
     // practised well. Gating this on `analysable` would mean a learner whose
     // takes were all too noisy to judge kept a streak that never advanced.
     onAttempt?.();
-    if (out.status !== "ok" || !out.analysable) return;
-    setLastSeconds(out.duration_s);
-    setLastScore(out.score ?? null);
   }
 
   /* ── the recovery loop ──────────────────────────────────────────────────
@@ -493,17 +506,26 @@ export default function Recite({
 
   return (
     <>
+      {/* The sura, in the serif, exactly as the reader's own head shows it —
+          and the ayah number is NOT here. It sits in the centre of the arrow
+          row below, which is where the reader puts it, so the two screens
+          carry the same fact in the same slot. */}
       <div className="eyebrow">
-        <h2 className="eyebrow__name">
-          {sura.number}. {sura.translit}
-        </h2>
-        <span className="eyebrow__meta">
-          {sura.number}:{ayah.aya}
-          {!selection.whole &&
-            ` · ${t(lang, "words")} ${segment.start_word + 1}–${
-              segment.start_word + segment.num_words
-            }`}
-        </span>
+        <div className="eyebrow__where">
+          <h2 className="eyebrow__name">
+            {sura.number}. {sura.translit}
+          </h2>
+          {/* The partial range, when one is in play. It qualifies the ayah, so
+              it sits under the sura name rather than inside the badge — the
+              badge answers "which ayah", and it must keep answering only that
+              however narrow the range gets. */}
+          {!selection.whole && (
+            <p className="eyebrow__range">
+              {t(lang, "words")} {segment.start_word + 1}–
+              {segment.start_word + segment.num_words}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* ── LEAVING, AND MOVING ALONG ────────────────────────────────────
@@ -529,11 +551,15 @@ export default function Recite({
           <Close />
         </button>
 
-        {/* NO LABEL BETWEEN THEM. The first draft put "Al-Fatiha · 1:1" here
-            and it landed directly beneath the heading, which already says
-            "1. Al-Fatiha" and "1:1" — the same two facts twice, eight pixels
-            apart. The heading is the title; this row is chrome, and chrome
-            that repeats the title is just noise with a border. */}
+        {/* THE AYAH NUMBER, BETWEEN THE CONTROLS. An early draft put
+            "Al-Fatiha · 1:1" here and it repeated the heading two lines above
+            it, which is why it was removed. The badge is not that: it carries
+            the one fact the heading does NOT — which ayah of the sura — and it
+            sits here because this is where the reader's verse view puts it, in
+            the middle of its own arrow row. Same component, same slot, so the
+            number does not move when the recording starts. */}
+        <AyahBadge lang={lang} aya={ayah.aya} />
+
         <div className="ayah-nav__steps">
           <button
             className="ayah-nav__arrow"
@@ -569,12 +595,10 @@ export default function Recite({
         }
       />
 
-      {/* What the learner is about to be measured against, before they commit
-          to recording: how long this should take at a normal pace. A long ayah
-          is slow, not broken — this is the number that lets them decide. */}
-      <p className="estimate">
-        {t(lang, "estimate")} ≈ {estimate(segment.seconds)}
-      </p>
+      {/* NO DURATION ESTIMATE HERE. "Taxminiy davomiylik ≈ 4.5 s" under every
+          ayah was a figure about the ENGINE's budget dressed as a reading aid.
+          The two warnings below stay, because they are not measurements — they
+          are the app explaining something it has already done to the range. */}
 
       {/* THE ONE SENTENCE THE FALLBACK OWES THE LEARNER. Shown when the app
           has narrowed a long ayah on its own, so the range on screen is
@@ -612,12 +636,22 @@ export default function Recite({
              recording, hearing a perfect reading is as likely to be a thing to
              imitate from memory as a thing to learn from. */}
 
-      {/* THE ONE DARK SURFACE IN THE APP. It carries the whole recording and
-          analysing experience — waveform, stats, button, copy — and disappears
-          the moment a result arrives. The learner goes into it to recite and
-          comes straight back out to the ivory; that is what makes it read as a
-          moment of focus rather than as a second theme. */}
-      <Studio
+      {/* THE SAME STRIP THE READER SHOWS, from the same `rules` on the same
+          segment — so what the ayah contains does not change on the way into
+          the recording. It sits ABOVE the mic here, because below it is where
+          the result lands. */}
+      <RuleBadges
+        lang={lang}
+        rules={selection.segment.rules ?? []}
+        showUnreviewed={showUnreviewed}
+      />
+
+      {/* THE SAME CONTROL THE READER SHOWS. Not a similar one — the same
+          component, the same props, the same disc floating on the same
+          background with no card around it. There used to be a deep navy panel
+          here carrying a header, a stats row and a small horizontal mic, and it
+          made this moment look like equipment being operated. */}
+      <Recorder
         lang={lang}
         phase={
           phase === "recording"
@@ -628,25 +662,8 @@ export default function Recite({
         }
         elapsed={elapsed}
         level={() => handleRef.current?.level() ?? 0}
-        lastSeconds={lastSeconds}
-        lastScore={lastScore}
         disabled={failure === "mic"}
         longWait={tooLong}
-        /**
-         * PINNED UNTIL THERE IS SOMETHING TO READ.
-         *
-         * While idle, recording or analysing, the mic is the whole point of
-         * the screen and has to be reachable without a scroll hunt — that is
-         * item 5 and it is why this card fixes itself to the viewport.
-         *
-         * The moment a result lands, that stops being true and starts being
-         * harmful: the card floats over the top of the feedback, and the first
-         * thing it covers is the playback comparison sitting directly under
-         * the verdict. So it returns to the flow, above the results, where
-         * scrolling back up finds it. Re-recording is one scroll away; reading
-         * what you were just told is not behind anything.
-         */
-        pinned={!result}
         onStart={start}
         onStop={stop}
       />

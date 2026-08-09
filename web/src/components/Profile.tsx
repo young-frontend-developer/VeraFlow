@@ -232,7 +232,12 @@ export default function Profile({
       {/* APPEARANCE. Two named times of day rather than a "dark mode" switch:
           both are designed systems and neither is the other one dimmed, so
           neither gets to be the off position of the other. Applies on the tap
-          — one attribute on <html>, no reload. See lib/theme.ts. */}
+          — one attribute on <html>, no reload. See lib/theme.ts.
+
+          THE LEARNER DECIDES, NOT THE PHONE. A previous round replaced this
+          with a read-only row that followed `prefers-color-scheme`; that is
+          reversed. What is chosen here holds whatever the device is set to,
+          and it holds across launches. */}
       <div className="setting">
         <span className="setting__label">
           {t(lang, "theme_label")}

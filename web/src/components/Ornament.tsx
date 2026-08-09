@@ -172,40 +172,49 @@ export const TabIcon = {
       <path d="M15.4 4.2l1.1 2.2 2.2 1.1-2.2 1.1-1.1 2.2-1.1-2.2-2.2-1.1 2.2-1.1z" />
     </>,
   ),
-  // A QALAM - THE CUT REED, not a ballpoint and not a quill.
+  // A QALAM — THE CUT REED. Third attempt, and this one is subtractive.
   //
-  // The previous version was a generic stylus: a plain tapered barrel with a
-  // collar, which is the shape of every "edit" icon ever drawn. A qalam is a
-  // length of reed cut to a chisel nib, and three details are what say so
-  // rather than saying "pen":
+  // ── WHY THE PREVIOUS TWO READ AS A BALLPOINT ────────────────────────────
   //
-  //   the NIB is a slanted chisel, not a cone - the oblique cut is the whole
-  //     reason Arabic script has thick and thin strokes at all
-  //   the SPLIT runs back from the nib along the shaft, as a cut reed's does
-  //   the NODES are the two rings across the barrel, which is what makes it
-  //     read as reed rather than as moulded plastic
+  // Not because they were drawn as pens. They were drawn as reeds, with a
+  // chisel nib, a slit and a node ring, and every one of those details is
+  // correct about a real qalam. Rendered at 320px the drawing is a qalam.
+  // Rendered at 20px, which is the only size it is ever seen at, seven
+  // hairline strokes inside a 20-unit box do this:
   //
-  // Still the only diagonal in the row, which is what keeps it legible at
-  // 20px next to four upright glyphs. The line beneath is the written baseline.
+  //   the shaft's two parallel lines sat 2.3 units apart at stroke 1.3, so the
+  //     1-unit gap between them closed up and the tube filled in SOLID
+  //   the node — one short stroke across the barrel — survived as the only
+  //     readable interior detail, and a short bar across a pen barrel is
+  //     universally a POCKET CLIP
+  //   the slit and the nib wedge merged into one fat paddle
+  //
+  // A solid barrel with a clip is a marker pen. The detail was not wrong, it
+  // was invisible, and what remained of it was worse than nothing.
+  //
+  // ── WHAT THIS IS ────────────────────────────────────────────────────────
+  //
+  // ONE closed outline and no interior strokes at all: a long slender rod on
+  // the diagonal, square-cut at the top end, and cut OBLIQUELY at the bottom
+  // so one side runs 3.5 units further than the other and meets the short side
+  // at a point. That oblique face is the nib — it is the whole reason Arabic
+  // script has thick and thin strokes — and at 20px it is the only thing that
+  // has to survive, so it is the only thing drawn.
+  //
+  // The rod is 3.2 units wide against a 1.3 stroke, which leaves 1.9 units of
+  // open interior: it reads as a hollow stalk rather than a filled bar. It is
+  // 15 units long, so the proportion is a reed rather than a blade. Miter
+  // joins rather than the set's round ones, and only here — a rounded-off
+  // point is not a cut, and the cut is the entire icon.
+  //
+  // No node, no slit, no baseline. Each of those was true and each of them, at
+  // this size, cost more than it carried.
   learn: icon(
-    <>
-      {/* The shaft: a REED, so it is a constant-width tube. The previous two
-          attempts both tapered it to a point, and a tapered barrel with a
-          collar is a pencil no matter what the comment above it says. */}
-      <path d="M15.9 3.1 7.4 11.6" />
-      <path d="M13.6 1.9 6.2 9.3" />
-      <path d="M15.9 3.1 13.6 1.9" />
-      {/* The nib: an oblique chisel cut across the end of the tube, which is
-          the whole reason Arabic script has thick and thin strokes. Drawn as a
-          closed wedge with a flat slanted edge — never a cone. */}
-      <path d="M7.4 11.6 6.2 9.3 3.4 13.1l2.2 1.1z" />
-      {/* The slit, running back from the nib as a cut reed's does. */}
-      <path d="M6.8 10.5 4.6 13.6" />
-      {/* The node — the joint that says reed rather than moulded plastic. */}
-      <path d="M11.6 5.6 9.3 4.4" />
-      {/* The written baseline. */}
-      <path d="M3.6 17.3h12.8" />
-    </>,
+    <path
+      d="M14.2 4.7 16.4 7 8.3 15.1 3.6 15.3Z"
+      strokeLinejoin="miter"
+      strokeLinecap="butt"
+    />,
   ),
   // A PERSON. Not in the bar any more - it lives behind the settings gear -
   // but Profile still labels itself with it.
@@ -534,6 +543,64 @@ export function TutorMark({ size = 56 }: { size?: number }) {
  * theme. The teeth are drawn as a single closed outline so the silhouette reads
  * at a glance instead of resolving into rays.
  */
+/**
+ * The notification bell.
+ *
+ * A QANDIL, NOT A HANDBELL. The mosque lamp hangs by a chain from an arch and
+ * flares at the base, which is the same silhouette a bell icon has and a
+ * shape this app already owns — the ornaments upstairs are drawn from the same
+ * vocabulary. A stock jingle-bell with a clapper would be the one glyph in the
+ * top bar borrowed from a generic icon set, three centimetres from the
+ * wordmark.
+ *
+ * The clapper stroke at the bottom is kept, because without it the shape is a
+ * lamp and with it the shape is a bell — and this control must be recognised
+ * as notifications on the first look, not admired for its provenance.
+ */
+export function Bell({ size = 19 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.35"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {/* The hanging ring. */}
+      <path d="M10 2.1v1.4" />
+      {/* The body: shoulders rising to a dome, skirt flaring to the rim. */}
+      <path d="M10 3.5a4.6 4.6 0 0 0-4.6 4.6c0 3.1-.7 4.6-1.6 5.5h12.4c-.9-.9-1.6-2.4-1.6-5.5A4.6 4.6 0 0 0 10 3.5z" />
+      {/* The clapper. */}
+      <path d="M8.4 15.6a1.9 1.9 0 0 0 3.2 0" />
+    </svg>
+  );
+}
+
+/** A target with an arrow in it — goals. Drawn on the icon set's 20px grid. */
+export function Target({ size = 20 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="10" cy="10" r="7.1" />
+      <circle cx="10" cy="10" r="3.6" />
+      <circle cx="10" cy="10" r="0.9" />
+    </svg>
+  );
+}
+
 export function Gear({ size = 18 }: { size?: number }) {
   return (
     <svg

@@ -22,9 +22,9 @@ from ..engine.segments import segments_for, segments_for_range
 from ..engine.target import target_for
 from .schemas import (AttemptOut, AyahBriefOut, AyahOut, AyahSegmentsOut,
                       HadithOut, MetaOut, PracticeSegmentOut, ReciterOut,
-                      RecitersOut,
-                      ReviewDecisionIn, ReviewEntryOut, ReviewQueueOut,
-                      SegmentOut, SuraAyatOut, SuraOut, WrongFlagIn)
+                      RecitersOut, ReviewDecisionIn, ReviewEntryOut,
+                      ReviewQueueOut, RuleBadgeOut, SegmentOut, SuraAyatOut,
+                      SuraOut, WrongFlagIn)
 
 router = APIRouter(prefix="/api")
 
@@ -217,6 +217,54 @@ def flag_wrong(attempt_id: int, body: WrongFlagIn,
     return {"ok": True}
 
 
+def _rule_badges(rng: Range, uthmani: str) -> list[RuleBadgeOut]:
+    """The tajweed rules present in this range, as learner-facing badges.
+
+    Two phonetizer runs, and both are needed. The flat one is what every other
+    precondition in the engine reads; the SPACED one is the only thing that
+    separates madd muttasil from madd munfasil, which differ by a word boundary
+    and by nothing else. `remove_spaces=True` destroys exactly that.
+
+    A failure here costs badges, not the segment. This endpoint is what the
+    reader calls to open an ayah, and an ayah that will not open because a
+    decorative pill could not be computed would be a bad trade.
+    """
+    try:
+        from quran_transcript import quran_phonetizer
+
+        from ..engine.moshaf import MOSHAF
+        from ..engine.rule_presence import badges, is_reviewed, rules_present
+
+        flat = quran_phonetizer(uthmani, MOSHAF, remove_spaces=True)
+        spaced = quran_phonetizer(uthmani, MOSHAF, remove_spaces=False)
+        codes = rules_present(flat.phonemes, flat.sifat, spaced.phonemes,
+                              n_words=len(uthmani.split()))
+    except Exception:
+        return []
+
+    out: list[RuleBadgeOut] = []
+    catalogue = badges()
+    for code in codes:
+        entry = catalogue.get(code, {})
+        # NO RUSSIAN WAS AUTHORED for these entries and none is invented here -
+        # see rule_badges.json _meta. The Uzbek is served for both languages
+        # and the client says so; the alternative is a model writing tajweed
+        # instruction, which is the one thing this content may not be.
+        uz = entry.get("uz", {})
+        target = entry.get("target_harakat", "")
+        out.append(RuleBadgeOut(
+            code=code,
+            color=entry.get("color", "gray"),
+            name=uz.get("name", code),
+            rule=uz.get("rule", ""),
+            example=uz.get("example", ""),
+            target=str(target) if target != "" else "",
+            source=entry.get("source", ""),
+            reviewed=is_reviewed(code),
+        ))
+    return out
+
+
 def _practice_segment(sura: int, aya: int, index: int, start_word: int,
                       num_words: int, n_phonemes: int) -> PracticeSegmentOut:
     rng = Range(sura, aya, start_word, num_words)
@@ -224,12 +272,14 @@ def _practice_segment(sura: int, aya: int, index: int, start_word: int,
     # n_phonemes is 0 only when the prebuilt artifact is missing for this ayah;
     # compute it rather than showing the learner "0 s".
     n_phon = n_phonemes or sum(len(t["text"]) for t in text_segments)
+    uthmani = uthmani_of(rng)
     return PracticeSegmentOut(
         index=index, start_word=start_word, num_words=num_words,
         n_phonemes=n_phonemes,
         seconds=round(estimate_seconds(n_phon), 1),
-        uthmani=uthmani_of(rng),
+        uthmani=uthmani,
         text_segments=[SegmentOut(**t) for t in text_segments],
+        rules=_rule_badges(rng, uthmani),
     )
 
 

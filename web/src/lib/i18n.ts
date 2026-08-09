@@ -628,7 +628,6 @@ const STRINGS = {
     parts: "qism",
     words: "soʻz",
     seconds_short: "s",
-    estimate: "Taxminiy davomiylik",
     change_selection: "Boshqa oyat tanlash",
 
     // library
@@ -717,7 +716,6 @@ const STRINGS = {
     stat_hasanat: "Hasanat",
     stat_ayat: "Oʻqilgan oyat",
     stat_time: "Mashq vaqti",
-    stat_streak_best: "Eng uzuni: {n}",
     stat_none_yet: "Hali boshlanmagan",
     stats_kicker_home: "HISOB",
     stats_title_home: "Sizning hisobingiz",
@@ -726,7 +724,6 @@ const STRINGS = {
 
     // ── hasanat. The claim and its source travel together; see the card. ──
     hasanat_kicker: "HASANAT",
-    hasanat_letters: "{n} harf oʻqildi",
     hasanat_claim:
       "«Kim Allohning Kitobidan bir harf oʻqisa, unga bir yaxshilik bor; har bir yaxshilik esa oʻn baravar qilib beriladi.»",
     // Said plainly, and not in small print: a counter cannot know what is
@@ -799,7 +796,7 @@ const STRINGS = {
     theme_dark: "Tungi",
     theme_light: "Kunduzgi",
     theme_help:
-      "Tungi koʻrinish — chuqur zangori fon, tilla yoritish. Kunduzgi — fil suyagi qogʻoz, lojuvard va guruch ranglari.",
+      "Tungi koʻrinish — chuqur zangori fon, tilla yoritish. Kunduzgi — fil suyagi qogʻoz va guruch ranglari.",
     settings_section: "SOZLAMALAR",
     lang_label: "Til",
 
@@ -815,6 +812,70 @@ const STRINGS = {
     // ── the comparison, after the result ─────────────────────────────────
     compare_mine: "Mening oʻqishim",
     compare_reciter: "Qori oʻqishi",
+
+    // ── rule badges: what this ayah CONTAINS ─────────────────────────────
+    rules_title: "Shu oyatdagi qoidalar",
+    rules_target: "Cho'zilishi",
+    rules_uz_only:
+      "Bu qoidalar hozircha faqat o'zbek tilida — ruscha tarjimasi tayyorlanmoqda.",
+
+    // ── which ayah you are on ────────────────────────────────────────────
+    ayah: "Oyat",
+
+    // ── notifications ────────────────────────────────────────────────────
+    notif_open: "Bildirishnomalar",
+    notif_title: "Bildirishnomalar",
+    notif_close: "Yopish",
+    notif_mark_all: "Hammasini oʻqilgan deb belgilash",
+    notif_empty_title: "Hozircha bildirishnoma yoʻq",
+    notif_empty_body: "Maqsad qoʻysangiz, eslatmalar shu yerda koʻrinadi.",
+    // Said plainly, because a bell that never rings on the lock screen is a
+    // promise the app has not kept yet. See lib/notifications.ts.
+    notif_delivery_note:
+      "Eslatmalar hozircha faqat shu yerda koʻrinadi. Telefon bildirishnomalari keyinroq ulanadi.",
+    notif_now: "hozir",
+    notif_min: "{n} daqiqa oldin",
+    notif_hour: "{n} soat oldin",
+    notif_day: "{n} kun oldin",
+
+    // ── goals ────────────────────────────────────────────────────────────
+    goal_home_kicker: "MAQSAD",
+    goal_home_title: "Oʻzingizga maqsad qoʻying",
+    goal_home_body: "Kichik, har kuni bajariladigan maqsad — eng yaxshi boshlanish.",
+    goal_new_cta: "Yangi maqsad",
+    goal_screen_sub: "Bittasini tanlang. Keyin istalgan vaqtda oʻzgartirasiz.",
+    goal_p_ayah_title: "Har kuni bitta oyat",
+    goal_p_ayah_body: "Kuniga bir oyat oʻqiysiz.",
+    goal_p_minutes_title: "Har kuni 5 daqiqa mashq",
+    goal_p_minutes_body: "Kuniga besh daqiqa ovoz chiqarib oʻqiysiz.",
+    goal_p_sura_title: "Haftasiga bitta sura",
+    goal_p_sura_body: "Haftada bir surani toʻliq oʻqiysiz.",
+    goal_p_custom_title: "Oʻzim tanlayman",
+    goal_p_custom_body: "Miqdorini va qachonligini oʻzingiz belgilaysiz.",
+    goal_what: "Nimani?",
+    goal_how_much: "Qancha?",
+    goal_how_often: "Qachon?",
+    goal_unit_ayah: "oyat",
+    goal_unit_minute: "daqiqa",
+    goal_unit_sura: "sura",
+    goal_every_day: "Har kuni",
+    goal_every_week: "Har hafta",
+    goal_more: "Koʻproq",
+    goal_less: "Kamroq",
+    goal_remind: "Eslatma yubor",
+    goal_remind_help: "Belgilangan vaqtda eslatib turamiz.",
+    goal_remind_time: "Vaqti",
+    goal_save: "Maqsadni saqlash",
+    goal_cancel: "Bekor qilish",
+    goal_active_kicker: "SIZNING MAQSADINGIZ",
+    goal_change: "Oʻzgartirish",
+    goal_remove: "Maqsadni oʻchirish",
+    goal_reminder_at: "Eslatma: {t}",
+    goal_no_reminder: "Eslatmasiz",
+    goal_sum_day: "Har kuni {n} {unit}",
+    goal_sum_week: "Har hafta {n} {unit}",
+    goal_notif_title: "Mashq vaqti",
+    goal_notif_body: "{goal}. Hozir boshlaymizmi?",
   },
 
   ru: {
@@ -1283,7 +1344,6 @@ const STRINGS = {
     parts: "частей",
     words: "слова",
     seconds_short: "с",
-    estimate: "Примерная длительность",
     change_selection: "Выбрать другой аят",
 
     library_title: "Аяты",
@@ -1354,7 +1414,6 @@ const STRINGS = {
     stat_hasanat: "Хасанат",
     stat_ayat: "Прочитано аятов",
     stat_time: "Время практики",
-    stat_streak_best: "Лучший: {n}",
     stat_none_yet: "Ещё не начато",
     stats_kicker_home: "СЧЁТ",
     stats_title_home: "Ваш счёт",
@@ -1362,7 +1421,6 @@ const STRINGS = {
       "Эти числа начнут расти после первого прочитанного аята. Пока здесь ничего не придумано.",
 
     hasanat_kicker: "ХАСАНАТ",
-    hasanat_letters: "Прочитано букв: {n}",
     hasanat_claim:
       "«Кто прочитает одну букву из Книги Аллаха, тому — одно доброе дело, а доброе дело воздаётся десятикратно.»",
     hasanat_caveat:
@@ -1420,7 +1478,7 @@ const STRINGS = {
     theme_dark: "Ночное",
     theme_light: "Дневное",
     theme_help:
-      "Ночное — глубокий синий фон и золотое свечение. Дневное — цвет слоновой кости, лазурь и латунь.",
+      "Ночное — глубокий синий фон и золотое свечение. Дневное — цвет слоновой кости и латунь.",
     settings_section: "НАСТРОЙКИ",
     lang_label: "Язык",
 
@@ -1430,6 +1488,68 @@ const STRINGS = {
 
     compare_mine: "Моё чтение",
     compare_reciter: "Чтение чтеца",
+
+    // ── rule badges: what this ayah CONTAINS ─────────────────────────────
+    rules_title: "Правила в этом аяте",
+    rules_target: "Протяжение",
+    rules_uz_only:
+      "Эти правила пока только на узбекском — русский перевод готовится.",
+
+    // ── which ayah you are on ────────────────────────────────────────────
+    ayah: "Аят",
+
+    // ── notifications ────────────────────────────────────────────────────
+    notif_open: "Уведомления",
+    notif_title: "Уведомления",
+    notif_close: "Закрыть",
+    notif_mark_all: "Отметить все как прочитанные",
+    notif_empty_title: "Пока уведомлений нет",
+    notif_empty_body: "Поставьте цель — и напоминания появятся здесь.",
+    notif_delivery_note:
+      "Пока напоминания видны только здесь. Системные уведомления телефона подключим позже.",
+    notif_now: "только что",
+    notif_min: "{n} мин назад",
+    notif_hour: "{n} ч назад",
+    notif_day: "{n} дн назад",
+
+    // ── goals ────────────────────────────────────────────────────────────
+    goal_home_kicker: "ЦЕЛЬ",
+    goal_home_title: "Поставьте себе цель",
+    goal_home_body: "Небольшая ежедневная цель — самое лучшее начало.",
+    goal_new_cta: "Новая цель",
+    goal_screen_sub: "Выберите одну. Потом сможете изменить в любой момент.",
+    goal_p_ayah_title: "Один аят каждый день",
+    goal_p_ayah_body: "Читаете по одному аяту в день.",
+    goal_p_minutes_title: "5 минут практики каждый день",
+    goal_p_minutes_body: "Пять минут чтения вслух в день.",
+    goal_p_sura_title: "Одна сура в неделю",
+    goal_p_sura_body: "За неделю прочитываете одну суру.",
+    goal_p_custom_title: "Выберу сам",
+    goal_p_custom_body: "Сами укажете сколько и как часто.",
+    goal_what: "Что?",
+    goal_how_much: "Сколько?",
+    goal_how_often: "Как часто?",
+    goal_unit_ayah: "аятов",
+    goal_unit_minute: "минут",
+    goal_unit_sura: "сур",
+    goal_every_day: "Каждый день",
+    goal_every_week: "Каждую неделю",
+    goal_more: "Больше",
+    goal_less: "Меньше",
+    goal_remind: "Присылать напоминание",
+    goal_remind_help: "Напомним в указанное время.",
+    goal_remind_time: "Время",
+    goal_save: "Сохранить цель",
+    goal_cancel: "Отмена",
+    goal_active_kicker: "ВАША ЦЕЛЬ",
+    goal_change: "Изменить",
+    goal_remove: "Удалить цель",
+    goal_reminder_at: "Напоминание: {t}",
+    goal_no_reminder: "Без напоминания",
+    goal_sum_day: "Каждый день {n} {unit}",
+    goal_sum_week: "Каждую неделю {n} {unit}",
+    goal_notif_title: "Время практики",
+    goal_notif_body: "{goal}. Начнём?",
   },
 } as const;
 

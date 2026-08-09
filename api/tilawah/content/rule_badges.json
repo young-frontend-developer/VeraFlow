@@ -1,0 +1,124 @@
+{
+  "_meta": {
+    "purpose": "Rule code -> learner-facing badge content. These fire on PRESENCE, not on error: a segment shows a badge for every rule that structurally occurs in it, whether or not the learner got it right. That is the difference from tajweed_error_registry_v3.json, whose entries all describe a MISTAKE.",
+    "source": "«Тажвид (Қуръон ўқиш қоидалари)» — Абдулҳаким қори Комилжон ўғли, «Имом Бухорий халқаро маркази», Самарқанд, 2018. Approved by Uzbekistan's Committee on Religious Affairs, decision 1164, 27 Feb 2018.",
+    "authored_by": "Rahmatulloh, transcribed from the printed text. NOT generated. Every uz.name / uz.rule / uz.example string is copied from the brief verbatim; nothing here was written by a model and nothing may be.",
+    "status_values": {
+      "draft": "not shown to a learner. Same gate as the error registry - see coverage.is_reviewed().",
+      "reviewed": "a qualified qori has signed the strings off."
+    },
+    "RU_IS_DELIBERATELY_ABSENT": "No Russian was authored for these entries, so none is present. Writing it here would mean a model authoring tajweed instruction, which is the one thing this file may not contain. The client falls back to the Uzbek string for a Russian UI and the badge is still gated by status, so nothing unreviewed reaches anyone either way. Russian needs the same transcription pass the Uzbek got.",
+    "detection": "engine/rule_presence.py. Derived from the reference phonetic script alone - never from a recording."
+  },
+
+  "RULE_MADD_LOZIM": {
+    "status": "draft",
+    "color": "pink",
+    "group": "madd",
+    "target_harakat": 6,
+    "trigger": "madd letter + shaddah in the same word, OR a muqatta'at letter-name",
+    "uz": {
+      "name": "Mad lozim",
+      "rule": "Mad harfidan keyin tashdidli harf yoki muqattaʿat harf nomi kelsa, 6 harakat cho'ziladi — bu eng uzun mad turi.",
+      "example": "ٱلضَّآلِّينَ, يَتَمَآسَّا, va الٓمٓ kabi sura boshidagi yakka harflar."
+    },
+    "source": "21-dars, Тажвид (2018), 38-bet"
+  },
+
+  "RULE_MADD_MUTTASIL": {
+    "status": "draft",
+    "color": "dark-pink",
+    "group": "madd",
+    "target_harakat": "4-5",
+    "trigger": "madd letter + hamza in the SAME word",
+    "error_counterpart": "MADD_WAJIB_SHORTENED",
+    "uz": {
+      "name": "Mad vojib (muttasil)",
+      "rule": "Mad harfidan keyin hamza bir so'z ichida kelsa, 4-5 harakat cho'ziladi.",
+      "example": "السَّمَاء, جَاء, سُوء"
+    },
+    "source": "19-dars, Тажвид (2018), 35-bet"
+  },
+
+  "RULE_MADD_MUNFASIL": {
+    "status": "draft",
+    "color": "orange-red",
+    "group": "madd",
+    "target_harakat": "2, 4, 5",
+    "trigger": "madd letter at word end + hamza starting the NEXT word",
+    "scoring_note": "2 is the baseline for scoring. 4 and 5 are reciter choices and are NOT penalised.",
+    "uz": {
+      "name": "Mad joiz (munfasil)",
+      "rule": "Mad harfi bir so'z oxirida, hamza esa keyingi so'z boshida kelsa, 2, 4 yoki 5 harakat cho'zish mumkin — qori ixtiyoriga bog'liq.",
+      "example": "إِنَّآ أَعْطَيْنَاكَ, يَآ أَيُّهَا"
+    },
+    "source": "20-dars, Тажвид (2018), 36-bet"
+  },
+
+  "RULE_MADD_TABIIY": {
+    "status": "draft",
+    "color": "orange",
+    "group": "madd",
+    "target_harakat": 2,
+    "trigger": "madd letter with no following hamza or sukun",
+    "error_counterpart": "MADD_TOO_SHORT / MADD_TOO_LONG",
+    "uz": {
+      "name": "Mad tabiiy",
+      "rule": "Oddiy holatda mad harfi 2 harakat cho'ziladi — bu eng asosiy va eng ko'p uchraydigan mad turi.",
+      "example": "قَالَ, نُوحِيهَآ, أُوذُوا"
+    },
+    "source": "18-dars, Тажвид (2018), 34-bet"
+  },
+
+  "RULE_IKHFO_GHUNNA": {
+    "status": "draft",
+    "color": "green",
+    "group": "ghunna",
+    "target_harakat": 2,
+    "trigger": "sukunli nun/tanvin + one of the 15 ikhfo letters, OR tashdidli nun/mim",
+    "uz": {
+      "name": "Ixfo va g'unna",
+      "rule": "Sukunli «nuvn» yoki tanvin 15 ta ixfo harfidan biriga yo'liqsa, yashirin va burun tovushi (g'unna) bilan, 2 harakat o'qiladi."
+    },
+    "source": "14-dars, Тажвид (2018), 28-bet"
+  },
+
+  "RULE_IDGHOM": {
+    "status": "draft",
+    "color": "gray",
+    "group": "idgham",
+    "trigger": "any of the idgham subtypes (mislayn, mutajanisayn, mutaqaribayn, shamsiyya)",
+    "error_counterpart": "IDGHAM_MISSING",
+    "uz": {
+      "name": "Idg'om",
+      "rule": "Bir harf ikkinchi harf ichiga kiritilib, alohida talaffuz qilinmaydi."
+    },
+    "source": "12, 13, 27-30-darslar, Тажвид (2018), 25-49-betlar"
+  },
+
+  "RULE_TAFXIM": {
+    "status": "draft",
+    "color": "dark",
+    "group": "sifat",
+    "trigger": "an iste'lo letter is present",
+    "error_counterpart": "TAFKHEEM_LOST",
+    "uz": {
+      "name": "Tafxim",
+      "rule": "Iste'lo harflari (خ ص ض ط ظ غ ق) doim yo'g'on o'qiladi."
+    },
+    "source": "4-5-darslar, Тажвид (2018), 13-15-betlar"
+  },
+
+  "RULE_QALQALA": {
+    "status": "draft",
+    "color": "blue",
+    "group": "sifat",
+    "trigger": "a qalqalah letter carries sukun",
+    "error_counterpart": "QALQALAH_MISSING",
+    "uz": {
+      "name": "Qalqala",
+      "rule": "Sukunli ق ط ب ج د harflarida yengil sakrash tovushi eshitiladi."
+    },
+    "source": "8-dars, Тажвид (2018), 21-bet"
+  }
+}

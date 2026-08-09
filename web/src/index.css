@@ -65,6 +65,16 @@
   --ivory-sunk: rgba(7, 10, 18, 0.42);
   --ivory-lift: rgba(255, 255, 255, 0.055);
   --beige: rgba(255, 255, 255, 0.06);
+  /* A WELL — the inside of a meter track, sunk below the pane it is cut into.
+     A token because the literal `rgba(0, 0, 0, 0.34)` was written straight
+     into three tracks and only one of them ever got a light-mode counterpart;
+     the other two drew a black groove across a sheet of paper.
+
+     A CHIP GROUND — the small opaque badge that has to stay legible sitting on
+     top of live text. Near-black here, near-white there. Its ink reads from
+     `--ink-2` in both themes, which only works if the ground flips with it. */
+  --well: rgba(0, 0, 0, 0.34);
+  --chip-ground: rgba(11, 15, 26, 0.92);
 
   /* ── the glass ──────────────────────────────────────────────────────── */
   /* A panel is a gradient of two very low-alpha whites, not a flat wash: the
@@ -101,11 +111,64 @@
      at body size — the one contrast rule this palette cannot bend. */
   --on-gold: #0d1220;
 
+  /* ── THE ACCENT AS A FILLED SHAPE ─────────────────────────────────────
+     Every disc, pill, button and meter painted in the accent reads from these
+     three, so the tonal sweep is one decision rather than nine copies of a
+     gradient. Brass is never one tone: a lit edge at the top-left, the true
+     hue through the middle, a shaded edge at the bottom-right. A flat
+     single-tone fill is the tell that a palette was substituted into a design
+     rather than designed, and the other theme has to earn the same depth out
+     of its own hues — see the light block for how far the sweep can go before
+     the label on top of it stops being readable.
+
+       --accent-fill       discs and full-width buttons, lit from top-left
+       --accent-fill-soft  the same sweep, shorter, for small pills and badges
+       --accent-fill-bar   left-to-right, for meters that fill sideways */
+  --accent-fill: linear-gradient(
+    158deg,
+    var(--gold-lift) 0%,
+    var(--gold) 50%,
+    #b8873a 100%
+  );
+  --accent-fill-soft: linear-gradient(160deg, var(--gold-lift) 0%, var(--gold) 100%);
+  --accent-fill-bar: linear-gradient(
+    90deg,
+    var(--gold-deep) 0%,
+    var(--gold) 55%,
+    var(--gold-lift) 100%
+  );
+
   /* ── the secondary accent: jade ─────────────────────────────────────── */
   --sage: #3fa287;
   --jade: #3fa287;
   --jade-lift: #5cc4a6;
   --sage-soft: rgba(63, 162, 135, 0.18);
+
+  /* ── THE FOUR STAT TONES ──────────────────────────────────────────────
+     One pair of stops per figure, plus its glow. These are the ONLY place in
+     the app where a hue is chosen for what a number means rather than for the
+     palette, and they are deliberately fenced into the four marks on Home —
+     see `.stat-tile__mark--*`. Nothing else may read them.
+
+       flame  the streak. Amber into orange: fire, and the only warm-hot pair
+              in the app, so the streak is findable in the grid at a glance
+       brass  hasanat. THE APP'S BRASS, unchanged and unthemed — hasanat is
+              gold everywhere it appears and this is that gold
+       jade   ayat completed. The palette's own secondary green
+       teal   time practised. Cool and blue, chosen to be the one tone that
+              cannot be confused with the other three at 20px */
+  --tone-flame-1: #f7bb70;
+  --tone-flame-2: #de6f34;
+  --tone-flame-glow: rgba(231, 140, 74, 0.42);
+  --tone-brass-1: #ecca85;
+  --tone-brass-2: #c08b34;
+  --tone-brass-glow: rgba(212, 168, 83, 0.4);
+  --tone-jade-1: #6ed0b1;
+  --tone-jade-2: #2f8a72;
+  --tone-jade-glow: rgba(63, 162, 135, 0.4);
+  --tone-teal-1: #8ed2ef;
+  --tone-teal-2: #3688bb;
+  --tone-teal-glow: rgba(84, 165, 205, 0.4);
 
   /* The correction colour, lifted for a dark ground. */
   --terra: #d98b62;
@@ -209,10 +272,29 @@ body::before {
  * stars. Drawn here as geometry, not imported as an image: it is the logo's
  * construction repeated, so the background and the mark share an origin.
  *
- * AT 4%, AND MASKED. It is texture, not decoration — you should notice it on
- * the second look and never on the first. The mask fades it out of the top
- * third so it never competes with the greeting and the hero card, which is
- * where the eye lands.
+ * ── DRAWN IN INK, NOT IN THE ACCENT ────────────────────────────────────────
+ *
+ * It used to be stroked in brass here and emerald there, and in both themes it
+ * was invisible without going looking for it. The accent is the wrong pigment
+ * for this job twice over: brass is only a little lighter than the indigo
+ * ground it sits on, and emerald is a MID tone — against near-white paper it
+ * has barely more contrast than a grey at the same alpha, so raising the alpha
+ * mostly added colour rather than structure.
+ *
+ * The ink is the extreme of the theme in the direction that has room: warm
+ * off-white on the dark ground, warm charcoal on the pale one. That buys the
+ * full range of the palette, so a low alpha still reads as a line.
+ *
+ * ── THE TWO ALPHAS ARE DIFFERENT ON PURPOSE ────────────────────────────────
+ *
+ * 10% here and 13% in the light block, because the same alpha does not buy the
+ * same texture: ink at 12% over #0b0f1a moves the ground by ΔL* 12.5, and over
+ * #f7f3ec by ΔL* 9.0. Matched by eye and by measurement at ΔL* ≈ 10 in both,
+ * which is a pattern you see immediately rather than one you find.
+ *
+ * STILL MASKED. It fades out of the top third, so it never competes with the
+ * greeting and the hero card, which is where the eye lands — and at this
+ * strength that matters more than it did at 4%, not less.
  */
 body::after {
   content: "";
@@ -220,8 +302,8 @@ body::after {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  opacity: 0.042;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='132' height='132' viewBox='0 0 132 132'%3E%3Cg fill='none' stroke='%23d4a853' stroke-width='1.15'%3E%3Crect x='42' y='42' width='48' height='48'/%3E%3Crect x='42' y='42' width='48' height='48' transform='rotate(45 66 66)'/%3E%3Crect x='-24' y='-24' width='48' height='48'/%3E%3Crect x='-24' y='-24' width='48' height='48' transform='rotate(45 0 0)'/%3E%3Crect x='108' y='-24' width='48' height='48'/%3E%3Crect x='108' y='-24' width='48' height='48' transform='rotate(45 132 0)'/%3E%3Crect x='-24' y='108' width='48' height='48'/%3E%3Crect x='-24' y='108' width='48' height='48' transform='rotate(45 0 132)'/%3E%3Crect x='108' y='108' width='48' height='48'/%3E%3Crect x='108' y='108' width='48' height='48' transform='rotate(45 132 132)'/%3E%3Cpath d='M33.9 0H98.1M33.9 132H98.1M0 33.9V98.1M132 33.9V98.1M66 0V32.1M66 99.9V132M0 66H32.1M99.9 66H132'/%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.1;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='132' height='132' viewBox='0 0 132 132'%3E%3Cg fill='none' stroke='%23f4efe4' stroke-width='1.15'%3E%3Crect x='42' y='42' width='48' height='48'/%3E%3Crect x='42' y='42' width='48' height='48' transform='rotate(45 66 66)'/%3E%3Crect x='-24' y='-24' width='48' height='48'/%3E%3Crect x='-24' y='-24' width='48' height='48' transform='rotate(45 0 0)'/%3E%3Crect x='108' y='-24' width='48' height='48'/%3E%3Crect x='108' y='-24' width='48' height='48' transform='rotate(45 132 0)'/%3E%3Crect x='-24' y='108' width='48' height='48'/%3E%3Crect x='-24' y='108' width='48' height='48' transform='rotate(45 0 132)'/%3E%3Crect x='108' y='108' width='48' height='48'/%3E%3Crect x='108' y='108' width='48' height='48' transform='rotate(45 132 132)'/%3E%3Cpath d='M33.9 0H98.1M33.9 132H98.1M0 33.9V98.1M132 33.9V98.1M66 0V32.1M66 99.9V132M0 66H32.1M99.9 66H132'/%3E%3C/g%3E%3C/svg%3E");
   background-size: 132px 132px;
   -webkit-mask-image: linear-gradient(
     to bottom,
@@ -370,11 +452,8 @@ ol {
  * figures so digits align and none of them dip. Everywhere else the serif
  * keeps its own.
  */
-.studio__timer,
-.studio__stat-value,
+.recorder__timer,
 .hero__ref,
-.eyebrow__meta,
-.verse__ref,
 .row__num,
 .group__count,
 .progress__text,
@@ -462,7 +541,7 @@ ol {
   width: 100%;
   padding: 17px 24px;
   border-radius: var(--r-chip);
-  background: linear-gradient(160deg, var(--gold-lift) 0%, var(--gold) 52%, #c1913f 100%);
+  background: var(--accent-fill);
   color: var(--on-gold);
   font-size: 16px;
   font-weight: 600;
@@ -693,7 +772,7 @@ ol {
   margin-bottom: 1px;
   border-radius: 50%;
   color: var(--on-gold);
-  background: linear-gradient(158deg, var(--gold-lift) 0%, var(--gold) 50%, #b8873a 100%);
+  background: var(--accent-fill);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.5),
     0 0 0 5px rgba(11, 15, 26, 0.92),
@@ -996,7 +1075,7 @@ ol {
   width: 100%;
   padding: 17px 24px;
   border-radius: var(--r-chip);
-  background: linear-gradient(160deg, var(--gold-lift) 0%, var(--gold) 52%, #c1913f 100%);
+  background: var(--accent-fill);
   color: var(--on-gold);
   font-size: 16px;
   font-weight: 600;
@@ -1102,7 +1181,7 @@ ol {
 .progress {
   height: 5px;
   border-radius: var(--r-chip);
-  background: rgba(0, 0, 0, 0.34);
+  background: var(--well);
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
   overflow: hidden;
   margin-bottom: 8px;
@@ -1112,7 +1191,7 @@ ol {
   display: block;
   height: 100%;
   border-radius: var(--r-chip);
-  background: linear-gradient(90deg, var(--gold-deep) 0%, var(--gold) 55%, var(--gold-lift) 100%);
+  background: var(--accent-fill-bar);
   box-shadow: 0 0 12px var(--gold-glow);
   transition: width 420ms var(--ease);
 }
@@ -1429,13 +1508,6 @@ ol {
   opacity: 0.3;
 }
 
-.verse__ref {
-  font-size: 12px;
-  letter-spacing: 0.16em;
-  color: var(--ink-3);
-  font-variant-numeric: tabular-nums;
-}
-
 .verse__ar {
   font-family: var(--arabic);
   font-size: 30px;
@@ -1496,7 +1568,7 @@ ol {
   width: 100%;
   padding: 17px 24px;
   border-radius: var(--r-chip);
-  background: linear-gradient(160deg, var(--gold-lift) 0%, var(--gold) 52%, #c1913f 100%);
+  background: var(--accent-fill);
   color: var(--on-gold);
   font-size: 16px;
   font-weight: 600;
@@ -1540,13 +1612,6 @@ ol {
   font-family: var(--serif);
   font-size: 26px;
   font-weight: 500;
-}
-
-.eyebrow__meta {
-  font-size: 12px;
-  letter-spacing: 0.1em;
-  color: var(--ink-3);
-  font-variant-numeric: tabular-nums;
 }
 
 .estimate {
@@ -1685,7 +1750,7 @@ ol {
   white-space: nowrap;
   padding: 1px 7px;
   border-radius: var(--r-chip);
-  background: rgba(11, 15, 26, 0.92);
+  background: var(--chip-ground);
   -webkit-backdrop-filter: var(--blur);
   backdrop-filter: var(--blur);
   border: 1px solid var(--border);
@@ -1707,91 +1772,99 @@ ol {
   border-radius: 4px;
 }
 
-/* ══ THE DARK MOMENT — recording and analysing only ═══════════════════════ */
-
-.studio {
-  position: relative;
-  overflow: hidden;
-  border-radius: var(--r-card);
-  padding: 30px 26px 26px;
-  margin-bottom: 18px;
-  background: linear-gradient(168deg, var(--night-2) 0%, var(--night) 78%);
-  border: 1px solid var(--border);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 22px 54px rgba(0, 0, 0, 0.62);
-  color: var(--ink);
-  animation: rise var(--t) var(--ease) both;
+/* ══ THE RECORDING CONTROL — ONE OF THEM, EVERYWHERE ══════════════════════
+ *
+ * ── WHAT THIS REPLACED ────────────────────────────────────────────────────
+ *
+ * A deep navy card, 30px of padding, an uppercase header, a 62px waveform, a
+ * rule, a stats row, and a 64px disc laid out HORIZONTALLY beside two lines of
+ * copy — used on the practice screen, while the reader's verse view showed a
+ * bare centred disc with one label under it. Two designs for one action, and
+ * the boxed one made reciting look like operating equipment.
+ *
+ * The card is gone. What is left is the disc, centred, floating directly on
+ * the page's own pattern with nothing enclosing it: no border, no background,
+ * no shadow, no panel. Generous space above and below, because space is what
+ * this moment is made of and a container is what it was suffering from.
+ *
+ * IDENTICAL IN BOTH PLACES BY CONSTRUCTION. There is one component and one
+ * block of CSS; the reader and the practice screen render the same element
+ * with the same props. They cannot drift apart again without deleting this.
+ */
+.recorder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* The generous open space. Deliberately large and deliberately equal top and
+     bottom, so the disc reads as sitting IN the page rather than as attached
+     to whatever is above it. */
+  margin: 34px 0 38px;
 }
 
-.studio__head {
-  font-size: 12px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+/* NO SIZE OVERRIDE, ON PURPOSE. The disc is `.mic`'s own 76px on every screen
+   — the size was one of the things the two old designs disagreed about (68px
+   bare in the reader, 64px inside the card), and the fix is one number in one
+   place rather than a per-screen adjustment. A modifier here would also lose
+   silently: `.mic` is declared later in this sheet at equal specificity, so it
+   wins. The class stays as the hook the component needs; it sets nothing. */
+.recorder__mic {
+  flex: 0 0 auto;
+}
+
+.recorder__primary {
+  margin-top: 16px;
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--ink-2);
+}
+
+.recorder__secondary {
+  margin-top: 6px;
+  max-width: 30ch;
+  font-size: 13.5px;
+  line-height: 1.55;
+  text-align: center;
   color: var(--ink-3);
-  margin-bottom: 22px;
 }
 
-/* The waveform. Amber bars of varying height, centred on a baseline. Live
-   while recording, held still otherwise — it is a level meter, not decoration,
-   so it must not animate when nothing is being heard. */
+/* The waveform. Accent bars of varying height on a common baseline, floating
+   on the page like everything else here — it had a card behind it and does not
+   need one. Live ONLY while recording: an idle meter, even a flat one, is a row
+   of ticks the learner has to decode before they have done anything, and one
+   that animates when nothing is being heard is a lie about whether the app can
+   hear them. Rendered only in the recording state; there is no idle variant. */
 .wave {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 3px;
-  height: 62px;
-  margin-bottom: 24px;
+  height: 52px;
+  margin-bottom: 22px;
 }
 
 .wave__bar {
   width: 3px;
   min-height: 3px;
   border-radius: 2px;
-  background: var(--amber);
+  background: var(--gold);
   opacity: 0.85;
   transition: height 90ms linear;
 }
 
-.wave__bar--idle {
-  background: rgba(212, 168, 83, 0.34);
-}
+/* Accent fill, dark glyph, soft glow. Never turns red — the app does not
+   signal "danger" at someone reciting the Quran.
 
-.studio__rule {
-  height: 1px;
-  background: var(--border-soft);
-  margin-bottom: 18px;
-}
-
-.studio__stats {
-  display: flex;
-  gap: 30px;
-  margin-bottom: 26px;
-}
-
-.studio__stat-label {
-  display: block;
-  font-size: 10.5px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-
-.studio__stat-value {
-  display: block;
-  font-family: var(--serif);
-  font-size: 21px;
-  font-weight: 500;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-
-.studio__control {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-/* Cream fill, deep green mic, soft green glow. Never turns red — the app does
-   not signal "danger" at someone reciting the Quran. */
+   NO SPREAD RING, AND NO MOAT. This used to carry a `0 0 0 1px` accent shadow,
+   which draws a hard hairline circle sitting just outside the disc: against a
+   fill of the same hue it does not read as a rim, it reads as a second border
+   drawn around the icon by mistake. The 26px glyph inside a 68px disc left a
+   ring of empty fill around it as well, and the two together were the artifact.
+   The lit top edge and the glow do the lifting now, and the glyph is sized as
+   a fraction of the disc so it stays proportionate at every size this button
+   is used at. */
 .mic {
   position: relative;
   flex: 0 0 auto;
@@ -1800,27 +1873,34 @@ ol {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: linear-gradient(158deg, var(--gold-lift) 0%, var(--gold) 50%, #b8873a 100%);
+  background: var(--accent-fill);
   color: var(--on-gold);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.5),
-    0 0 0 1px rgba(212, 168, 83, 0.4),
-    0 0 34px rgba(212, 168, 83, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 0 30px var(--gold-glow);
   transition: transform var(--t) var(--ease);
+}
+
+.mic > svg {
+  width: 46%;
+  height: 46%;
 }
 
 .mic:disabled {
   opacity: 0.5;
 }
 
+/* The pulse, and NOTHING while at rest. The border lives on the live rule
+   rather than here: a bordered element at opacity 0 is one stray rule away
+   from being the very ring this component just got rid of. */
 .mic__ring {
   position: absolute;
   inset: -6px;
   border-radius: 50%;
-  border: 1px solid rgba(212, 168, 83, 0.55);
+  border: 1px solid transparent;
   opacity: 0;
 }
 
 .mic--live .mic__ring {
+  border-color: var(--gold-glow);
   animation: pulse 2.4s var(--ease) infinite;
 }
 
@@ -1848,37 +1928,20 @@ ol {
 @keyframes breathe {
   0%,
   100% {
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 0 0 1px rgba(212, 168, 83, 0.35),
-      0 0 24px rgba(212, 168, 83, 0.2);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 0 22px var(--gold-glow);
   }
   50% {
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 0 0 1px rgba(212, 168, 83, 0.6),
-      0 0 46px rgba(212, 168, 83, 0.42);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 0 46px var(--gold-glow);
   }
 }
 
-.studio__copy {
-  min-width: 0;
-}
-
-.studio__primary {
-  font-family: var(--serif);
-  font-size: 21px;
-  font-weight: 500;
-  line-height: 1.3;
-  color: var(--ink);
-}
-
-.studio__secondary {
-  font-size: 13.5px;
-  line-height: 1.55;
-  color: var(--ink-2);
-  margin-top: 3px;
-}
-
-.studio__timer {
-  font-variant-numeric: tabular-nums;
-  color: var(--amber);
+/* The clock, in the accent, where the idle label sits. It is the one figure
+   the recording state has to show and it replaces the label rather than
+   crowding in beside it. */
+.recorder__timer {
+  font-variant-numeric: lining-nums tabular-nums;
+  font-size: 27px;
+  color: var(--gold);
 }
 
 /* ══ results ══════════════════════════════════════════════════════════════ */
@@ -2180,7 +2243,7 @@ ol {
 
 .rung--done::before {
   border-color: var(--gold);
-  background: var(--gold);
+  background: var(--accent-fill);
   color: var(--on-gold);
 }
 
@@ -2835,7 +2898,7 @@ ol {
 .review__bar {
   height: 3px;
   border-radius: var(--r-chip);
-  background: rgba(0, 0, 0, 0.34);
+  background: var(--well);
   overflow: hidden;
   margin-bottom: 10px;
 }
@@ -2843,7 +2906,7 @@ ol {
 .review__meter,
 .review__meter-fill {
   height: 100%;
-  background: var(--gold);
+  background: var(--accent-fill-bar);
 }
 
 .review__counts,
@@ -3943,11 +4006,67 @@ button.link {
   animation: rise var(--t) var(--ease) both;
 }
 
+/* ── THE FOUR MARKS CARRY COLOUR; NOTHING ELSE IN THE TILE DOES ───────────
+ *
+ * Each figure's icon takes an accent chosen for what the figure MEANS — amber
+ * for the flame, brass for hasanat, jade for ayat, a cool teal for time — and
+ * the value and label under it stay in the neutral ink in all four. That
+ * division is what keeps this from becoming a dashboard: four coloured numbers
+ * would be one, four coloured icons over neutral figures is a legend.
+ *
+ * The stroke is a GRADIENT, not a flat hue — the same diagonal light direction
+ * `--accent-fill` uses on every filled shape, so these belong to the same
+ * material as the mic and the primary button rather than looking like icons
+ * that were tinted. The paint servers live in a hidden defs sprite; see
+ * ToneDefs in Standing.tsx for why they have to.
+ *
+ * The glow under each is the theme's usual emission device in the mark's own
+ * hue, at the same strength the single brass glow used to carry.
+ */
 .stat-tile__mark {
   display: inline-flex;
   margin-bottom: 8px;
   color: var(--gold);
-  filter: drop-shadow(0 0 12px rgba(212, 168, 83, 0.4));
+}
+
+.stat-tile__mark svg {
+  overflow: visible;
+}
+
+.stat-tile__mark--flame svg {
+  stroke: url(#tone-flame);
+}
+.stat-tile__mark--brass svg {
+  stroke: url(#tone-brass);
+}
+.stat-tile__mark--jade svg {
+  stroke: url(#tone-jade);
+}
+.stat-tile__mark--teal svg {
+  stroke: url(#tone-teal);
+}
+
+.stat-tile__mark--flame {
+  filter: drop-shadow(0 0 12px var(--tone-flame-glow));
+}
+.stat-tile__mark--brass {
+  filter: drop-shadow(0 0 12px var(--tone-brass-glow));
+}
+.stat-tile__mark--jade {
+  filter: drop-shadow(0 0 12px var(--tone-jade-glow));
+}
+.stat-tile__mark--teal {
+  filter: drop-shadow(0 0 12px var(--tone-teal-glow));
+}
+
+/* The sprite is a paint-server carrier, not a graphic. Out of flow and out of
+   the accessibility tree, but NOT `display: none` — a hidden SVG's gradients
+   still resolve, a removed one's do not. */
+.tone-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
 }
 
 .stat-tile__value {
@@ -3983,9 +4102,16 @@ button.link {
   color: var(--ink-3);
 }
 
+/* A tile at zero drops its colour with its glow. `stroke` has to be named
+   explicitly: the tone rules set a paint-server url, and a `color` change
+   cannot outrank a url() the way it outranks `currentColor`. */
 .stat-tile--empty .stat-tile__mark {
   color: var(--ink-3);
   filter: none;
+}
+
+.stat-tile--empty .stat-tile__mark svg {
+  stroke: var(--ink-3);
 }
 
 .stat-grid__note {
@@ -4354,7 +4480,7 @@ button.link {
 /* Gold when active, and filled rather than outlined — an active filter has to
    be readable in peripheral vision, because the whole list changed under it. */
 .pill--on {
-  background: linear-gradient(160deg, var(--gold-lift) 0%, var(--gold) 100%);
+  background: var(--accent-fill-soft);
   border-color: transparent;
   color: var(--on-gold);
   font-weight: 600;
@@ -4396,7 +4522,7 @@ button.link {
    the badge is already the row's strongest mark, so "started" makes it solid
    instead of adding a second marker somewhere else on the row. */
 .sura-badge--on {
-  background: linear-gradient(160deg, var(--gold-lift) 0%, var(--gold) 100%);
+  background: var(--accent-fill-soft);
   color: var(--on-gold);
   box-shadow: 0 0 18px rgba(212, 168, 83, 0.34);
 }
@@ -4455,12 +4581,21 @@ button.link {
 
 /* ══ AYAH NAVIGATION — leave, or move along ═══════════════════════════════ */
 
+/* THREE COLUMNS, NOT SPACE-BETWEEN. The badge sits in the middle of this row
+   and has to be centred on the SCREEN, not centred in the gap left over by an
+   X on one side and two arrows on the other — which is what space-between
+   would give, and it would drift as the numeral grew a digit. The two 1fr
+   tracks are equal whatever they contain. */
 .ayah-nav {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   margin-bottom: 18px;
+}
+
+.ayah-nav__steps {
+  justify-self: end;
 }
 
 .ayah-nav__close {
@@ -4525,128 +4660,6 @@ button.link {
 }
 
 
-/* ══ THE PINNED MIC ═══════════════════════════════════════════════════════
- *
- * The recording card fixes itself to the bottom of the viewport, above the
- * global nav and clear of it. An ayah can be a screen and a half of Arabic,
- * and the control the whole screen exists for was underneath all of it.
- *
- * SCREEN-LOCAL, NOT PART OF THE NAV. The tab bar navigates between screens;
- * this records. They are stacked, never merged — putting a stop-recording
- * control inside navigation chrome would make the two mean the same thing.
- *
- * Centred on the same 560px column as the page, so on a wide viewport it sits
- * over the content rather than spanning the whole window.
- */
-.studio--pinned {
-  position: fixed;
-  /* CENTRED BY AUTO MARGINS, NOT BY A TRANSFORM. `.studio` carries
-     `animation: rise ... both`, and `rise` animates `transform` to `none` —
-     so a `translateX(-50%)` here is silently overwritten the moment the
-     animation settles, and the card lands half a screen to the right. This
-     was visible only in a screenshot; every geometry assertion about its
-     VERTICAL position passed while it hung off the right edge. */
-  left: 0;
-  right: 0;
-  margin-inline: auto;
-  /* CLEAR OF THE NAV'S RAISED BUTTON, not merely of the bar.
-     The bar sits 22px off the edge and stands ~74px tall, so its top edge is
-     at 96px — but the centre action breaks 30px out of it, reaching 126px.
-     Stopping at 112 put a gold stop-button and a gold mic-button in contact
-     with each other, which reads as one malformed control rather than two.
-     138 leaves a real gap between them. */
-  bottom: 138px;
-  z-index: 35;
-  width: calc(100% - 2 * var(--pad));
-  max-width: calc(560px - 2 * var(--pad));
-  margin-bottom: 0;
-  /* Compact: pinned, it is chrome rather than a card being read. The waveform
-     and stats stay, because they are the state of the thing in progress. */
-  padding: 18px 20px 16px;
-}
-
-/* Room for it, so the last card is never trapped underneath. The tab bar's
-   allowance already covers its own height; this adds the studio's. */
-.app--recording {
-  padding-bottom: 356px;
-}
-
-.studio--pinned .wave {
-  height: 40px;
-  margin-bottom: 14px;
-}
-
-.studio--pinned .studio__head {
-  margin-bottom: 12px;
-}
-
-.studio--pinned .studio__stats {
-  margin-bottom: 16px;
-}
-
-.studio--pinned .mic {
-  width: 64px;
-  height: 64px;
-}
-
-/* ── the reader's mic bar ────────────────────────────────────────────────
- * The same disc, in the same place, on a screen that does not own the
- * recorder. Pressing it selects the ayah and starts recording, so the real
- * Studio appears with its button exactly where this one was — the handoff is
- * invisible because nothing moves.
- */
-.micbar {
-  position: fixed;
-  /* Same reason as .studio--pinned: this one animates in too. */
-  left: 0;
-  right: 0;
-  margin-inline: auto;
-  bottom: 138px;
-  z-index: 35;
-  width: calc(100% - 2 * var(--pad));
-  max-width: calc(560px - 2 * var(--pad));
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  padding: 16px 20px;
-  border-radius: var(--r-card);
-  border: 1px solid var(--border);
-  /* AN OVERLAY NEEDS MORE BACKING THAN AN INLINE CARD. `--card` is a 7%-white
-     gradient, which is right for a pane with page behind it and wrong for one
-     floating over live text: the verse translation read straight through this
-     bar and the two collided into an unreadable stripe. Same construction as
-     the tab bar, which solved this already — the ground at high alpha, with
-     the glass gradient over it. */
-  background:
-    var(--card),
-    linear-gradient(170deg, rgba(24, 31, 52, 0.9) 0%, rgba(11, 15, 26, 0.94) 100%);
-  -webkit-backdrop-filter: blur(26px) saturate(150%);
-  backdrop-filter: blur(26px) saturate(150%);
-  box-shadow: var(--lift-2);
-  animation: rise var(--t) var(--ease) both;
-}
-
-.micbar__mic {
-  width: 60px;
-  height: 60px;
-  flex: 0 0 auto;
-}
-
-.micbar__copy {
-  font-family: var(--serif);
-  font-size: 19px;
-  font-weight: 500;
-  line-height: 1.3;
-  color: var(--ink);
-}
-
-/* The verse pane reserves room for it. */
-/* Room for the pinned bar, plus the listen button beneath the translation —
-   which was being clipped in half by it. */
-.reader--verse {
-  padding-bottom: 210px;
-}
-
 /* ══ THE COMPARISON — your reading and the reciter's ══════════════════════
  *
  * Two buttons, one row, EQUAL WEIGHT. Same width, same height, same
@@ -4708,6 +4721,913 @@ button.link {
   }
 }
 
+/* ══ THE BELL ═════════════════════════════════════════════════════════════
+ *
+ * A quiet disc in the top bar, next to the streak chip. It carries a COUNT
+ * rather than a dot: the number is already known, and "three things happened"
+ * is a different message from "something happened".
+ */
+.bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--ivory-lift);
+  color: var(--ink-2);
+  transition: color var(--t) var(--ease), background var(--t) var(--ease);
+}
+
+.bell:hover {
+  color: var(--gold);
+  background: var(--green-soft);
+}
+
+/* ON THE ACCENT, NOT ON RED. Nothing in this app is an alert — an unread
+   reminder to recite is not a warning, and a red pip in the corner of a
+   Qur'an app is borrowed urgency from a mail client. */
+.bell__badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-chip);
+  background: var(--accent-fill);
+  color: var(--on-gold);
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums;
+  box-shadow: 0 0 0 2px var(--ground-1);
+}
+
+/* ══ THE SHEET — a panel over the page ════════════════════════════════════
+ *
+ * Anchored to the BOTTOM on a phone, because the top of the screen is out of
+ * thumb reach and this panel's only control is its close button. It is the
+ * one overlay in the app; the recording card that used to float was moved
+ * into the flow precisely because it was not one.
+ */
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: var(--pad);
+  background: rgba(4, 6, 12, 0.55);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  animation: fade var(--t) var(--ease) both;
+}
+
+.sheet__panel {
+  width: 100%;
+  max-width: calc(560px - 2 * var(--pad));
+  max-height: 74vh;
+  overflow-y: auto;
+  padding: 22px 22px 18px;
+  border-radius: var(--r-card);
+  border: 1px solid var(--border);
+  /* Same construction as the tab bar: the ground at high alpha with the glass
+     gradient over it. A 7%-white pane is right over the page and wrong over a
+     scrim, where it turns into fog. */
+  background:
+    var(--card),
+    linear-gradient(170deg, rgba(24, 31, 52, 0.94) 0%, rgba(11, 15, 26, 0.97) 100%);
+  -webkit-backdrop-filter: blur(26px) saturate(150%);
+  backdrop-filter: blur(26px) saturate(150%);
+  box-shadow: var(--lift-2);
+  animation: rise var(--t) var(--ease) both;
+}
+
+.sheet__panel:focus {
+  outline: none;
+}
+
+.sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.sheet__title {
+  font-family: var(--serif);
+  font-size: 23px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.sheet__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  color: var(--ink-2);
+}
+
+/* The sentence that keeps the bell honest. Quiet, but never omitted. */
+.sheet__note {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-soft);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink-3);
+}
+
+.notif-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.notif {
+  position: relative;
+  padding: 13px 14px 13px 16px;
+  border-radius: var(--r-soft);
+  background: var(--ivory-sunk);
+}
+
+/* Unread is a bar down the leading edge, not a background wash — a tinted row
+   in a list of rows reads as "selected", which is a different claim. */
+.notif--unread::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: var(--r-chip);
+  background: var(--accent-fill-bar);
+}
+
+.notif__title {
+  font-size: 11px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 3px;
+}
+
+.notif__body {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.notif__when {
+  margin-top: 5px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.notif-empty {
+  text-align: center;
+  padding: 26px 10px 10px;
+}
+
+.notif-empty__mark {
+  display: inline-flex;
+  color: var(--gold);
+  opacity: 0.55;
+  margin-bottom: 12px;
+}
+
+.notif-empty__title {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 5px;
+}
+
+.notif-empty__body {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  max-width: 34ch;
+  margin: 0 auto;
+}
+
+/* ══ GOALS ════════════════════════════════════════════════════════════════
+ *
+ * EVERYTHING HERE IS SIZED FOR A THUMB THAT IS NOT PRECISE. The preset cards
+ * are 88px tall and full width, the stepper buttons are 56px discs, the
+ * segment buttons are 48px. Nothing on this screen is a small target, and
+ * nothing is a slider — precise pointing is the hardest gesture to make on a
+ * phone, and this feature's audience is the one least served by it.
+ */
+.goal__top {
+  margin-bottom: 8px;
+}
+
+.goal__head {
+  text-align: center;
+  margin-bottom: 26px;
+}
+
+.goal__mark {
+  display: inline-flex;
+  color: var(--gold);
+  filter: drop-shadow(0 0 14px var(--gold-glow));
+  margin-bottom: 12px;
+}
+
+.goal__title {
+  font-family: var(--serif);
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+.goal__sub {
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  max-width: 32ch;
+  margin-inline: auto;
+}
+
+.goal-picks {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.goal-pick {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 88px;
+  padding: 18px 20px;
+  text-align: start;
+  border-radius: var(--r-card);
+  border: 1px solid var(--border);
+  background: var(--card);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow: var(--lift);
+  transition: border-color var(--t) var(--ease), box-shadow var(--t) var(--ease);
+}
+
+/* The chosen card lights its rim and gains the accent's cast light. It does
+   NOT fill with the accent: a filled card would have to carry `--on-gold`
+   text, and four cards where the chosen one changes typeface colour is a
+   bigger visual jump than this decision deserves. */
+.goal-pick--on {
+  border-color: var(--gold);
+  box-shadow: var(--rim), 0 0 0 1px var(--gold-glow), 0 10px 30px var(--gold-glow);
+}
+
+.goal-pick__text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.goal-pick__title {
+  display: block;
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.goal-pick__body {
+  display: block;
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+/* Reserved whether or not it is filled, so choosing a card does not reflow
+   the text beside it. */
+.goal-pick__state {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: var(--gold);
+}
+
+.goal-pick--on .goal-pick__state {
+  background: var(--green-soft);
+  box-shadow: inset 0 0 0 1px var(--gold);
+}
+
+/* The two custom controls, opening under the card that asked for them. */
+.goal-custom {
+  margin-top: 12px;
+  padding: 18px 20px 20px;
+  border-radius: var(--r-card);
+  border: 1px solid var(--border-soft);
+  background: var(--ivory-sunk);
+  animation: rise var(--t) var(--ease) both;
+}
+
+.goal-custom__label {
+  font-size: 11px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 10px;
+}
+
+.goal-custom__label:not(:first-child) {
+  margin-top: 22px;
+}
+
+.goal-seg {
+  display: flex;
+  gap: 8px;
+}
+
+.goal-seg__btn {
+  flex: 1 1 0;
+  min-height: 48px;
+  padding: 12px 8px;
+  border-radius: var(--r-chip);
+  border: 1px solid var(--border);
+  background: var(--ivory-lift);
+  color: var(--ink-2);
+  font-size: 14.5px;
+  transition: background var(--t) var(--ease), color var(--t) var(--ease);
+}
+
+.goal-seg__btn.is-on {
+  background: var(--accent-fill-soft);
+  border-color: transparent;
+  color: var(--on-gold);
+  font-weight: 600;
+}
+
+/* ── the stepper ─────────────────────────────────────────────────────────
+   Two big discs and the number between them. No text field: a numeric input
+   raises a keyboard on top of the value it is editing, and this is a number
+   between 1 and 50 that is always reachable in a few taps. */
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.stepper__btn {
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--ivory-lift);
+  color: var(--gold);
+  font-size: 26px;
+  line-height: 1;
+  transition: background var(--t) var(--ease), opacity var(--t) var(--ease);
+}
+
+.stepper__btn:hover:not(:disabled) {
+  background: var(--green-soft);
+}
+
+.stepper__btn:disabled {
+  opacity: 0.32;
+  cursor: default;
+}
+
+.stepper__value {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.stepper__num {
+  font-family: var(--serif);
+  font-size: 40px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--ink);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.stepper__unit {
+  font-size: 12.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ── the one toggle ──────────────────────────────────────────────────────── */
+.goal-remind {
+  margin-bottom: 20px;
+}
+
+.goal-remind__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+}
+
+.goal-remind__text {
+  min-width: 0;
+}
+
+.goal-remind__label {
+  display: block;
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.goal-remind__help {
+  display: block;
+  margin-top: 3px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-3);
+}
+
+.goal-remind__when {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border-soft);
+  animation: rise var(--t) var(--ease) both;
+}
+
+/* A real checkbox, restyled — not a div pretending. It keeps the keyboard
+   behaviour, the label association and the screen-reader role for free. */
+.switch {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 0 0 auto;
+  width: 56px;
+  height: 32px;
+  border-radius: var(--r-chip);
+  border: 1px solid var(--border);
+  background: var(--ivory-sunk);
+  position: relative;
+  cursor: pointer;
+  transition: background var(--t) var(--ease), border-color var(--t) var(--ease);
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--ink-3);
+  transition: transform var(--t) var(--ease), background var(--t) var(--ease);
+}
+
+.switch:checked {
+  background: var(--accent-fill-soft);
+  border-color: transparent;
+}
+
+.switch:checked::after {
+  transform: translateX(24px);
+  background: var(--on-gold);
+}
+
+.time-input {
+  flex: 0 0 auto;
+  padding: 12px 14px;
+  border-radius: var(--r-soft);
+  border: 1px solid var(--border);
+  background: var(--ivory-lift);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 22px;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.goal__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.goal__remove {
+  color: var(--terra);
+}
+
+/* ── the card on Home ────────────────────────────────────────────────────── */
+.goal-invite {
+  text-align: center;
+}
+
+.goal-invite__mark {
+  display: inline-flex;
+  color: var(--gold);
+  filter: drop-shadow(0 0 12px var(--gold-glow));
+  margin-bottom: 10px;
+}
+
+.goal-invite__title {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--ink);
+  margin: 4px 0 6px;
+}
+
+.goal-invite__body {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  max-width: 32ch;
+  margin: 0 auto 18px;
+}
+
+.goal-live__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.goal-live__name {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--ink);
+  margin-top: 2px;
+}
+
+.goal-live__mark {
+  flex: 0 0 auto;
+  color: var(--gold);
+  filter: drop-shadow(0 0 12px var(--gold-glow));
+}
+
+.goal-live__foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+.goal-live__count {
+  color: var(--ink-2);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.goal-live__edit {
+  width: 100%;
+  margin-top: 18px;
+}
+
+/* Met, and marked once. The rim lights and the tick replaces the target; the
+   card does not change size, colour or copy — a goal that has been reached is
+   the same goal, and a card that transforms on completion makes the ordinary
+   state look like the unfinished one. */
+.goal-live--met {
+  border-color: var(--gold);
+}
+
+/* ══ WHICH AYAH YOU ARE ON ════════════════════════════════════════════════
+ *
+ * The reference used to be 12px tracked-out caps in `--ink-3` — the treatment
+ * this app gives a timestamp — sitting to the right of the sura name. It is
+ * the single fact that says where you are on the screen where being lost costs
+ * a recording, and stepping through a sura with the arrows meant hunting for
+ * the one thing that had changed.
+ *
+ * A plate, then, with the numeral at display size in the accent. Big enough to
+ * be read across the room and to be the second thing seen after the Arabic.
+ */
+.eyebrow__where {
+  min-width: 0;
+}
+
+.eyebrow__range {
+  margin-top: 4px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* THE PLATE IS GONE; THE PROMINENCE IS NOT.
+ *
+ * It was a filled, bordered, inner-lit box, which was the right instinct for
+ * "make this findable" and the wrong material for a screen whose whole point is
+ * now that nothing is boxed in. A container three centimetres above a mic that
+ * deliberately has no container is the inconsistency you notice first.
+ *
+ * So the weight moves out of the box and into the TYPE: a small tracked-out
+ * caption over the numeral at display size in the accent, centred between the
+ * two step arrows. No border, no fill, nothing enclosing it — the same
+ * treatment the mic gets, and the second thing the eye lands on after the
+ * Arabic either way.
+ *
+ * ONE BLOCK FOR BOTH SCREENS. The reader's verse view and the recording screen
+ * render the same component into the same slot, so this is the only place the
+ * ayah number is styled anywhere in the app. */
+.ayah-badge {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 2px 0;
+}
+
+.ayah-badge__label {
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  line-height: 1;
+}
+
+.ayah-badge__num {
+  font-family: var(--serif);
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1.05;
+  color: var(--gold);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* The eyebrow's two halves now have different heights, so they align at the
+   TOP rather than on a shared baseline that no longer exists. */
+.eyebrow {
+  align-items: flex-start;
+}
+
+/* ══ RULE BADGES — what this ayah CONTAINS ════════════════════════════════
+ *
+ * A row of small pills under the ayah, one per tajweed rule present in it, each
+ * opening a panel with the rule in plain Uzbek. These are NOT the error cards:
+ * an error card can only appear after a bad take, and these appear because the
+ * Qur'an says so.
+ *
+ * THE COLOUR IS THE RULE'S OWN, not the palette's. Eight rules, eight hues,
+ * assigned in the source text and carried through the API as a token name —
+ * madd lozim is pink because the book's chart makes it pink. That is the one
+ * place in this app where a colour is chosen outside the brass/emerald system,
+ * and it is fenced into these pills: the hue lives on the DOT and the rim, and
+ * the label stays in the theme's own ink. Eight coloured labels would be a
+ * legend competing with the Arabic above it.
+ */
+.rules {
+  margin: 22px 0 4px;
+}
+
+.rules__kicker {
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.rules__row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 7px;
+}
+
+.rule-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 11px 7px 10px;
+  border-radius: var(--r-chip);
+  border: 1px solid var(--rule-tone-soft, var(--border));
+  background: var(--ivory-lift);
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.2;
+  transition: border-color var(--t) var(--ease), background var(--t) var(--ease),
+    color var(--t) var(--ease);
+}
+
+.rule-pill:hover,
+.rule-pill--open {
+  color: var(--ink);
+  border-color: var(--rule-tone, var(--border));
+  background: var(--rule-tone-wash, var(--ivory-lift));
+}
+
+/* The hue, as a 7px dot. Small enough that eight of them read as a key rather
+   than as decoration, and it survives being read in greyscale because the pill
+   also carries the rule's NAME — the colour is a second channel, never the
+   only one. */
+.rule-pill__dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--rule-tone, var(--gold));
+}
+
+/* PLUS BECOMES MINUS, by rotating the vertical bar out of existence. Two
+   glyphs swapped at the same position read as a flicker; one bar turning is
+   the state change itself. */
+.rule-pill__toggle {
+  position: relative;
+  width: 11px;
+  height: 11px;
+  flex: 0 0 auto;
+  margin-left: 1px;
+}
+
+.rule-pill__bar {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 11px;
+  height: 1.4px;
+  border-radius: 1px;
+  background: currentColor;
+  transform: translateY(-50%);
+  opacity: 0.7;
+}
+
+.rule-pill__bar--v {
+  transform: translateY(-50%) rotate(90deg);
+  transition: transform var(--t) var(--ease), opacity var(--t) var(--ease);
+}
+
+.rule-pill--open .rule-pill__bar--v {
+  transform: translateY(-50%) rotate(0deg);
+  opacity: 0;
+}
+
+/* ONE PANEL, BELOW THE WHOLE ROW. See the note in RuleBadges.tsx for why it is
+   not inside the pill that opened it. */
+.rule-panel {
+  margin-top: 12px;
+  padding: 16px 18px;
+  border-radius: var(--r-soft);
+  border: 1px solid var(--border-soft);
+  background: var(--ivory-sunk);
+  animation: panel var(--t) var(--ease) both;
+}
+
+/* The same rise the cards use, plus a height sweep so the panel grows out of
+   the row rather than appearing over it. `max-height` rather than `height`
+   because the copy is authored and its length is not ours to predict. */
+@keyframes panel {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    max-height: 460px;
+    transform: none;
+  }
+}
+
+.rule-panel__rule {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--ink);
+}
+
+.rule-panel__target {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.rule-panel__target strong {
+  color: var(--gold);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* The Arabic runs at reading size; the Uzbek that surrounds it in some of the
+   authored examples falls back to the sans, so a mixed string does not come out
+   in a font that has to synthesise its Latin. */
+.rule-panel__example {
+  margin-top: 12px;
+  font-family: var(--arabic), var(--sans);
+  font-size: 19px;
+  line-height: 2.15;
+  color: var(--ink);
+  text-align: center;
+}
+
+.rule-panel__source {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-soft);
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+
+/* THE GATE, STATED ON THE PANEL. Every one of these entries is draft — no qori
+   has signed the strings off — and a build that shows them says so on each
+   one rather than once in a banner nobody re-reads. */
+.rule-panel__draft {
+  padding: 2px 7px;
+  border-radius: var(--r-chip);
+  border: 1px solid var(--terra-soft);
+  color: var(--terra);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+
+.rule-panel__lang {
+  margin-top: 8px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ink-3);
+}
+
+/* ── the eight hues ──────────────────────────────────────────────────────
+   Dark first. Each is a mid-to-light tone that holds against near-black; the
+   light block below deepens all eight, for the same reason the stat marks are
+   deepened there — a hairline on paper has to be darker to carry equal weight.
+   `--rule-tone-soft` is the resting rim and `--rule-tone-wash` the open
+   background, both derived from the same hue at low alpha. */
+.rule-pill--pink        { --rule-tone: #e88bb0; --rule-tone-soft: rgba(232,139,176,.3); --rule-tone-wash: rgba(232,139,176,.1); }
+.rule-pill--dark-pink   { --rule-tone: #d4638f; --rule-tone-soft: rgba(212,99,143,.3);  --rule-tone-wash: rgba(212,99,143,.1); }
+.rule-pill--orange-red  { --rule-tone: #e8794f; --rule-tone-soft: rgba(232,121,79,.3);  --rule-tone-wash: rgba(232,121,79,.1); }
+.rule-pill--orange      { --rule-tone: #e8a05a; --rule-tone-soft: rgba(232,160,90,.3);  --rule-tone-wash: rgba(232,160,90,.1); }
+.rule-pill--green       { --rule-tone: #5cc4a6; --rule-tone-soft: rgba(92,196,166,.3);  --rule-tone-wash: rgba(92,196,166,.1); }
+.rule-pill--gray        { --rule-tone: #a8b0c0; --rule-tone-soft: rgba(168,176,192,.3); --rule-tone-wash: rgba(168,176,192,.1); }
+.rule-pill--dark        { --rule-tone: #93a0b8; --rule-tone-soft: rgba(147,160,184,.3); --rule-tone-wash: rgba(147,160,184,.1); }
+.rule-pill--blue        { --rule-tone: #7ec7e8; --rule-tone-soft: rgba(126,199,232,.3); --rule-tone-wash: rgba(126,199,232,.1); }
+
+/* ══ THE MUSHAF, PAGED ════════════════════════════════════════════════════
+ * Five ayat to a page with the arrows at the top, the same shape the verse
+ * view uses. The box no longer scrolls: a page that fits is the whole point,
+ * and a scrollbar inside a paged reader is both mechanisms at once.
+ */
+.mushaf--paged {
+  max-height: none;
+  overflow: visible;
+}
+
+.mushaf__page-of {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* The eight rule hues, DEEPENED for paper. Same eight rules, same order; each
+   dark stop moved toward its saturated end so a 7px dot and a hairline rim
+   carry the same weight on #f7f3ec that they carry on #0b0f1a. */
+:root[data-theme="light"] .rule-pill--pink       { --rule-tone: #c2557f; --rule-tone-soft: rgba(194,85,127,.32); --rule-tone-wash: rgba(194,85,127,.09); }
+:root[data-theme="light"] .rule-pill--dark-pink  { --rule-tone: #a33a66; --rule-tone-soft: rgba(163,58,102,.32); --rule-tone-wash: rgba(163,58,102,.09); }
+:root[data-theme="light"] .rule-pill--orange-red { --rule-tone: #c14e28; --rule-tone-soft: rgba(193,78,40,.32);  --rule-tone-wash: rgba(193,78,40,.09); }
+:root[data-theme="light"] .rule-pill--orange     { --rule-tone: #b8752a; --rule-tone-soft: rgba(184,117,42,.32); --rule-tone-wash: rgba(184,117,42,.09); }
+:root[data-theme="light"] .rule-pill--green      { --rule-tone: #17724c; --rule-tone-soft: rgba(23,114,76,.32);  --rule-tone-wash: rgba(23,114,76,.09); }
+:root[data-theme="light"] .rule-pill--gray       { --rule-tone: #5d6470; --rule-tone-soft: rgba(93,100,112,.32); --rule-tone-wash: rgba(93,100,112,.09); }
+:root[data-theme="light"] .rule-pill--dark       { --rule-tone: #2f3742; --rule-tone-soft: rgba(47,55,66,.32);   --rule-tone-wash: rgba(47,55,66,.08); }
+:root[data-theme="light"] .rule-pill--blue       { --rule-tone: #1f6b96; --rule-tone-soft: rgba(31,107,150,.32); --rule-tone-wash: rgba(31,107,150,.09); }
+
 /* ══ LIGHT MODE — THE SAME SYSTEM, RE-HUED ════════════════════════════════
  *
  * ── WHAT THIS IS, AND WHAT IT REPLACED ────────────────────────────────────
@@ -4754,6 +5674,10 @@ button.link {
   --ivory-sunk: rgba(90, 74, 48, 0.055);
   --ivory-lift: rgba(255, 255, 255, 0.72);
   --beige: rgba(90, 74, 48, 0.075);
+  /* Same two roles, inverted. The well is a warm tint rather than black; the
+     chip is paper rather than night, so `--ink-2` on it stays legible. */
+  --well: rgba(58, 46, 28, 0.1);
+  --chip-ground: rgba(253, 251, 247, 0.96);
 
   /* ── the glass: STILL GLASS ───────────────────────────────────────────
      Same two-stop translucent gradient, same blur, same top-edge-catches-more
@@ -4768,9 +5692,12 @@ button.link {
   );
   --card-solid: rgba(253, 251, 247, 0.94);
   --blur: blur(20px) saturate(125%);
-  /* The hairline is EMERALD-TINTED, the counterpart of the brass hairline. */
-  --border: rgba(24, 92, 66, 0.16);
-  --border-soft: rgba(60, 50, 35, 0.09);
+  /* The hairline is EMERALD-TINTED, the counterpart of the brass hairline —
+     and at the same alpha it was weaker than its counterpart, because a 16%
+     emerald edge on paper carries less separation than a 16% brass edge on
+     near-black. Raised until a pane's edge is as findable here as there. */
+  --border: rgba(24, 92, 66, 0.21);
+  --border-soft: rgba(60, 50, 35, 0.11);
 
   /* ── ink ──────────────────────────────────────────────────────────────
      Warm near-black, then two muted warm greys — the mirror of the dark
@@ -4790,6 +5717,24 @@ button.link {
      mode, where brass is light and takes near-black. */
   --on-gold: #fbf9f4;
 
+  /* ── THE FILLED ACCENT: A SWEEP, NOT A COLOUR ─────────────────────────
+     The previous stops were #1e7d54 → #14603f → #0f4f34, three greens inside
+     a band so narrow that every filled shape in the theme rendered as one
+     flat tone. Dark mode's brass runs L*82 → L*60; this now runs L*49 → L*22,
+     so the sweep is at least as wide and a disc reads as lit on one edge and
+     shaded on the other, the way the brass one does.
+
+     WHY IT STOPS AT #23855a AND NOT AT A TRUE MINT. Warm white on the lightest
+     stop has to stay legible, and #23855a is exactly where that lands at 4.6:1.
+     A sage highlight above it would look better and would put the button
+     labels below contrast — brass could go pale because it carries near-black
+     text, and emerald cannot because it carries white. The mint tone the
+     palette does own goes into `--accent-fill-bar`, which fills meters that
+     never have a label on them. */
+  --accent-fill: linear-gradient(158deg, #23855a 0%, #14603f 48%, #0a3a28 100%);
+  --accent-fill-soft: linear-gradient(160deg, #23855a 0%, #12523a 100%);
+  --accent-fill-bar: linear-gradient(90deg, #0a3a28 0%, #14603f 52%, #45ad7d 100%);
+
   /* ── the secondary accent ─────────────────────────────────────────────
      Dark mode pairs brass with jade. Light mode pairs emerald with brass, so
      the two palettes share both pigments and simply trade which one leads. */
@@ -4797,6 +5742,24 @@ button.link {
   --jade: #9a6f2c;
   --jade-lift: #bb8c42;
   --sage-soft: rgba(154, 111, 44, 0.16);
+
+  /* The four stat tones, DEEPENED. Same four hues, same roles, same order —
+     but a mark on paper has to be darker than the same mark on indigo to carry
+     the same weight, and a 20px hairline is the least forgiving place in the
+     app to get that wrong. Each pair lands its dark stop at or past 3:1 on the
+     card, which is the contrast floor for a graphical object. */
+  --tone-flame-1: #e9963c;
+  --tone-flame-2: #b8511f;
+  --tone-flame-glow: rgba(196, 100, 42, 0.3);
+  --tone-brass-1: #cf9a3c;
+  --tone-brass-2: #8f6526;
+  --tone-brass-glow: rgba(154, 111, 44, 0.3);
+  --tone-jade-1: #2fa07c;
+  --tone-jade-2: #106042;
+  --tone-jade-glow: rgba(24, 116, 84, 0.3);
+  --tone-teal-1: #3499c9;
+  --tone-teal-2: #175f89;
+  --tone-teal-glow: rgba(38, 122, 167, 0.3);
 
   /* The correction colour, darkened for a light ground. */
   --terra: #a9603f;
@@ -4819,10 +5782,14 @@ button.link {
      shadow rather than a neutral black one — neutral shadow on a warm ground
      is the single thing that makes a light UI look cheap. */
   --rim: inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  --lift: var(--rim), 0 1px 2px rgba(58, 46, 28, 0.05),
-    0 10px 26px rgba(58, 46, 28, 0.07);
-  --lift-2: var(--rim), 0 2px 4px rgba(58, 46, 28, 0.06),
-    0 20px 48px rgba(58, 46, 28, 0.1);
+  /* The drop was too shy to be the load-bearing device. In dark, depth comes
+     from the rim and the ground is darker than any shadow, so a soft drop is
+     enough; here the drop IS the separation, and at 5%/7% a card floated
+     nowhere. Deepened, and still warm-tinted rather than neutral. */
+  --lift: var(--rim), 0 1px 2px rgba(58, 46, 28, 0.07),
+    0 10px 26px rgba(58, 46, 28, 0.11);
+  --lift-2: var(--rim), 0 2px 4px rgba(58, 46, 28, 0.08),
+    0 20px 48px rgba(58, 46, 28, 0.15);
 }
 
 /* ── layer 1: the ground ────────────────────────────────────────────────
@@ -4856,12 +5823,17 @@ button.link {
 }
 
 /* ── layer 2: the pattern ───────────────────────────────────────────────
-   The same khatam lattice, the same 132px tile, the same top-fade mask. Drawn
-   in emerald, and at a lower alpha because dark ink on a pale ground reads
-   heavier than pale ink on a dark one — 3% here matches 4.2% there. */
+   The same khatam lattice, the same 132px tile, the same top-fade mask, the
+   same fixed placement. Only the stroke colour and the alpha change — and the
+   colour is now the theme's INK rather than its accent, for the reason set out
+   at the base rule.
+
+   13% against dark's 10%, so both land at ΔL* ≈ 10. Charcoal on paper is a
+   flatter trade than off-white on indigo: the pale ground starts at L* 96 and
+   there is less headroom below it than there is above L* 4.6. */
 :root[data-theme="light"] body::after {
-  opacity: 0.032;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='132' height='132' viewBox='0 0 132 132'%3E%3Cg fill='none' stroke='%2314603f' stroke-width='1.15'%3E%3Crect x='42' y='42' width='48' height='48'/%3E%3Crect x='42' y='42' width='48' height='48' transform='rotate(45 66 66)'/%3E%3Crect x='-24' y='-24' width='48' height='48'/%3E%3Crect x='-24' y='-24' width='48' height='48' transform='rotate(45 0 0)'/%3E%3Crect x='108' y='-24' width='48' height='48'/%3E%3Crect x='108' y='-24' width='48' height='48' transform='rotate(45 132 0)'/%3E%3Crect x='-24' y='108' width='48' height='48'/%3E%3Crect x='-24' y='108' width='48' height='48' transform='rotate(45 0 132)'/%3E%3Crect x='108' y='108' width='48' height='48'/%3E%3Crect x='108' y='108' width='48' height='48' transform='rotate(45 132 132)'/%3E%3Cpath d='M33.9 0H98.1M33.9 132H98.1M0 33.9V98.1M132 33.9V98.1M66 0V32.1M66 99.9V132M0 66H32.1M99.9 66H132'/%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.13;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='132' height='132' viewBox='0 0 132 132'%3E%3Cg fill='none' stroke='%2317211c' stroke-width='1.15'%3E%3Crect x='42' y='42' width='48' height='48'/%3E%3Crect x='42' y='42' width='48' height='48' transform='rotate(45 66 66)'/%3E%3Crect x='-24' y='-24' width='48' height='48'/%3E%3Crect x='-24' y='-24' width='48' height='48' transform='rotate(45 0 0)'/%3E%3Crect x='108' y='-24' width='48' height='48'/%3E%3Crect x='108' y='-24' width='48' height='48' transform='rotate(45 132 0)'/%3E%3Crect x='-24' y='108' width='48' height='48'/%3E%3Crect x='-24' y='108' width='48' height='48' transform='rotate(45 0 132)'/%3E%3Crect x='108' y='108' width='48' height='48'/%3E%3Crect x='108' y='108' width='48' height='48' transform='rotate(45 132 132)'/%3E%3Cpath d='M33.9 0H98.1M33.9 132H98.1M0 33.9V98.1M132 33.9V98.1M66 0V32.1M66 99.9V132M0 66H32.1M99.9 66H132'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 /* ── layer 3: the glass ─────────────────────────────────────────────────
@@ -4873,21 +5845,65 @@ button.link {
    The hero keeps its bloom — see below — and the tutor card keeps its
    bottom-left warmth, both in the accent hue. */
 
+/* ── THE CONTINUE CARD'S GLOW ────────────────────────────────────────────
+ *
+ * IT WAS PRESENT AND IT WAS INVISIBLE, which is the same failure the
+ * background pattern had: an emission device copied across at the alpha that
+ * worked on near-black. Brass at 24% over #0b0f1a is a bloom you see across
+ * the room; emerald at 13% over #f7f3ec moves the card by about one shade of
+ * white. Both the corner bloom and the inner wash are raised until the card
+ * reads as LIT rather than as merely bordered — measured by eye against the
+ * dark card side by side, which is the only way to compare two things that use
+ * light in opposite directions.
+ *
+ * The rim goes with it. On paper a glow cannot be brighter than the ground, so
+ * what carries "this card is the live one" is a saturated edge plus a cast
+ * shadow in the accent hue — the same substitution the rest of this block
+ * makes, applied to the one card that had been left behind. */
 :root[data-theme="light"] .card--hero {
-  border-color: rgba(20, 96, 63, 0.3);
+  border-color: rgba(20, 96, 63, 0.4);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    inset 0 0 60px rgba(20, 96, 63, 0.035),
+    inset 0 0 70px rgba(20, 96, 63, 0.09),
     0 20px 48px rgba(58, 46, 28, 0.12),
-    0 0 0 1px rgba(20, 96, 63, 0.05);
+    0 10px 34px rgba(20, 96, 63, 0.16),
+    0 0 0 1px rgba(20, 96, 63, 0.1);
 }
 
 :root[data-theme="light"] .card--hero::before {
   background: radial-gradient(
     closest-side,
-    rgba(20, 96, 63, 0.13) 0%,
+    rgba(20, 96, 63, 0.3) 0%,
     rgba(20, 96, 63, 0) 100%
   );
+}
+
+/* ── the rest of the dark-only emission, audited ─────────────────────────
+ *
+ * Everything else that glows in dark and had no counterpart here. Found by
+ * listing every base rule that paints a brass radial or a brass drop-shadow
+ * and checking each against this block; these are the four that were missing.
+ *
+ *   .tutor-card / .card--tutor  had its bottom-left warmth already (above)
+ *   .hero__go                   the primary button inside the lit card - its
+ *                               cast halo comes from .btn-primary and was
+ *                               already re-hued, but the card behind it is
+ *                               brighter here, so the halo needs to be too
+ *   .rank__mark, .clear__mark   drop-shadows, re-hued above
+ *   .streak-chip                had a cast light, kept
+ *   .opening__basmala           the entry screen's bloom - dark only, and the
+ *                               entry screen is the one place a learner meets
+ *                               the app before choosing a theme */
+:root[data-theme="light"] .hero__go {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 8px 28px rgba(20, 96, 63, 0.36);
+}
+
+:root[data-theme="light"] .opening__basmala {
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85),
+    0 2px 18px rgba(20, 96, 63, 0.22);
 }
 
 :root[data-theme="light"] .card--tutor::after {
@@ -4936,12 +5952,12 @@ button.link {
   color: transparent;
 }
 
-/* The primary button keeps its brushed gradient, its bright top rim and its
-   cast halo — the halo is now an emerald-tinted shadow. */
+/* The primary button keeps its brushed gradient — from `--accent-fill`, which
+   is the whole point of the token — its bright top rim and its cast halo. The
+   halo is an emerald-tinted shadow rather than a brass one. */
 :root[data-theme="light"] .btn-primary,
 :root[data-theme="light"] .gate__primary,
 :root[data-theme="light"] .record {
-  background: linear-gradient(160deg, var(--gold-lift) 0%, var(--gold) 52%, #0f4f34 100%);
   color: var(--on-gold);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.22),
@@ -4972,14 +5988,14 @@ button.link {
   filter: drop-shadow(0 1px 5px rgba(154, 111, 44, 0.32));
 }
 
-/* The progress fill keeps its gradient and its cast light. */
+/* The track comes from `--well` now; only the inner shadow is re-hued. */
 :root[data-theme="light"] .progress {
-  background: rgba(58, 46, 28, 0.1);
   box-shadow: inset 0 1px 2px rgba(58, 46, 28, 0.12);
 }
 
+/* The fill itself comes from `--accent-fill-bar`; only the cast light is
+   re-hued. */
 :root[data-theme="light"] .progress__fill {
-  background: linear-gradient(90deg, var(--gold-deep) 0%, var(--gold) 55%, var(--gold-lift) 100%);
   box-shadow: 0 0 10px rgba(20, 96, 63, 0.34);
 }
 
@@ -5008,9 +6024,11 @@ button.link {
   box-shadow: 0 0 8px rgba(20, 96, 63, 0.5);
 }
 
+/* The disc takes `--accent-fill` from the base rule — no gradient repeated
+   here. Only the two separator rings and the cast shadow are re-hued, because
+   the ring that cuts the disc out of the bar has to be the LIGHT ground here
+   and the dark one there. */
 :root[data-theme="light"] .tab--center .tab__glyph {
-  background: linear-gradient(158deg, var(--gold-lift) 0%, var(--gold) 50%, #0f4f34 100%);
-  color: var(--on-gold);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.24),
     0 0 0 5px rgba(250, 247, 241, 0.95),
@@ -5113,29 +6131,42 @@ button.link {
   background: rgba(58, 46, 28, 0.12);
 }
 
-/* THE RECORDING SURFACE IS UNCHANGED IN BOTH THEMES. It is deliberately the
-   one dark card in light mode, and its brass mic and amber timer stay brass
-   and amber — an emerald mic on near-black would lose exactly the glow that
-   makes the live state readable. */
-:root[data-theme="light"] .micbar {
+/* ── the bell, the sheet and the goal screen ────────────────────────────
+   Only the two places that name a literal near-black need re-hueing; every
+   other rule in those blocks already reads a token. */
+:root[data-theme="light"] .bell__badge {
+  box-shadow: 0 0 0 2px var(--ground-0);
+}
+
+:root[data-theme="light"] .sheet {
+  background: rgba(58, 46, 28, 0.28);
+}
+
+:root[data-theme="light"] .sheet__panel {
   background:
     var(--card),
-    linear-gradient(170deg, rgba(255, 255, 255, 0.92) 0%, rgba(247, 243, 236, 0.95) 100%);
+    linear-gradient(170deg, rgba(255, 255, 255, 0.96) 0%, rgba(247, 243, 236, 0.98) 100%);
 }
 
-:root[data-theme="light"] .mic {
-  background: linear-gradient(158deg, #ecca85 0%, #d4a853 50%, #b8873a 100%);
-  color: #0d1220;
+/* THE ACCENT RIM ON A CHOSEN CARD. In dark the accent glows outward; here the
+   same "this one is selected" cue is a tight saturated cast, per the emission
+   rule at the top of this block. */
+:root[data-theme="light"] .goal-pick--on {
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    0 0 0 1px rgba(212, 168, 83, 0.4),
-    0 0 34px rgba(212, 168, 83, 0.34);
+    var(--rim),
+    0 0 0 1px rgba(20, 96, 63, 0.3),
+    0 8px 26px rgba(20, 96, 63, 0.22);
 }
 
-:root[data-theme="light"] .mic__ring {
-  border-color: rgba(212, 168, 83, 0.55);
-}
+/* ── THE RECORDING CONTROL NEEDS NOTHING HERE ANY MORE ──────────────────
+   Three rules used to live at this spot, and all three existed because the
+   recording surface was a near-black CARD inside the light theme: it had to
+   restate the dark palette's ink so its own copy stayed legible, force its mic
+   back to brass, and re-hue its timer. The card is gone. The control is a disc
+   and two lines of type sitting on the page, so it reads `--ink`, `--gold` and
+   `--accent-fill` from whichever theme is in play — emerald here, brass there —
+   with no override at all.
 
-:root[data-theme="light"] .studio__timer {
-  color: var(--amber);
-}
+   Which is the better outcome on its own terms: the one place in the app that
+   deliberately broke the palette was also the one place that kept managing to
+   render charcoal on charcoal. */

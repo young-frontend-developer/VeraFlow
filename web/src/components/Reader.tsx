@@ -1,12 +1,21 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AyahBrief,
+  RuleBadge,
   Sura,
   SuraAyat,
+  ayahSegments,
   expertAudioUrl,
 } from "../lib/api";
 import { Lang, t } from "../lib/i18n";
-import { Mic } from "./Ornament";
+import AyahBadge from "./AyahBadge";
+import RuleBadges from "./RuleBadges";
+import Recorder, { useElapsed } from "./Recorder";
+import {
+  RecorderHandle,
+  cancelShared,
+  startShared,
+} from "../lib/recorder";
 
 /**
  * Reading a sura, in the two shapes people actually read one.
@@ -29,11 +38,6 @@ export type ReadMode = "mushaf" | "verse";
 const arabicNum = (n: number) =>
   String(n).replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[Number(d)]);
 
-const secs = (lang: Lang, s: number) =>
-  s >= 60
-    ? `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`
-    : `${s.toFixed(s < 10 ? 1 : 0)} ${t(lang, "seconds_short")}`;
-
 export default function Reader({
   lang,
   sura,
@@ -48,6 +52,7 @@ export default function Reader({
   onOpenSura,
   busy,
   reciter,
+  showUnreviewed,
 }: {
   lang: Lang;
   sura: Sura;
@@ -71,13 +76,96 @@ export default function Reader({
   busy: boolean;
   /** Chosen once in Settings. Resolves the listen button's audio only. */
   reciter: string;
+  /** Pilot builds show draft rule content, labelled. Production shows none. */
+  showUnreviewed: boolean;
 }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
 
+  /**
+   * RECORDING BEGAN ON THIS SCREEN, and the disc says so before the app has
+   * finished working out which range it will be submitted against.
+   *
+   * `arming` is set synchronously in the tap handler, so the control goes live
+   * in the same frame as the press. The recording itself is genuinely running
+   * by then — `startShared()` has already been called — and this component is
+   * usually replaced by the practice screen a moment later, which continues the
+   * same recording and the same clock.
+   *
+   * It is NOT a fake "recording" state waiting for a real one: if the microphone
+   * is refused, the promise rejects and this resets, and the practice screen
+   * shows the permission failure it was always going to show.
+   */
+  const [arming, setArming] = useState(false);
+  const live = useRef<RecorderHandle | null>(null);
+  const elapsed = useElapsed(arming, live.current?.startedAt);
+
+  /**
+   * The rules this ayah contains, for the badge strip.
+   *
+   * Fetched from the SAME endpoint the mic press needs, one ayah at a time, so
+   * it is not a new cost so much as a moved one: by the time the learner
+   * presses record the range is already resolved and cached. Adding `rules` to
+   * the sura payload instead would mean two phonetizer runs per ayah for all
+   * 286 of al-Baqara on every open, to draw pills for one of them.
+   *
+   * Null while loading and on failure. Badges are worth a fetch and not worth
+   * an error state — the ayah is readable either way.
+   */
+  const [rules, setRules] = useState<RuleBadge[] | null>(null);
+
+  // Leaving the reader with a recording still parked and no practice screen to
+  // adopt it would leave the microphone open behind a screen that is gone.
+  useEffect(
+    () => () => {
+      if (!live.current) cancelShared();
+    },
+    [],
+  );
+
   const current =
     ayat.ayat.find((a) => a.aya === focusAya) ?? ayat.ayat[0] ?? null;
+
+  /**
+   * THE PRESS DOES BOTH THINGS AT ONCE.
+   *
+   * The microphone opens first and the app works out where to send the audio
+   * second — in parallel, not in sequence. The old order fetched the practice
+   * range, swapped screens, and only then asked for the mic, so the gap between
+   * "I pressed record" and "it is recording" was a network round trip plus a
+   * mount. Neither of those is something the learner should have to recite
+   * through or wait out.
+   */
+  function startHere() {
+    if (!current || arming) return;
+    setArming(true);
+    startShared()
+      .then((h) => {
+        live.current = h;
+      })
+      .catch(() => {
+        // Denied, or no device. Drop back to idle here; the practice screen
+        // owns the explanation, because that is where the retry lives.
+        setArming(false);
+      });
+    onPractise(current, true);
+  }
+
+  // One fetch per focused ayah, and only in the verse view — the mushaf shows
+  // a page of them and a strip of pills under continuous text would be the one
+  // thing that view exists to avoid.
+  useEffect(() => {
+    if (mode !== "verse" || !current) return setRules(null);
+    let alive = true;
+    setRules(null);
+    ayahSegments(sura.number, current.aya)
+      .then((got) => alive && setRules(got.whole.rules ?? []))
+      .catch(() => alive && setRules(null));
+    return () => {
+      alive = false;
+    };
+  }, [mode, sura.number, current?.aya]);
 
   // Changing ayah or reciter must stop whatever is playing: the <audio> src
   // swaps underneath and would otherwise keep going with the old recitation,
@@ -103,6 +191,34 @@ export default function Reader({
     const r = el.getBoundingClientRect();
     box.scrollTop += r.top - b.top - (b.height - r.height) / 2;
   }, [mode, focusAya, ayat.sura]);
+
+  /**
+   * The mushaf, cut into pages of five ayat.
+   *
+   * FIVE, not a measured height. A real mushaf page holds a fixed number of
+   * LINES and the ayat that fall on it vary; matching that would mean laying
+   * out the Arabic and measuring it, and the result would still differ from
+   * the printed page the learner knows. A fixed ayah count is honest about
+   * being the app's own pagination rather than pretending to be the mushaf's,
+   * and it keeps every page a comfortable read: al-Baqara 282 alone is longer
+   * than five short ayat put together, so the range is uneven either way.
+   */
+  const PAGE = 5;
+  const pages = useMemo(() => {
+    const out: AyahBrief[][] = [];
+    for (let i = 0; i < ayat.ayat.length; i += PAGE)
+      out.push(ayat.ayat.slice(i, i + PAGE));
+    return out.length ? out : [[]];
+  }, [ayat.ayat]);
+
+  // Derived, never stored — see the note at the arrows.
+  const page = Math.max(
+    0,
+    Math.min(
+      pages.length - 1,
+      pages.findIndex((p) => p.some((a) => a.aya === focusAya)),
+    ),
+  );
 
   // ── moving between ayat, across sura boundaries ──────────────────────────
   const idx = current ? ayat.ayat.findIndex((a) => a.aya === current.aya) : -1;
@@ -211,12 +327,67 @@ export default function Reader({
       <>
         {header}
         <p className="section-sub">{t(lang, "mushaf_hint")}</p>
-        <div className="mushaf" ref={scrollRef} dir="rtl" lang="ar">
-          {ayat.has_basmala && (
+
+        {/* ── A PAGE AT A TIME, NOT A SCROLL ────────────────────────────
+               286 ayat in one scrolling column has no sense of place: you
+               cannot tell how far in you are, returning means hunting, and on
+               a phone the thumb travels the length of al-Baqara. A mushaf is
+               PAGED, and this is the same arrows-at-the-top pattern the verse
+               view already uses — so the two reading modes are navigated
+               identically instead of by two different gestures.
+
+               The page is derived from `focusAya` rather than held in state of
+               its own. Tapping an ayah, stepping in the verse view and coming
+               back, or restoring a saved place all move the focus; a second
+               page number would have to be kept in step with it and would
+               eventually disagree. */}
+        <div className="ayah-nav">
+          <button
+            className="ayah-nav__close"
+            aria-label={t(lang, "prev_ayah")}
+            disabled={page === 0}
+            onClick={() => onFocusAya(pages[page - 1][0].aya)}
+          >
+            <span aria-hidden="true">‹</span>
+          </button>
+
+          <span className="mushaf__page-of">
+            {page + 1} / {pages.length}
+          </span>
+
+          <div className="ayah-nav__steps">
+            <button
+              className="ayah-nav__arrow ayah-nav__arrow--next"
+              aria-label={t(lang, "next_ayah")}
+              disabled={page >= pages.length - 1}
+              onClick={() => onFocusAya(pages[page + 1][0].aya)}
+            >
+              <span aria-hidden="true">›</span>
+            </button>
+          </div>
+        </div>
+
+        {/* ── TAPPING AN AYAH OPENS IT IN THE VERSE VIEW ─────────────────
+               and NOT straight into the recording screen, which is what it used
+               to do. That was the whole defect: the same ayah reached from here
+               and from Oyatma-oyat landed on two different screens — this one
+               skipped the translation, the reciter playback and the prominent
+               ayah number, because it skipped the reader entirely.
+
+               `onMode("verse")` is the fix, and the reason it is the right one
+               is that there is now nothing to build: the verse view already IS
+               the screen for looking at one ayah and reciting it. Mushaf is a
+               way of FINDING an ayah; tapping one says "this is where I am",
+               and where you are is shown in exactly one place. */}
+        <div className="mushaf mushaf--paged" ref={scrollRef} dir="rtl" lang="ar">
+          {/* The basmala heads the SURA, so it belongs on the first page and
+              nowhere else — reprinting it above page four would be a claim
+              about the text that is not true. */}
+          {ayat.has_basmala && page === 0 && (
             <p className="mushaf__bismillah">{ayat.bismillah}</p>
           )}
           <p className="mushaf__body">
-            {ayat.ayat.map((a) => (
+            {(pages[page] ?? []).map((a) => (
               // A span, not a button: buttons do not reflow as inline text, and
               // the whole point of this view is one continuous paragraph. Keyed
               // to keyboard as well as tap so it stays reachable.
@@ -231,13 +402,13 @@ export default function Reader({
                 }
                 onClick={() => {
                   onFocusAya(a.aya);
-                  onPractise(a);
+                  onMode("verse");
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
                     onFocusAya(a.aya);
-                    onPractise(a);
+                    onMode("verse");
                   }
                 }}
               >
@@ -261,7 +432,7 @@ export default function Reader({
     <>
       {header}
 
-      <div className="verse reader--verse">
+      <div className="verse">
         <div className="verse__nav">
           {/* RTL text, LTR controls: previous is on the left because the whole
               interface around it is Latin. Arrows point the way the LEARNER
@@ -274,9 +445,12 @@ export default function Reader({
           >
             ‹
           </button>
-          <span className="verse__ref">
-            {sura.number}:{current.aya}
-          </span>
+          {/* THE SAME BADGE THE RECORDING SCREEN SHOWS, in the same slot: the
+              centre of the arrow row. This was a 12px tracked-out "112:1" — the
+              treatment the app gives a timestamp — while the recording screen
+              carried a prominent plate, and the mismatch was half of why the
+              two screens did not read as one. */}
+          <AyahBadge lang={lang} aya={current.aya} />
           <button
             className="verse__arrow"
             disabled={!canNext}
@@ -297,6 +471,41 @@ export default function Reader({
           {current.uthmani}
         </p>
 
+        {/* ── RECORD, ON THIS SCREEN, AT THE PRESS ───────────────────────
+               THE SAME `Recorder` THE PRACTICE SCREEN USES. Not a lookalike —
+               the same component, so the disc, its size, its label and the
+               space around it cannot drift apart again.
+
+               AND THE PRESS IS THE START. `startShared()` issues getUserMedia
+               in the tap handler, so the microphone opens on this screen, in
+               this frame. The range fetch and the screen change run beside it
+               and the practice screen adopts the recording already in
+               progress — see claimShared() in lib/recorder.ts. Previously the
+               order was the other way round: fetch, navigate, and only then
+               open the mic, which is a second or more of a button that looks
+               pressed and is not yet listening.
+
+               IT IS PART OF THE CARD, in the normal flow, directly below the
+               Arabic. An earlier version pinned it to the bottom of the
+               viewport and it floated over the translation.
+
+               MUSHAF VIEW IS UNTOUCHED: tapping an ayah in continuous text
+               still selects it exactly as before. That flow was never the
+               complaint, and a mushaf page with a mic welded into it would
+               break the one thing it is for, which is uninterrupted reading. */}
+        <Recorder
+          lang={lang}
+          phase={arming ? "recording" : "idle"}
+          elapsed={elapsed}
+          level={() => live.current?.level() ?? 0}
+          onStart={startHere}
+          // Unreachable: this screen hands the recording over the instant the
+          // range resolves, so the stop button belongs to the practice screen.
+          // Present because the component demands it, and because a Recorder
+          // that could reach a live state with no way out would be a trap.
+          onStop={() => {}}
+        />
+
         {current.translation ? (
           <p className="verse__tr">{current.translation}</p>
         ) : (
@@ -305,9 +514,19 @@ export default function Reader({
           </p>
         )}
 
-        <p className="estimate">
-          {t(lang, "estimate")} ≈ {secs(lang, current.seconds)}
-        </p>
+        {/* WHAT THIS AYAH CONTAINS. Under the translation rather than under
+            the Arabic: the pills are about the text, and putting them between
+            the verse and its meaning would break the one pairing the verse
+            view exists for. */}
+        {rules && rules.length > 0 && (
+          <RuleBadges lang={lang} rules={rules} showUnreviewed={showUnreviewed} />
+        )}
+
+        {/* NO DURATION ESTIMATE HERE. "Taxminiy davomiylik ≈ 4.5 s" was a
+            number about the ENGINE's budget wearing the costume of a reading
+            aid, and it sat under every ayah in the app. Removed from the
+            learner-facing view; the figure itself is still computed and still
+            drives the auto-narrowing on the ~60 ayat the engine cannot hold. */}
 
         <div className="verse__actions">
           <button className="listen" onClick={togglePlay}>
@@ -340,49 +559,6 @@ export default function Reader({
           onError={() => setPlaying(false)}
         />
       </div>
-
-      {/* ── RECORD, WITHOUT LEAVING THE VERSE ────────────────────────────
-             There used to be a "Bu oyatni oʻqish" button down here that took
-             the learner to a different screen, where they then pressed a
-             second button to start recording. Two taps and a screen change
-             between reading a verse and reciting it.
-
-             This is the same pinned control the recording screen uses, in the
-             same place on the viewport, and it starts recording on the first
-             press. The screen behind it does change — the analysis needs the
-             practice range resolved — but the learner does not experience a
-             step, because the button they pressed does not move and the ayah
-             they were reading is still the ayah on screen.
-
-             MUSHAF VIEW IS UNTOUCHED: tapping an ayah in continuous text still
-             selects it exactly as before. That flow was never the complaint,
-             and a mushaf page with a mic welded to the bottom would break the
-             one thing it is for, which is uninterrupted reading. */}
-      <MicBar lang={lang} onStart={() => onPractise(current, true)} />
     </>
-  );
-}
-
-/**
- * The pinned mic, in its pre-recording state, for a screen that does not own
- * the recorder.
- *
- * It draws the same disc as Studio's and sits in the same place, so pressing it
- * and finding the real one there afterwards reads as one continuous control
- * rather than as a handoff. It records nothing itself — see onStart.
- */
-function MicBar({ lang, onStart }: { lang: Lang; onStart: () => void }) {
-  return (
-    <div className="micbar">
-      <button
-        className="mic micbar__mic"
-        onClick={onStart}
-        aria-label={t(lang, "record")}
-      >
-        <span className="mic__ring" aria-hidden="true" />
-        <Mic />
-      </button>
-      <p className="micbar__copy">{t(lang, "studio_idle_primary")}</p>
-    </div>
   );
 }

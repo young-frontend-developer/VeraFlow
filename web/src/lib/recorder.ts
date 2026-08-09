@@ -117,6 +117,59 @@ class TapProcessor extends AudioWorkletProcessor {
 registerProcessor('tap', TapProcessor);
 `;
 
+/* ══ THE HANDOFF ══════════════════════════════════════════════════════════
+ *
+ * WHY A MODULE-LEVEL SLOT AND NOT A PROP.
+ *
+ * The mic in the reader and the mic on the practice screen are the same
+ * control, and pressing it has to start recording AT THE PRESS — not after the
+ * app has resolved the ayah's practice range over the network and swapped
+ * screens. Those are two different things and only one of them is allowed to
+ * be slow.
+ *
+ * So the press does both at once: `startShared()` issues getUserMedia
+ * immediately, and the range fetch runs beside it. Whichever screen mounts next
+ * calls `claimShared()` and continues the recording that is already running,
+ * rather than starting a second one. The component that started it has usually
+ * unmounted by then, which is exactly why this cannot live in React state.
+ *
+ * THE PROMISE IS STORED, NOT THE HANDLE. `startRecording` takes a few hundred
+ * milliseconds — a permission check, an AudioContext, and a deliberate settle
+ * period that banks room tone. Parking the promise means the claimant can await
+ * the same one instead of racing it or starting over.
+ */
+let pending: Promise<RecorderHandle> | null = null;
+
+/** Begin now. The next screen picks this up; nothing is lost in between. */
+export function startShared(): Promise<RecorderHandle> {
+  cancelShared();
+  pending = startRecording();
+  // Nobody may be listening yet, and an unhandled rejection here would be a
+  // console error on a denied microphone. The claimant re-awaits and handles it.
+  pending.catch(() => {});
+  return pending;
+}
+
+/** Take the in-flight recording, or null if this screen was reached some other way. */
+export function claimShared(): Promise<RecorderHandle> | null {
+  const p = pending;
+  pending = null;
+  return p;
+}
+
+/**
+ * Drop it, and release the microphone with it.
+ *
+ * Called when the journey the recording was started for does not arrive — a
+ * failed range fetch, or a second press. Without this the mic light stays on
+ * after a navigation the learner has already abandoned, which is the single
+ * worst bug this file could have.
+ */
+export function cancelShared(): void {
+  pending?.then((h) => h.cancel()).catch(() => {});
+  pending = null;
+}
+
 export async function startRecording(): Promise<RecorderHandle> {
   const stream = await navigator.mediaDevices.getUserMedia(CONSTRAINTS);
 

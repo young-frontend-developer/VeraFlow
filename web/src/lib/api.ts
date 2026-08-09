@@ -464,6 +464,37 @@ export type PracticeSegment = PracticeRange & {
    * highlight on the wrong letter.
    */
   text_segments: Segment[];
+  /**
+   * Tajweed rules that are STRUCTURALLY PRESENT in this range.
+   *
+   * Not errors. These say what the passage CONTAINS — a madd lozim is in
+   * al-Baqara 1 whether or not the learner held it — so a flawless recitation
+   * still shows what it just executed. Every entry in the error registry
+   * describes a mistake and could only ever appear after a bad take; this is
+   * the other half.
+   */
+  rules: RuleBadge[];
+};
+
+/**
+ * One rule badge. Content is transcribed from the printed Uzbek Tajweed text
+ * (see api/tilawah/content/rule_badges.json) — never generated.
+ *
+ * `reviewed` is the SERVER's decision and the only thing that may gate
+ * display. A client that inferred the gate for itself would eventually infer
+ * it wrong, which for religious instruction is the expensive direction.
+ */
+export type RuleBadge = {
+  code: string;
+  /** A palette token name, not a CSS colour. Resolved in index.css. */
+  color: string;
+  name: string;
+  rule: string;
+  example: string;
+  /** Harakat count, as authored: "6", "4-5", "2, 4, 5". Free text on purpose. */
+  target: string;
+  source: string;
+  reviewed: boolean;
 };
 
 export type AyahSegments = {

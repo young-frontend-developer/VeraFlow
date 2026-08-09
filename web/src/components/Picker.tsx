@@ -10,6 +10,7 @@ import {
   suraAyat,
 } from "../lib/api";
 import { Lang, t } from "../lib/i18n";
+import { cancelShared } from "../lib/recorder";
 import { Blank, Failure, Loading } from "./States";
 
 /**
@@ -106,6 +107,12 @@ type Props = {
    * suras were started; that would be a fabricated history.
    */
   started: Set<number>;
+  /**
+   * Whether draft content may be shown, labelled. From /api/meta, so the
+   * decision is the server's — the rule badges are all draft today and this is
+   * the only thing standing between them and a learner.
+   */
+  showUnreviewed: boolean;
 };
 
 export default function Picker({
@@ -117,6 +124,7 @@ export default function Picker({
   onMode,
   reciter,
   started,
+  showUnreviewed,
 }: Props) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
@@ -207,6 +215,11 @@ export default function Picker({
         autoRecord: record,
       });
     } catch {
+      // THE MICROPHONE MUST NOT SURVIVE THIS. When `record` is set, the reader's
+      // mic already opened the stream — see startShared() — and the practice
+      // screen that was going to adopt it is never going to mount. Without this
+      // the recording light stays on behind a failure notice.
+      if (record) cancelShared();
       setFailed(true);
     } finally {
       setBusy(false);
@@ -340,6 +353,7 @@ export default function Picker({
       onOpenSura={(s, aya) => openSura(s, aya)}
       busy={busy}
       reciter={reciter}
+      showUnreviewed={showUnreviewed}
     />
   );
 }

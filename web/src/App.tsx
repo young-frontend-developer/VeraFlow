@@ -19,6 +19,16 @@ import Review from "./components/Review";
 import { Learn } from "./components/Soon";
 import Progress from "./components/Progress";
 import { Flame, Gear } from "./components/Ornament";
+import GoalScreen, { GoalCard, goalSentence } from "./components/Goal";
+import Notifications, { BellButton } from "./components/Notifications";
+import { Goal, clearGoal, saveGoal, storedGoal } from "./lib/goals";
+import {
+  NotificationRecord,
+  dropForGoal,
+  markAllRead,
+  push as pushNotification,
+  read as readNotifications,
+} from "./lib/notifications";
 import TabBar, { Tab } from "./components/TabBar";
 import Today from "./components/Today";
 import { Failure, Loading } from "./components/States";
@@ -29,7 +39,6 @@ import {
   Reciter,
   Sura,
   apiPredatesContract,
-  ayahSegments,
   history,
   listAyat,
   listReciters,
@@ -38,7 +47,6 @@ import {
   missingPayloadFields,
   setConsent,
   staleApiFields,
-  suraAyat,
 } from "./lib/api";
 import { streak } from "./lib/progress";
 import { Theme, applyTheme, storedTheme } from "./lib/theme";
@@ -129,10 +137,12 @@ function ReviewApp() {
 function LearnerApp() {
   const [lang, setLang] = useState<Lang>(initialLang);
   /**
-   * Dark or light. Read from storage on the first render rather than in an
-   * effect, so the very first paint is already the chosen theme — setting it
-   * after mount is what produces the flash of the wrong palette on every
-   * launch.
+   * Dark or light, CHOSEN IN SETTINGS.
+   *
+   * Read from storage on the first render rather than in an effect, so the very
+   * first paint is already the chosen theme — setting it after mount is what
+   * produces the flash of the wrong palette on every launch. The device's own
+   * preference is deliberately not consulted; see lib/theme.ts.
    */
   const [theme, setTheme] = useState<Theme>(storedTheme);
   const [tab, setTab] = useState<Tab>("home");
@@ -201,6 +211,22 @@ function LearnerApp() {
    * not a failure.
    */
   const [rows, setRows] = useState<Attempt[] | null>(null);
+
+  /**
+   * The goal, and the notification list.
+   *
+   * Both device-local, both read once on mount and held here rather than in
+   * the screens that show them — the goal card is on Home, the goal screen is
+   * a view of its own, and the bell is in the header on every tab, so a
+   * per-screen copy would go stale the moment one of them wrote.
+   */
+  const [goal, setGoal] = useState<Goal | null>(storedGoal);
+  const [notifications, setNotifications] = useState<NotificationRecord[]>(
+    readNotifications,
+  );
+  const [bellOpen, setBellOpen] = useState(false);
+  /** The goal editor is a SCREEN, not a tab — see the render. */
+  const [goalOpen, setGoalOpen] = useState(false);
 
   useEffect(() => {
     // The catalogue is what Practice runs on; failing to load it is fatal to
@@ -473,65 +499,45 @@ function LearnerApp() {
    * it falls through to the chooser, which is the only honest thing it can do —
    * and if resolving fails it does the same, rather than sitting silent.
    */
-  async function startRecite() {
-    if (!place) {
-      setSelection(null);
-      setTab("practice");
-      return;
-    }
+  function startRecite() {
+    // STRAIGHT TO THE ONE PRACTISING SCREEN, which is the reader's verse view.
+    //
+    // This used to resolve the practice range itself and drop the learner into
+    // the recording screen with the mic idle — a THIRD way of looking at an
+    // ayah, alongside the two the reading modes had. Now it lands exactly where
+    // tapping an ayah in the mushaf lands: the verse view, at the stored place,
+    // with the ayah, its translation, the reciter playback and the mic.
+    //
+    // Nothing is awaited any more. The Picker restores to `place` on mount and
+    // the range is resolved when the mic is pressed, which is the only moment
+    // it is actually needed. With no stored place there is nothing to restore
+    // and it falls through to the sura list, as it always did.
+    setSelection(null);
+    setMode("verse");
     setTab("practice");
-    try {
-      const found = suras.find((s) => s.number === place.sura);
-      const got = await ayahSegments(place.sura, place.aya);
-      const brief = (await suraAyat(place.sura, lang)).ayat.find(
-        (a) => a.aya === place.aya,
-      );
-      if (!found || !brief) throw new Error("no such ayah");
-      setSelection({
-        sura: found,
-        ayah: brief,
-        segment: got.whole,
-        whole: true,
-        wholeSegment: got.whole,
-        parts: got.parts,
-      });
-    } catch {
-      setSelection(null);
-    }
   }
 
   /**
-   * Step to the ayah either side of the one being practised.
+   * Step to the ayah either side of the one just recorded.
    *
-   * Resolves the new range the same way Picker does, so the learner lands in a
-   * fully-formed practice state rather than in a half-selected one. A failure
-   * leaves the current selection alone — being stuck on the ayah you were
-   * already on is a far better outcome than being dumped out of practice.
+   * IT LANDS ON THE READER, not on another recording screen. This used to
+   * resolve the next range and swap the selection in place, which meant the
+   * arrows produced a recording screen with an idle mic — the same third view
+   * of an ayah that `startRecite` used to produce, reachable one tap from a
+   * result. Moving on to the next ayah now goes where moving on always goes:
+   * the verse view, where you can read it and hear it before you recite it.
+   *
+   * No fetch and nothing to fail. Clearing the selection renders the Picker,
+   * which restores to `place` — so "next" is one state update rather than two
+   * network calls that could half-succeed.
    */
-  async function stepAyah(delta: -1 | 1) {
+  function stepAyah(delta: -1 | 1) {
     if (!selection) return;
     const aya = selection.ayah.aya + delta;
-    const sura = selection.sura;
-    if (aya < 1 || aya > sura.n_ayat) return;
-    try {
-      const [got, list] = await Promise.all([
-        ayahSegments(sura.number, aya),
-        suraAyat(sura.number, lang),
-      ]);
-      const brief = list.ayat.find((a) => a.aya === aya);
-      if (!brief) return;
-      setPlace({ sura: sura.number, aya });
-      setSelection({
-        sura,
-        ayah: brief,
-        segment: got.whole,
-        whole: true,
-        wholeSegment: got.whole,
-        parts: got.parts,
-      });
-    } catch {
-      /* keep the current ayah */
-    }
+    if (aya < 1 || aya > selection.sura.n_ayat) return;
+    setPlace({ sura: selection.sura.number, aya });
+    setSelection(null);
+    setMode("verse");
   }
 
   const run = streak(rows ?? []);
@@ -544,10 +550,11 @@ function LearnerApp() {
   const started = new Set((rows ?? []).map((r) => r.sura));
 
   return (
-    // The pinned recording card needs the page to reserve room beneath it,
-    // and only while it is actually mounted — every other screen would
-    // otherwise carry 200px of dead space at the bottom.
-    <div className={`app${tab === "practice" && selection ? " app--recording" : ""}`}>
+    // No per-screen bottom allowance. The recording card used to be fixed to
+    // the viewport and the page had to reserve room under it; it is in the
+    // normal flow now, so `.app`'s own clearance for the nav bar is all that
+    // is needed and every screen gets the same one.
+    <div className="app">
       {/* The top bar: wordmark left, streak right. That is all.
           THE STREAK CHIP IS NOT DECORATION AND NOT ALWAYS THERE. It appears
           only once there is a real run of days behind it — a flame showing "0"
@@ -569,6 +576,11 @@ function LearnerApp() {
           destination — the exact duplication the centre button just fixed. */}
       <header className="app__header">
         <h1 className="wordmark">{BRAND}</h1>
+        {/* THE BELL IS ON EVERY SCREEN, the streak chip only when there is a
+            streak. Both live in the same cluster on the right, and the bell is
+            the outermost because it is the one that is always there — a row
+            whose items shuffle position depending on whether you practised
+            yesterday is a row you have to re-read every time. */}
         <div className="app__tools">
           {consented && run.current > 0 && (
             <span className="streak-chip" title={t(lang, "stat_streak")}>
@@ -576,8 +588,30 @@ function LearnerApp() {
               {run.current}
             </span>
           )}
+          <BellButton
+            lang={lang}
+            rows={notifications}
+            onOpen={() => setBellOpen(true)}
+          />
         </div>
       </header>
+
+      {bellOpen && (
+        <Notifications
+          lang={lang}
+          rows={notifications}
+          // MARKED READ ON CLOSE, NOT ON OPEN. Marking on open is the obvious
+          // move and it makes the unread marker unobservable: the state update
+          // batches with the one that mounts the panel, so the list renders
+          // with every row already read and the learner never finds out which
+          // ones were new. Reading happens while the panel is up; the state
+          // catches up when it comes down.
+          onClose={() => {
+            setBellOpen(false);
+            setNotifications(markAllRead());
+          }}
+        />
+      )}
 
       {/* VERSION SKEW, NAMED.
           A server process started before a field was added keeps answering
@@ -621,6 +655,45 @@ function LearnerApp() {
             body={t(lang, "api_stale_body")}
             onRetry={() => window.location.reload()}
           />
+        ) : goalOpen ? (
+          /* ── THE GOAL EDITOR IS A SCREEN, NOT A SHEET AND NOT A TAB ──────
+                It replaces the main region the way Recite does, checked before
+                the tab switch so it opens over whatever the learner was on.
+                Full-screen because it is one focused decision; not a tab
+                because it is not a destination you return to. The nav bar
+                stays mounted underneath — trapping someone inside a form is
+                how a four-tap flow becomes a place people get stuck. */
+          <GoalScreen
+            lang={lang}
+            goal={goal}
+            onClose={() => setGoalOpen(false)}
+            onSave={(next) => {
+              const saved = saveGoal({ ...next, id: goal?.id, createdAt: goal?.createdAt });
+              setGoal(saved);
+              setGoalOpen(false);
+              // A record of what was just set, so the bell has something true
+              // in it from the first goal onward. NOT a fake reminder — see
+              // the header of lib/notifications.ts.
+              setNotifications(
+                pushNotification({
+                  kind: "goal_set",
+                  goalId: saved.id,
+                  title: t(lang, "goal_active_kicker"),
+                  body:
+                    goalSentence(lang, saved) +
+                    (saved.remindAt
+                      ? ` · ${t(lang, "goal_reminder_at").replace("{t}", saved.remindAt)}`
+                      : ""),
+                }),
+              );
+            }}
+            onRemove={() => {
+              if (goal) setNotifications(dropForGoal(goal.id));
+              clearGoal();
+              setGoal(null);
+              setGoalOpen(false);
+            }}
+          />
         ) : tab === "home" ? (
           suras.length === 0 ? (
             <Loading rows={5} />
@@ -650,6 +723,8 @@ function LearnerApp() {
                 setTab("practice");
               }}
               onViewAchievements={() => setTab("progress")}
+              goal={goal}
+              onOpenGoal={() => setGoalOpen(true)}
             />
           )
         ) : tab === "learn" ? (
@@ -698,6 +773,7 @@ function LearnerApp() {
               // Settings decision now. The id still comes through, because the
               // comparison playback has to resolve a file.
               reciter={reciter}
+              showUnreviewed={info?.show_unreviewed ?? false}
             />
           ) : (
             <Picker
@@ -709,6 +785,7 @@ function LearnerApp() {
               onMode={setMode}
               reciter={reciter}
               started={started}
+              showUnreviewed={info?.show_unreviewed ?? false}
             />
           )
         ) : (
@@ -737,7 +814,15 @@ function LearnerApp() {
           plain tab change. */}
       <TabBar
         tab={tab}
-        onChange={(next) => (next === "tutor" ? startRecite() : setTab(next))}
+        onChange={(next) => {
+          // THE GOAL EDITOR CLOSES ON ANY NAV. It renders ahead of the tab
+          // switch, so without this a learner who opened it and then pressed
+          // Profil would watch the bar's highlight move while the screen did
+          // not — the definition of being stuck in a form.
+          setGoalOpen(false);
+          if (next === "tutor") startRecite();
+          else setTab(next);
+        }}
         lang={lang}
       />
     </div>

@@ -89,6 +89,28 @@ class RecitersOut(BaseModel):
     reciters: list[ReciterOut]
 
 
+class RuleBadgeOut(BaseModel):
+    """A tajweed rule that is STRUCTURALLY PRESENT in a range.
+
+    Not an error. This says "this passage contains a madd lozim", which is a
+    fact about the Qur'an and true whether or not the learner read it well -
+    the whole point is that a flawless recitation still shows what it just
+    executed. See engine/rule_presence.py.
+
+    `reviewed` travels with each badge for the same reason it travels with an
+    error: the gate is the server's decision, not the client's, and a client
+    that had to infer it from `status` would eventually infer it wrong.
+    """
+    code: str
+    color: str
+    name: str
+    rule: str
+    example: str = ""
+    target: str = ""
+    source: str = ""
+    reviewed: bool = False
+
+
 class PracticeSegmentOut(BaseModel):
     """One practice-sized range of an ayah, indexed relative to the ayah.
 
@@ -100,6 +122,11 @@ class PracticeSegmentOut(BaseModel):
     relative to the range. They travel with the segment so that picking one
     gives the client everything it needs to preview it and, later, to place a
     highlight on it - without a second round trip per selection.
+
+    `rules` are the tajweed rules that occur in THIS range, computed from the
+    reference script. They ride along with the segment for the same reason the
+    letter-groups do: the client needs them to draw the range and must not have
+    to ask a second time per selection.
     """
     index: int
     start_word: int
@@ -108,6 +135,7 @@ class PracticeSegmentOut(BaseModel):
     seconds: float
     uthmani: str
     text_segments: list[SegmentOut] = []
+    rules: list[RuleBadgeOut] = []
 
 
 class AyahSegmentsOut(BaseModel):

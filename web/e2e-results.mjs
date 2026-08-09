@@ -16,7 +16,7 @@ import { chromium } from "playwright";
 import path from "node:path";
 import fs from "node:fs";
 
-const URL = "http://localhost:5199";
+const URL = process.env.TILAWAH_URL ?? "http://localhost:5199";
 const OUT = path.resolve("./shots");
 const SCRATCH =
   "C:/Users/Rahmatulloh/AppData/Local/Temp/claude/C--Users-Rahmatulloh-Desktop-Tilawah/3c0d3642-d899-4867-9888-003502a34945/scratchpad";
@@ -47,6 +47,9 @@ const ctx = await browser.newContext({
   viewport: { width: 430, height: 932 },
   deviceScaleFactor: 2,
   permissions: ["microphone"],
+  // The theme comes from the DEVICE now, so the context has to state one —
+  // the stored key this used to set is gone. See lib/theme.ts.
+  colorScheme: "dark",
 });
 const page = await ctx.newPage();
 page.on("pageerror", (e) => problems.push(`pageerror: ${e.message}`));
@@ -89,7 +92,6 @@ try {
       veyraflow_entry_done: "1", tilawah_auth_seen: "1",
       tilawah_consent_seen: "1", tilawah_consent: "1", tilawah_lang: "uz",
       tilawah_device_id: "verify-results", tilawah_place: "103:1",
-      veyraflow_theme: "dark",
     };
     for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v);
   });
@@ -104,11 +106,16 @@ try {
   ok("4 baseline hasanat", before === "300", `${before} (1 row x 30 letters x 10)`);
 
   // ── recite ────────────────────────────────────────────────────────────
+  //
+  // THE CENTRE BUTTON LANDS ON THE READER NOW, not on the recording screen.
+  // There is one screen for looking at an ayah and it is the verse view; the
+  // recording screen is reached by pressing the mic, which is also the moment
+  // recording starts. So this presses the mic and then waits for the practice
+  // screen to appear around the recording that is already running.
   await page.locator(".tab--center").click();
+  await page.locator(".recorder__mic").waitFor({ timeout: 25000 });
+  await page.locator(".recorder__mic").click();
   await page.locator(".ayah-nav").waitFor({ timeout: 25000 });
-  const rec = page.getByRole("button", { name: /Oʻqishni boshlash/ });
-  await rec.waitFor({ timeout: 15000 });
-  await rec.click();
   await page.waitForTimeout(2200);
   await page.getByRole("button", { name: /^Toʻxtatish/ }).first().click();
   await page.waitForFunction(
@@ -138,17 +145,20 @@ try {
   ok("9 old standalone listen control gone",
      (await page.locator(".selfplay").count()) === 0);
 
-  // THE COMPARISON MUST NOT BE UNDER THE RECORDER. The studio unpins once a
-  // result is on screen precisely so it stops covering this row — the first
-  // version pinned it always and the two overlapped exactly here.
-  ok("5 studio unpins once results are shown",
-     (await page.locator(".studio--pinned").count()) === 0);
-  const studioBox = await page.locator(".studio").boundingBox();
+  // THE COMPARISON MUST NOT BE UNDER THE RECORDER. The recording control used
+  // to be a card fixed to the viewport that unpinned once a result arrived, and
+  // this checked the unpinning. There is no card at all now and nothing is ever
+  // fixed — so the check is that the control cannot cover the results, which is
+  // the property the old one was standing in for.
+  ok("1 the recording control is never fixed over the results",
+     (await page.locator(".recorder").evaluate((el) => getComputedStyle(el).position)) !== "fixed");
+  ok("1 no studio card survives", (await page.locator(".studio").count()) === 0);
+  const studioBox = await page.locator(".recorder").boundingBox();
   ok(
     "9 comparison is not covered by the recorder",
     !studioBox || b0.y >= studioBox.y + studioBox.height - 1 ||
       b0.y + b0.height <= studioBox.y + 1,
-    `compare y=${Math.round(b0.y)}, studio ${Math.round(studioBox?.y ?? -1)}–${Math.round((studioBox?.y ?? 0) + (studioBox?.height ?? 0))}`,
+    `compare y=${Math.round(b0.y)}, control ${Math.round(studioBox?.y ?? -1)}–${Math.round((studioBox?.y ?? 0) + (studioBox?.height ?? 0))}`,
   );
   await shot("r3-08-compare");
 

@@ -41,28 +41,92 @@ import {
 
 /* ══ the four figures ═════════════════════════════════════════════════════ */
 
+/**
+ * One figure.
+ *
+ * ── THE MARK CARRIES A COLOUR AND NOTHING ELSE DOES ────────────────────────
+ *
+ * `tone` names which accent the icon takes: flame amber for the streak, brass
+ * for hasanat, jade for ayat, a cool teal for time. The VALUE and the LABEL
+ * stay in the neutral ink in every tile, which is the whole reason this can
+ * have colour at all — four coloured numbers would be a dashboard, four
+ * coloured icons over neutral figures is a legend.
+ *
+ * The fills are soft gradients from the same construction as `--accent-fill`,
+ * not flat saturated icon colours. See `.stat-tile__mark--*` in index.css.
+ *
+ * ── AND THE SUB-NOTES ARE GONE ─────────────────────────────────────────────
+ *
+ * Two tiles used to carry a second line under the label — "Eng uzuni: 4" and
+ * "1 240 harf oʻqildi". Both were true and neither was wanted here: this block
+ * answers "how am I doing" at a glance, and a glance does not include a
+ * lifetime-best sub-figure. The letters count still exists and is still what
+ * hasanat is computed from — it is simply not narrated on Home.
+ */
 function Stat({
   mark,
+  tone,
   value,
   label,
-  note,
   empty,
 }: {
   mark: React.ReactNode;
+  tone: "flame" | "brass" | "jade" | "teal";
   value: string;
   label: string;
-  note?: string;
   empty: boolean;
 }) {
   return (
     <li className={`stat-tile${empty ? " stat-tile--empty" : ""}`}>
-      <span className="stat-tile__mark" aria-hidden="true">
+      <span
+        className={`stat-tile__mark stat-tile__mark--${tone}`}
+        aria-hidden="true"
+      >
         {mark}
       </span>
       <span className="stat-tile__value">{value}</span>
       <span className="stat-tile__label">{label}</span>
-      {note && <span className="stat-tile__note">{note}</span>}
     </li>
+  );
+}
+
+/**
+ * The four gradient paint-servers the marks stroke themselves with.
+ *
+ * WHY A DEFS SPRITE AND NOT A CSS GRADIENT. `stroke` on an SVG cannot take a
+ * CSS gradient — a gradient is a paint server, and a paint server has to live
+ * in the document as an element with an id. So the four run once, hidden, and
+ * every mark points at one by url(). The alternative was giving each icon its
+ * own inline defs, which puts four duplicate gradients in the DOM per tile.
+ *
+ * THE STOPS ARE TOKENS, so the pair re-hues per theme without a second sprite:
+ * the same amber has to be lighter on indigo than it is on paper to hold the
+ * same weight. See `--tone-*` in index.css.
+ *
+ * Diagonal, top-left to bottom-right, which is the same light direction
+ * `--accent-fill` uses on every filled shape in the app — that is what makes
+ * these read as the same material rather than as four coloured icons.
+ */
+function ToneDefs() {
+  const stop = (v: string) => ({ stopColor: `var(${v})` });
+  return (
+    <svg className="tone-defs" aria-hidden="true" focusable="false">
+      <defs>
+        {(["flame", "brass", "jade", "teal"] as const).map((tone) => (
+          <linearGradient
+            key={tone}
+            id={`tone-${tone}`}
+            x1="0.1"
+            y1="0"
+            x2="0.85"
+            y2="1"
+          >
+            <stop offset="0" style={stop(`--tone-${tone}-1`)} />
+            <stop offset="1" style={stop(`--tone-${tone}-2`)} />
+          </linearGradient>
+        ))}
+      </defs>
+    </svg>
   );
 }
 
@@ -77,6 +141,7 @@ export function StatsRow({
 
   return (
     <section className="today__block">
+      <ToneDefs />
       <header className="section-head">
         <div>
           <p className="section-label">{t(lang, "stats_kicker_home")}</p>
@@ -87,41 +152,28 @@ export function StatsRow({
       <ul className="stat-grid">
         <Stat
           mark={<Flame />}
+          tone="flame"
           value={String(totals.streak.current)}
           label={t(lang, "stat_streak")}
-          // Only once there IS a best worth naming. "Eng uzuni: 0" is noise.
-          note={
-            totals.streak.best > 0
-              ? t(lang, "stat_streak_best").replace(
-                  "{n}",
-                  String(totals.streak.best),
-                )
-              : undefined
-          }
           empty={totals.streak.current === 0}
         />
         <Stat
           mark={<Sparkle />}
+          tone="brass"
           value={compact(totals.hasanat)}
           label={t(lang, "stat_hasanat")}
-          note={
-            totals.letters > 0
-              ? t(lang, "hasanat_letters").replace(
-                  "{n}",
-                  totals.letters.toLocaleString(),
-                )
-              : undefined
-          }
           empty={totals.hasanat === 0}
         />
         <Stat
           mark={<Leaf />}
+          tone="jade"
           value={String(totals.ayat)}
           label={t(lang, "stat_ayat")}
           empty={totals.ayat === 0}
         />
         <Stat
           mark={<Dial />}
+          tone="teal"
           value={hhmm(totals.seconds)}
           label={t(lang, "stat_time")}
           empty={totals.seconds === 0}
