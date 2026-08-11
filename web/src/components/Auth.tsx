@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Lang, t } from "../lib/i18n";
 import { AppleMark, GoogleMark, StarOrnament } from "./Ornament";
 import { BRAND } from "../lib/brand";
+import GoogleButton from "./GoogleButton";
 
 /**
  * SIGN IN / SIGN UP.
@@ -37,7 +38,11 @@ import { BRAND } from "../lib/brand";
  * onSubmit/onProvider. The markup does not need to change.
  */
 
-/** Flip to false in the same commit that lands real auth endpoints. */
+/**
+ * Email and password ONLY. Google is live (see the providers block); Apple is
+ * not. This flag no longer means "accounts are not ready" - it means these two
+ * fields are still inert, which is a narrower and still-true statement.
+ */
 const PENDING = true;
 
 export default function Auth({
@@ -47,12 +52,28 @@ export default function Auth({
 }: {
   lang: Lang;
   onLang: (l: Lang) => void;
-  /** Proceed anonymously — the only path that currently does anything. */
+  /** Proceed into the app. Used for BOTH "continue without an account" and a
+   *  completed Google sign-in: the app is the same either way, and the
+   *  session in hand already says which one happened. */
   onContinue: () => void;
 }) {
   const [mode, setMode] = useState<"in" | "up">("up");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  // Set when the server reports no Google client configured, so the disabled
+  // control comes back rather than an empty gap where a button should be.
+  const [googleOff, setGoogleOff] = useState(false);
+
+  const onGoogleOff = useCallback(() => setGoogleOff(true), []);
+  const onSignedIn = useCallback(
+    (_linked: boolean) => {
+      // Linking preserved the anonymous account, so there is nothing to
+      // reconcile here - the same session simply has a Google identity on it
+      // now. Straight into the app, exactly as the anonymous path does.
+      onContinue();
+    },
+    [onContinue],
+  );
 
   return (
     <div className="auth">
@@ -133,11 +154,29 @@ export default function Auth({
           </div>
 
           <div className="auth__providers">
-            <button className="btn-provider" disabled={PENDING}>
-              <GoogleMark />
-              {t(lang, "auth_google")}
-            </button>
-            <button className="btn-provider" disabled={PENDING}>
+            {/* GOOGLE IS REAL NOW. It renders Google's own button, which is
+                the only supported way to get an ID token from a click - see
+                GoogleButton.tsx. If the server has no client id configured it
+                calls onUnavailable and we fall back to the disabled control
+                below, because a button that cannot work is worse than one
+                that says so. */}
+            {googleOff ? (
+              <button className="btn-provider" disabled>
+                <GoogleMark />
+                {t(lang, "auth_google")}
+              </button>
+            ) : (
+              <GoogleButton
+                lang={lang}
+                onSignedIn={onSignedIn}
+                onUnavailable={onGoogleOff}
+              />
+            )}
+
+            {/* APPLE IS STILL INERT and stays that way until it is built.
+                Same rule as before: every credential control that does
+                nothing is visibly disabled. */}
+            <button className="btn-provider" disabled>
               <span className="btn-provider__apple">
                 <AppleMark />
               </span>

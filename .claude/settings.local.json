@@ -284,7 +284,19 @@
       "Bash(node ./_identical.mjs --out \"C:\\\\Users\\\\RAHMAT~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Rahmatulloh-Desktop-Tilawah\\\\db39e874-a4c9-416c-a2d9-6821f75cb407\\\\scratchpad\\\\entry\")",
       "Bash(PYTHONIOENCODING=utf-8 py -3.13 \"C:\\\\Users\\\\RAHMAT~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Rahmatulloh-Desktop-Tilawah\\\\db39e874-a4c9-416c-a2d9-6821f75cb407\\\\scratchpad\\\\check_rules.py\")",
       "Bash(node ./_r6.mjs --out \"C:\\\\Users\\\\RAHMAT~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Rahmatulloh-Desktop-Tilawah\\\\db39e874-a4c9-416c-a2d9-6821f75cb407\\\\scratchpad\\\\r6\")",
-      "Bash(node ./_r6.mjs --out \"C:\\\\Users\\\\RAHMAT~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Rahmatulloh-Desktop-Tilawah\\\\db39e874-a4c9-416c-a2d9-6821f75cb407\\\\scratchpad\\\\r6\" --tag r6b)"
+      "Bash(node ./_r6.mjs --out \"C:\\\\Users\\\\RAHMAT~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Rahmatulloh-Desktop-Tilawah\\\\db39e874-a4c9-416c-a2d9-6821f75cb407\\\\scratchpad\\\\r6\" --tag r6b)",
+      "Bash(awk 'NR>3 && NF>=7 { if \\($2+0>36 || $4==\"False\" || $3==\"False\"\\) print }')",
+      "Bash(C:/Users/Rahmatulloh/Desktop/Tilawah/spike/.venv/Scripts/python.exe -c 'import sys; print\\(sys.version\\); print\\(sys.executable\\)')",
+      "Bash(C:/Users/Rahmatulloh/Desktop/Tilawah/spike/.venv/Scripts/python.exe -c ' *)",
+      "Bash(C:/Users/Rahmatulloh/Desktop/Tilawah/spike/.venv/Scripts/python.exe -m pip install alembic --quiet)",
+      "Bash(timeout 300 node e2e-session.mjs)",
+      "Bash(C:/Users/Rahmatulloh/Desktop/Tilawah/spike/.venv/Scripts/python.exe -m alembic heads)",
+      "Bash(C:/Users/Rahmatulloh/Desktop/Tilawah/spike/.venv/Scripts/python.exe -m pip install google-auth --quiet)",
+      "Bash(API=\"http://127.0.0.1:8041\" EXPECT=unconfigured PORT=5198 timeout 300 node e2e-google.mjs)",
+      "Bash(API=\"http://127.0.0.1:8042\" PORT=5199 DEVICE=\"e2e-existing-install\" timeout 300 node e2e-session.mjs)",
+      "Bash(npm --version)",
+      "Bash(npx cap *)",
+      "Bash(python *)"
     ]
   }
 }

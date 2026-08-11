@@ -2,6 +2,7 @@
 """Settings from environment. See .env.example."""
 import os
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 
 # Load api/.env before the field defaults below are evaluated. Without this the
@@ -96,6 +97,81 @@ class Settings:
     debug_audio: bool = os.getenv("TILAWAH_DEBUG_AUDIO", "0") == "1"
     debug_dir: str = os.getenv("TILAWAH_DEBUG_DIR", "")
 
+    # ── sessions ──────────────────────────────────────────────────────────
+    #
+    # OPAQUE TOKENS, NOT JWT, and the reason is this app's deletion promise.
+    # Revoking consent must really destroy the learner's data; a stateless JWT
+    # stays valid until it expires no matter what the database says, so "delete
+    # everything" would leave a working credential behind. Every request
+    # already touches the database, so the lookup costs nothing worth counting.
+    session_ttl_days: int = int(os.getenv("TILAWAH_SESSION_TTL_DAYS", 30))
+
+    # Cookie transport for the browser. The SAME session works as a bearer
+    # token for a native client - one auth system, two ways to carry it.
+    session_cookie_name: str = os.getenv("TILAWAH_SESSION_COOKIE", "tilawah_session")
+    # Secure defaults to off ONLY because dev runs on plain http; production
+    # must set it. See the launch checklist in the Phase 2 report.
+    session_cookie_secure: bool = os.getenv("TILAWAH_SESSION_COOKIE_SECURE", "0") == "1"
+    # lax | strict | none. `lax` refuses to send the cookie on a cross-site
+    # POST, which is the CSRF protection this relies on. Note the consequence:
+    # the dev client on :5173 talking to the api on :8000 is CROSS-SITE, so the
+    # browser will not attach the cookie there - dev uses the bearer header.
+    session_cookie_samesite: str = os.getenv("TILAWAH_SESSION_COOKIE_SAMESITE", "lax")
+
+    # ── the device-claim window ───────────────────────────────────────────
+    #
+    # Whether POST /api/auth/anonymous will hand a session to whoever presents
+    # an existing device id.
+    #
+    # THIS IS A BEARER EXCHANGE AND IT IS NOT AN AUTHENTICATION MECHANISM. A
+    # device id proves nothing: it has been travelling in query strings into
+    # access logs, browser history and every proxy since the first release, so
+    # anyone who harvested one can claim that learner's history while this is
+    # open. It exists for exactly one job - carrying existing anonymous installs
+    # onto real sessions once - and it is worth the risk only because the same
+    # id is ALREADY full authority on /api/attempts and /api/consent today.
+    # Closing this window is a strict security improvement over the status quo,
+    # never a regression.
+    #
+    # IT IS TEMPORARY BY CONSTRUCTION, NOT BY INTENTION. Intentions do not
+    # survive a busy quarter. Two mechanisms make that real:
+    #
+    #   * production REFUSES TO BOOT with claiming on and no deadline set
+    #     (see api/main.py), so it cannot reach a public deployment by anyone
+    #     forgetting a variable;
+    #   * past the deadline the endpoint stops claiming on its own, with no
+    #     deploy required, so an unattended box closes its own window.
+    #
+    # NEVER extend this to cover new installs, and never let a client depend on
+    # it after the migration. When it is done: TILAWAH_ALLOW_DEVICE_CLAIM=0.
+    allow_device_claim: bool = os.getenv("TILAWAH_ALLOW_DEVICE_CLAIM", "1") == "1"
+    # ISO date, e.g. 2026-09-30. The last day claiming works. Mandatory in
+    # production whenever claiming is on; optional in dev, where an open-ended
+    # window is only ever pointed at a laptop.
+    device_claim_until: str = os.getenv("TILAWAH_DEVICE_CLAIM_UNTIL", "")
+
+    # ── Google sign-in ────────────────────────────────────────────────────
+    #
+    # A COMMA-SEPARATED ALLOWLIST, NOT ONE VALUE, and this is the detail that
+    # breaks Google integrations most often. The `aud` claim carries whichever
+    # OAuth client obtained the token, and a project has several: the web
+    # client today, an Android client later. Android's Credential Manager is
+    # worse than it looks - it returns a token whose `aud` is the WEB/server
+    # client id, not the Android one - so hardcoding a single audience either
+    # rejects the web or rejects the phone, and the error says only "wrong
+    # audience".
+    #
+    # Empty means Google sign-in is switched off: the endpoints answer 503 and
+    # the client keeps its honest "not ready yet" line rather than showing a
+    # button that cannot work.
+    google_client_ids: str = os.getenv("TILAWAH_GOOGLE_CLIENT_IDS", "")
+
+    # How long a login nonce stays usable. Short on purpose - it is consumed
+    # within seconds of being handed out, and its whole job is to make sure the
+    # credential arriving back was requested by THIS browser.
+    google_nonce_ttl_seconds: int = int(
+        os.getenv("TILAWAH_GOOGLE_NONCE_TTL_SECONDS", 300))
+
     env: str = os.getenv("TILAWAH_ENV", "dev")           # dev | production
     # Shows the "not yet fully verified" banner. Also raised automatically while
     # any learner-facing correction is unreviewed, so it cannot be forgotten.
@@ -108,6 +184,48 @@ class Settings:
     @property
     def is_production(self) -> bool:
         return self.env.lower() in ("production", "prod")
+
+    @property
+    def google_audiences(self) -> list[str]:
+        """Every OAuth client id whose tokens this server will accept."""
+        return [c.strip() for c in self.google_client_ids.split(",") if c.strip()]
+
+    @property
+    def google_enabled(self) -> bool:
+        return bool(self.google_audiences)
+
+    @property
+    def claim_deadline(self) -> "date | None":
+        """The configured last day of the claim window, or None if unset.
+
+        Raises ValueError on a malformed date rather than shrugging. A typo in
+        this variable must not read as "no deadline" - that is precisely the
+        failure that would leave the window open forever.
+        """
+        raw = (self.device_claim_until or "").strip()
+        if not raw:
+            return None
+        return date.fromisoformat(raw)
+
+    @property
+    def device_claim_open(self) -> bool:
+        """Whether a device id may still be exchanged for a session, right now.
+
+        Three ways to be closed, and the last one needs no deploy:
+          * the flag is off;
+          * production with no deadline (main.py refuses to boot in that state,
+            so this is the belt to that braces);
+          * today is past the deadline.
+        """
+        if not self.allow_device_claim:
+            return False
+        try:
+            deadline = self.claim_deadline
+        except ValueError:
+            return False
+        if deadline is None:
+            return not self.is_production
+        return date.today() <= deadline
 
     @property
     def show_unreviewed(self) -> bool:

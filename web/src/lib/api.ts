@@ -332,8 +332,21 @@ export type Attempt = {
   letters?: number;
 };
 
-// Anonymous until there is a reason to have accounts. Stored locally so the
-// learner can revoke consent and have the server actually delete their data.
+/**
+ * THE DEVICE ID IS NO LONGER A CREDENTIAL. It used to be the whole of identity:
+ * every learner-data request carried it and the server took the caller's word
+ * for it, which meant anyone who knew one could read that person's history or
+ * delete their account. The server stopped accepting it as proof; this file
+ * stopped sending it as proof.
+ *
+ * What it still does, exactly once, is claim an account. An install that
+ * predates sign-in has practice history filed under this id, so it is handed to
+ * POST /api/auth/anonymous to say "this is who I was" and a real session comes
+ * back. After that it is never sent again.
+ *
+ * Keep it stable. Losing it does not lose the account while a session survives,
+ * but it is the only way back to the old history if the session is ever lost.
+ */
 export function deviceId(): string {
   let id = localStorage.getItem("tilawah_device_id");
   if (!id) {
@@ -346,6 +359,277 @@ export function deviceId(): string {
 async function json<T>(r: Response): Promise<T> {
   if (!r.ok) throw new Error(String(r.status));
   return r.json();
+}
+
+/* ── sessions ─────────────────────────────────────────────────────────────
+
+   The server issues an opaque token and ALSO sets it as an httpOnly cookie.
+   Both are the same session; which one travels is a transport detail.
+
+   WHY THE TOKEN IS KEPT IN localStorage ANYWAY, despite the cookie being the
+   safer store: the dev client runs on :5173 and the api on :8000, which is
+   CROSS-SITE, and the cookie is SameSite=lax - so the browser will not attach
+   it. The same is true of any split-origin deployment, which is where the
+   Android plan points. A bearer header works in every arrangement, so it is
+   the one this client relies on, with `credentials: "include"` alongside it so
+   a same-origin deployment gets the cookie for free.
+
+   THE TRADE-OFF IS REAL AND IT IS NOT FREE: a token in localStorage is
+   readable by any script that gets injected, which an httpOnly cookie is not.
+   The mitigation available today is that the token is revocable server-side.
+   The real fix is to serve the client and the api from ONE origin and delete
+   the localStorage half of this - at which point the cookie alone suffices. */
+
+const SESSION_KEY = "tilawah_session_token";
+
+/** In-flight bootstrap, so ten simultaneous calls mint one session, not ten. */
+let bootstrapping: Promise<string> | null = null;
+
+function storedToken(): string | null {
+  try {
+    return localStorage.getItem(SESSION_KEY);
+  } catch {
+    return null; // private mode, disabled storage - treat as "no session yet"
+  }
+}
+
+function keepToken(token: string): void {
+  try {
+    localStorage.setItem(SESSION_KEY, token);
+  } catch {
+    /* the session still works for this page load; it just will not survive it */
+  }
+}
+
+/** Forget the local session. Does NOT revoke it server-side - see logout(). */
+export function clearSession(): void {
+  bootstrapping = null;
+  try {
+    localStorage.removeItem(SESSION_KEY);
+  } catch {
+    /* nothing to do */
+  }
+}
+
+/**
+ * Forget the session ONLY if it is still the one the caller was using.
+ *
+ * COMPARE-AND-CLEAR, because 401s arrive in parallel. The app fires several
+ * learner-data requests at once, so an expired token produces several 401s at
+ * once. With an unconditional clear, the second one wipes the fresh token the
+ * first one just obtained, and each request bootstraps again - measured as two
+ * sessions minted per reload in e2e-session.mjs, with the losers left live on
+ * the server. Checking first means the first 401 replaces the token and the
+ * rest simply use it.
+ */
+function clearSessionIf(token: string): void {
+  if (storedToken() === token) clearSession();
+}
+
+export function hasSession(): boolean {
+  return Boolean(storedToken());
+}
+
+/** Exchange the device id for a session. The only place device_id is sent. */
+async function bootstrapSession(): Promise<string> {
+  const r = await fetch(`${BASE}/api/auth/anonymous`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ device_id: deviceId() }),
+  });
+  if (!r.ok) throw new Error(String(r.status));
+  const body = (await r.json()) as { token: string };
+  keepToken(body.token);
+  return body.token;
+}
+
+/**
+ * A usable token, minting one if needed.
+ *
+ * SINGLE-FLIGHT. The app opens by firing several requests at once; without the
+ * shared promise each would bootstrap its own session, leaving a pile of live
+ * tokens for one learner and a race over which one localStorage kept. The
+ * promise is cleared on failure so a later call retries rather than
+ * re-throwing a stale rejection forever.
+ */
+export async function ensureSession(): Promise<string> {
+  const existing = storedToken();
+  if (existing) return existing;
+  if (!bootstrapping) {
+    bootstrapping = bootstrapSession().finally(() => {
+      bootstrapping = null;
+    });
+  }
+  return bootstrapping;
+}
+
+/**
+ * Rotate the session. The old token stops working the moment this returns, so
+ * the new one is stored before anything else can use it.
+ */
+export async function refreshSession(): Promise<void> {
+  const token = await ensureSession();
+  const r = await fetch(`${BASE}/api/auth/refresh`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    credentials: "include",
+  });
+  if (!r.ok) {
+    // Refresh failing means the session is already dead; drop it so the next
+    // call bootstraps cleanly instead of retrying a corpse.
+    clearSession();
+    throw new Error(String(r.status));
+  }
+  const body = (await r.json()) as { token: string };
+  keepToken(body.token);
+}
+
+/** Revoke this session server-side, then forget it locally. */
+export async function logout(): Promise<void> {
+  const token = storedToken();
+  if (token) {
+    try {
+      await fetch(`${BASE}/api/auth/logout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
+      });
+    } catch {
+      /* the network can fail; the local half of logout must still happen */
+    }
+  }
+  clearSession();
+}
+
+/* ── Google sign-in ───────────────────────────────────────────────────── */
+
+export type GoogleStart = {
+  nonce: string;
+  /** The OAuth client id, served BY THE BACKEND so there is one source of
+   *  truth. Deliberately not a VITE_ env var: two copies of a client id drift,
+   *  and the failure ("wrong audience") names neither of them. */
+  client_id: string;
+  expires_in: number;
+};
+
+export type GoogleSession = {
+  token: string;
+  user_id: string;
+  expires_at: string;
+  /** True when Google was just attached to the anonymous account in hand -
+   *  i.e. the learner kept their history rather than starting over. */
+  linked_now: boolean;
+  providers: string[];
+  email: string | null;
+  display_name: string | null;
+};
+
+/** Distinguishable so the UI can say something true about what went wrong. */
+export class GoogleSignInError extends Error {
+  constructor(readonly status: number) {
+    super(`google_sign_in_${status}`);
+  }
+  /** This Google account already belongs to a different Tilawah account. */
+  get isConflict() {
+    return this.status === 409;
+  }
+  /** The server has no Google client configured. */
+  get isUnavailable() {
+    return this.status === 503;
+  }
+}
+
+/** Ask for a single-use nonce. 503 means Google is not configured here. */
+export async function googleStart(): Promise<GoogleStart> {
+  const r = await fetch(`${BASE}/api/auth/google/start`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!r.ok) throw new GoogleSignInError(r.status);
+  return r.json();
+}
+
+/**
+ * Hand Google's ID token to the server, which links or signs in.
+ *
+ * DELIBERATELY NOT authedFetch. That wrapper reacts to a 401 by discarding the
+ * session and bootstrapping a new one - which here would throw away the very
+ * anonymous account we are trying to attach Google TO, and silently create a
+ * fresh empty one instead. The current token is sent as-is or not at all.
+ */
+export async function googleSignIn(
+  credential: string,
+  nonce: string,
+): Promise<GoogleSession> {
+  const current = storedToken();
+  const r = await fetch(`${BASE}/api/auth/google`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(current ? { Authorization: `Bearer ${current}` } : {}),
+    },
+    body: JSON.stringify({ credential, nonce }),
+  });
+  if (!r.ok) throw new GoogleSignInError(r.status);
+  const body = (await r.json()) as GoogleSession;
+  // The server rotated the session; the old token is already dead.
+  keepToken(body.token);
+  return body;
+}
+
+/** Who the current session belongs to. Shape mirrors MeOut on the server. */
+export type Me = {
+  user_id: string;
+  lang: string;
+  consented: boolean;
+  audio_consented: boolean;
+  consent_seen: boolean;
+  is_anonymous: boolean;
+  email: string | null;
+  display_name: string | null;
+  providers: string[];
+  session_expires_at: string;
+};
+
+export const me = () => authedFetch(`/api/auth/me`).then(json<Me>);
+
+/**
+ * A request carrying the session, with ONE retry on 401.
+ *
+ * `makeInit` IS A FACTORY, NOT AN OBJECT, and that is not fussiness: a retry
+ * has to build a fresh body. A FormData holding an audio Blob cannot reliably
+ * be sent twice, and reusing a consumed body fails in a way that looks like the
+ * upload silently vanishing.
+ *
+ * The 401 path is the whole point. A session expires after 30 days, is revoked
+ * when the learner deletes their data, and dies if the server forgets it. In
+ * every one of those cases the honest response is to get a new session and
+ * carry on - the learner did nothing wrong and there is nothing to tell them.
+ * Exactly one retry: if a fresh session is also refused, something is actually
+ * broken and looping would only hide it.
+ */
+async function authedFetch(
+  path: string,
+  makeInit: () => RequestInit = () => ({}),
+): Promise<Response> {
+  const send = (token: string) => {
+    const init = makeInit();
+    return fetch(`${BASE}${path}`, {
+      ...init,
+      credentials: "include",
+      headers: { ...(init.headers ?? {}), Authorization: `Bearer ${token}` },
+    });
+  };
+
+  const used = await ensureSession();
+  let r = await send(used);
+  if (r.status === 401) {
+    clearSessionIf(used);
+    r = await send(await ensureSession());
+  }
+  return r;
 }
 
 export const listAyat = () => fetch(`${BASE}/api/ayat`).then(json<Ayah[]>);
@@ -439,10 +723,17 @@ export type Reciters = {
 export const listReciters = () =>
   fetch(`${BASE}/api/reciters`).then(json<Reciters>);
 
+/**
+ * This learner's recent attempts.
+ *
+ * `device_id` IS GONE FROM THE QUERY STRING and that is the single biggest
+ * privacy win in this change. It used to be the authorization for this call,
+ * which meant the credential was written into access logs, browser history,
+ * referrer headers and every proxy on the path - by design, on every load. The
+ * server now scopes the response to the session; there is nothing to send.
+ */
 export const history = (limit = 20) =>
-  fetch(
-    `${BASE}/api/attempts?device_id=${encodeURIComponent(deviceId())}&limit=${limit}`,
-  ).then(json<Attempt[]>);
+  authedFetch(`/api/attempts?limit=${limit}`).then(json<Attempt[]>);
 
 /** A practice range, indexed RELATIVE TO THE AYAH (never encoded indices). */
 export type PracticeRange = {
@@ -526,27 +817,33 @@ export async function submitAttempt(
   lang: string,
   range?: PracticeRange,
 ): Promise<Attempt> {
-  const fd = new FormData();
-  fd.append("audio", audio, "recitation.wav");
-  fd.append("sura", String(sura));
-  fd.append("aya", String(aya));
-  fd.append("lang", lang);
-  fd.append("device_id", deviceId());
-  // Omitted or 0 means the whole ayah, so existing callers are unaffected.
-  fd.append("start_word", String(range?.start_word ?? 0));
-  fd.append("num_words", String(range?.num_words ?? 0));
-  fd.append("include_bismillah", String(range?.include_bismillah ?? false));
-  return fetch(`${BASE}/api/attempts`, { method: "POST", body: fd }).then(
-    json<Attempt>,
-  );
+  // Rebuilt per attempt, because a 401 retry needs a fresh body - the audio
+  // Blob cannot be re-sent from a consumed FormData.
+  const build = (): RequestInit => {
+    const fd = new FormData();
+    fd.append("audio", audio, "recitation.wav");
+    fd.append("sura", String(sura));
+    fd.append("aya", String(aya));
+    fd.append("lang", lang);
+    // No device_id. The attempt is filed for the session's user; naming an
+    // account in a form field is what let anyone record against anyone.
+    // Omitted or 0 means the whole ayah, so existing callers are unaffected.
+    fd.append("start_word", String(range?.start_word ?? 0));
+    fd.append("num_words", String(range?.num_words ?? 0));
+    fd.append("include_bismillah", String(range?.include_bismillah ?? false));
+    return { method: "POST", body: fd };
+  };
+  return authedFetch(`/api/attempts`, build).then(json<Attempt>);
 }
 
 export async function flagWrong(attemptId: number): Promise<void> {
-  await fetch(`${BASE}/api/attempts/${attemptId}/wrong`, {
+  // The server now refuses an attempt that is not this learner's, with a 404
+  // that is deliberately indistinguishable from "no such attempt".
+  await authedFetch(`/api/attempts/${attemptId}/wrong`, () => ({
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ note: null }),
-  });
+  }));
 }
 
 /* ── qori review tool ─────────────────────────────────────────────────────
@@ -749,11 +1046,24 @@ export async function setConsent(
   consented: boolean,
   audioConsented = false,
 ): Promise<void> {
-  const fd = new FormData();
-  fd.append("device_id", deviceId());
-  fd.append("consented", String(consented));
-  fd.append("audio_consented", String(audioConsented));
-  await fetch(`${BASE}/api/consent`, { method: "POST", body: fd });
+  await authedFetch(`/api/consent`, () => {
+    const fd = new FormData();
+    // No device_id: the server acts on the session's own account and nothing
+    // else. This call can DESTROY every attempt and every stored recording,
+    // and until now a form field chose whose.
+    fd.append("consented", String(consented));
+    fd.append("audio_consented", String(audioConsented));
+    return { method: "POST", body: fd };
+  });
+
+  if (!consented) {
+    // Declining consent hard-deletes the account, and the session cascades
+    // away with it - the token in hand is already dead. Dropping it here means
+    // the next call bootstraps a fresh anonymous session instead of spending a
+    // round trip discovering the 401. The learner keeps using the app; there
+    // is simply nothing left of what they asked to be forgotten.
+    clearSession();
+  }
 }
 
 /**

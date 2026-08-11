@@ -3527,6 +3527,34 @@ button.plan__hit:hover {
   color: var(--ink);
 }
 
+/* GOOGLE RENDERS ITS OWN BUTTON HERE and we do not restyle its insides — that
+   is an iframe, and their brand terms cover what is in it. What this does is
+   centre it and give it the same rhythm as the Apple button beside it, so the
+   pair does not read as two unrelated controls. See GoogleButton.tsx for why
+   this one is not ours to draw. */
+.auth__google {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth__google > div {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+  color-scheme: light;
+}
+
+.auth__google-error {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--rose, #d98b8b);
+  text-align: center;
+}
+
 .auth__lang {
   display: flex;
   align-items: center;

@@ -8,6 +8,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
     "@fontsource/amiri-quran": "^5.3.0",
     "@fontsource/cormorant-garamond": "^5.3.0",
     "@fontsource/golos-text": "^5.3.0",

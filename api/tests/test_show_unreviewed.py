@@ -410,12 +410,21 @@ def boot(monkeypatch, **overrides):
     bug therefore turned these tests red for a reason with nothing to do with
     the review gate they are about. Each guard gets its own test; neither may
     depend on an untracked file.
+
+    THE SAME APPLIES TO THE AUTH GUARDS added alongside sessions: production
+    also refuses an insecure session cookie, and refuses an open device-claim
+    window with no deadline. Both are real requirements with their own tests in
+    test_auth_hardening.py, and neither has anything to do with the content
+    gate - so they are pinned to a valid production configuration here rather
+    than allowed to fail these tests for an unrelated reason.
     """
     import anyio
 
     from tilawah.api import main
 
     overrides.setdefault("debug_audio", False)
+    overrides.setdefault("session_cookie_secure", True)
+    overrides.setdefault("allow_device_claim", False)
     monkeypatch.setattr(main, "settings",
                         dataclasses.replace(settings, **overrides))
 

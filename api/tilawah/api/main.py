@@ -15,6 +15,7 @@ from .. import content
 from ..config import settings
 from ..content import coaching
 from ..db import init_db
+from .auth_routes import router as auth_router
 from .routes import router
 
 logging.basicConfig(level=logging.INFO)
@@ -63,6 +64,83 @@ async def lifespan(_: FastAPI):
             "strength of content no qori has read is the trust failure this "
             "project is built to avoid."
         )
+    # ── the device-claim window ───────────────────────────────────────────
+    #
+    # Claiming trades a device id for a session, and a device id is not a
+    # secret - it has been in access logs since the first release. The window
+    # exists to migrate existing installs exactly once. These checks are what
+    # stop "temporary" from meaning "until someone remembers", in the same
+    # spirit as the content gate above: structural, not one unset variable away
+    # from failing.
+    try:
+        claim_deadline = settings.claim_deadline
+    except ValueError:
+        raise RuntimeError(
+            f"TILAWAH_DEVICE_CLAIM_UNTIL={settings.device_claim_until!r} is not "
+            "an ISO date (YYYY-MM-DD). Refusing to start rather than treat a "
+            "typo as 'no deadline', which would leave the claim window open "
+            "indefinitely.")
+
+    if settings.is_production and settings.allow_device_claim:
+        if claim_deadline is None:
+            raise RuntimeError(
+                "TILAWAH_ALLOW_DEVICE_CLAIM=1 in production with no "
+                "TILAWAH_DEVICE_CLAIM_UNTIL deadline.\n"
+                "Device claiming hands a session to anyone presenting a device "
+                "id, and device ids are not secrets - they have been in access "
+                "logs and browser history since the first release. It is a "
+                "migration affordance, never an authentication mechanism.\n"
+                "Either set a deadline for the migration window:\n"
+                "    TILAWAH_DEVICE_CLAIM_UNTIL=YYYY-MM-DD\n"
+                "or, once existing installs have moved onto sessions:\n"
+                "    TILAWAH_ALLOW_DEVICE_CLAIM=0")
+        if not settings.device_claim_open:
+            logging.info("device claim window closed on %s; claiming is off",
+                         claim_deadline)
+
+    if settings.device_claim_open:
+        bar = "!" * 68
+        logging.warning(bar)
+        logging.warning("DEVICE CLAIM WINDOW IS OPEN - temporary, close it")
+        logging.warning("POST /api/auth/anonymous will hand a session to anyone")
+        logging.warning("presenting a known device_id. Device ids are NOT secrets.")
+        logging.warning("Closes: %s", claim_deadline or "NO DEADLINE SET (dev only)")
+        logging.warning("When existing installs have migrated, set")
+        logging.warning("TILAWAH_ALLOW_DEVICE_CLAIM=0 and remove this window.")
+        logging.warning(bar)
+
+    # ── session cookie ────────────────────────────────────────────────────
+    #
+    # A session cookie without Secure is sent over plain http, which puts the
+    # credential on the wire for anyone on the path. Dev runs on http and needs
+    # the default off; production does not get the choice.
+    if settings.is_production and not settings.session_cookie_secure:
+        raise RuntimeError(
+            "TILAWAH_SESSION_COOKIE_SECURE=0 in production. The session cookie "
+            "would be transmitted over plain http, exposing the token to anyone "
+            "on the network path. Set TILAWAH_SESSION_COOKIE_SECURE=1.")
+
+    samesite = (settings.session_cookie_samesite or "").lower()
+    if samesite not in ("lax", "strict", "none"):
+        raise RuntimeError(
+            f"TILAWAH_SESSION_COOKIE_SAMESITE={settings.session_cookie_samesite!r} "
+            "is not one of lax, strict, none. An unrecognised value is dropped "
+            "by the browser, which silently removes the CSRF protection this "
+            "relies on.")
+    if samesite == "none" and not settings.session_cookie_secure:
+        # Browsers reject SameSite=None without Secure outright, so the cookie
+        # would simply never be stored - an auth system that fails closed in a
+        # way nobody notices until every login stops working.
+        raise RuntimeError(
+            "TILAWAH_SESSION_COOKIE_SAMESITE=none requires "
+            "TILAWAH_SESSION_COOKIE_SECURE=1. Browsers refuse the combination "
+            "and the session cookie would never be stored at all.")
+    if settings.is_production and samesite == "none":
+        logging.warning(
+            "session cookie is SameSite=none: the browser will attach it to "
+            "cross-site requests, so CSRF protection must come from somewhere "
+            "else before any state-changing route moves behind the session.")
+
     if settings.show_unreviewed:
         bar = "=" * 68
         logging.warning(bar)
@@ -90,6 +168,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(router)
+# Sessions. Additive in this phase: nothing in `router` requires one yet, and
+# the device_id endpoints are untouched. See api/auth_routes.py.
+app.include_router(auth_router)
 
 # The isolated letter recordings a coaching card's practice section plays.
 # Mounted unconditionally: the directory is checked in (with a README) so the

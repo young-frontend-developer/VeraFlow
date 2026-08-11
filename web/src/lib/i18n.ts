@@ -268,9 +268,18 @@ const STRINGS = {
     auth_anon_note:
       "Tilawah hozir hisobsiz ishlaydi. Barcha imkoniyatlar shu qurilmada toʻliq ochiq.",
     // Said before the fields, not after. A learner should know the form is
-    // inert before they type into it.
+    // inert before they type into it. NARROWED when Google went live: email
+    // and password are still inert, but "accounts are not connected" stopped
+    // being true and a stale disclaimer is its own kind of lie.
     auth_pending:
-      "Hisoblar hali ulanmagan — bu yerdagi maydonlar hozircha ishlamaydi. Quyidagi tugma orqali hisobsiz davom eting.",
+      "Email va parol bilan kirish hali tayyor emas. Google orqali kiring yoki hisobsiz davom eting.",
+    // Shown when this Google account already belongs to another Tilawah
+    // account. Says what happened and what the learner can actually do -
+    // nothing was lost and nothing was changed.
+    auth_google_conflict:
+      "Bu Google hisobi boshqa Tilawah hisobiga ulangan. Hech narsa oʻzgarmadi. Shu hisobda qolish uchun hisobsiz davom eting.",
+    auth_google_failed:
+      "Google orqali kirib boʻlmadi. Qaytadan urinib koʻring yoki hisobsiz davom eting.",
 
     // ── onboarding. No sign up, no log in: there are no accounts, and the
     // consent step is the real decision being made here.
@@ -1070,7 +1079,11 @@ const STRINGS = {
     auth_anon_note:
       "Сейчас Tilawah работает без аккаунта. Все возможности полностью доступны на этом устройстве.",
     auth_pending:
-      "Аккаунты пока не подключены — поля здесь не работают. Продолжите без аккаунта кнопкой ниже.",
+      "Вход по email и паролю пока не готов. Войдите через Google или продолжите без аккаунта.",
+    auth_google_conflict:
+      "Этот аккаунт Google уже привязан к другому аккаунту Tilawah. Ничего не изменилось. Чтобы остаться в текущем, продолжите без аккаунта.",
+    auth_google_failed:
+      "Не удалось войти через Google. Попробуйте ещё раз или продолжите без аккаунта.",
 
     onboard_welcome: "Добро пожаловать в Tilawah",
     onboard_welcome_body:

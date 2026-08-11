@@ -91,14 +91,30 @@ def test_client_fields_are_declared_in_the_wire_contract():
 # ── through the real HTTP route ───────────────────────────────────────────
 
 @pytest.fixture
-def api(monkeypatch):
-    """The real app, with inference replaced.
+def api(monkeypatch, tmp_path):
+    """The real app, with inference replaced and a throwaway database.
 
     Only the SERIALISATION is under test here; running the 2.42 GB model would
     make this a slow test that people skip, and skipped tests catch nothing.
+
+    TWO THINGS CHANGED IN PHASE 3A and both are load-bearing:
+
+    * A SESSION IS NOW REQUIRED. /api/attempts no longer takes the caller's
+      word for who they are, so this fixture signs in like a real client would
+      - POST /api/auth/anonymous, then carry the bearer token. Without it every
+      request here is a 401 and the wire shape is never reached.
+
+    * ITS OWN DATABASE. This fixture used to run against api/tilawah.db, which
+      is why a user called `contract-test` is sitting in the developer's real
+      data. A test suite must not write to the live database, least of all one
+      holding learner recitations.
     """
+    from sqlalchemy import event
+    from sqlmodel import Session, SQLModel, create_engine
+
     from tilawah.api import routes
     from tilawah.api.main import app
+    from tilawah.db import get_session
     from tilawah.engine.pipeline import Feedback
 
     def fake_analyze(*_a, **_k):
@@ -108,7 +124,34 @@ def api(monkeypatch):
                         snr_db=42.0, duration_s=2.4)
 
     monkeypatch.setattr(routes, "analyze", fake_analyze)
-    return TestClient(app)
+
+    engine = create_engine(f"sqlite:///{tmp_path / 'contract.db'}",
+                           connect_args={"check_same_thread": False})
+
+    @event.listens_for(engine, "connect")
+    def _fk_on(dbapi_connection, _record):
+        cur = dbapi_connection.cursor()
+        cur.execute("PRAGMA foreign_keys=ON")
+        cur.close()
+
+    SQLModel.metadata.create_all(engine)
+
+    def _override():
+        with Session(engine) as s:
+            yield s
+
+    app.dependency_overrides[get_session] = _override
+    client = TestClient(app)
+    # `contract-test` as the device id so it matches what the posts below send:
+    # for an account with no sign-in, user.id IS the device id.
+    token = client.post("/api/auth/anonymous",
+                        json={"device_id": "contract-test"}).json()["token"]
+    client.headers.update({"Authorization": f"Bearer {token}"})
+
+    yield client
+
+    app.dependency_overrides.clear()
+    engine.dispose()
 
 
 def test_http_response_carries_every_client_field(api):

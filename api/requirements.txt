@@ -4,6 +4,16 @@ python-multipart
 sqlmodel
 psycopg[binary]
 anyio
+# Schema migrations. db/__init__.py:_add_missing_columns() can only ADD columns
+# to sqlite, and says so - the auth tables are the change it told you to bring
+# this in for. Run from api/: `py -3.13 -m alembic upgrade head`.
+alembic
+# Verifies Google ID tokens: fetches and caches Google's signing keys and
+# checks the signature. Everything above the signature - issuer, audience
+# allowlist, expiry, a usable `sub` - is re-checked in tilawah/google_identity.py
+# rather than delegated, because those are the claims that decide WHO the
+# caller is. Needs `requests`, which uvicorn[standard] already pulls in.
+google-auth
 
 # engine - same pins the spike verified on Python 3.13
 quran-muaalem

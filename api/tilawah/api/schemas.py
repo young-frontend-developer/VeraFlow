@@ -312,3 +312,94 @@ class MetaOut(BaseModel):
     # named, actionable message.
     error_fields: list[str] = []
     version: str = "0.1.0"
+
+
+# ── sessions ──────────────────────────────────────────────────────────────
+
+class AnonymousSessionIn(BaseModel):
+    """Bootstrap a session.
+
+    `device_id` IS A MIGRATION AFFORDANCE, NOT A CREDENTIAL BY DESIGN. Sending
+    one that already exists hands back a session for that learner, so their
+    history survives the move to accounts. Omit it and a brand new anonymous
+    user is created instead.
+
+    It is a bearer exchange and it is temporary: device ids have been visible
+    in access logs since the first release. Gated by settings.allow_device_claim
+    so the window can be closed the moment the client stops needing it.
+    """
+    device_id: str | None = None
+
+
+class SessionOut(BaseModel):
+    """A freshly minted session.
+
+    `token` IS RETURNED EXACTLY ONCE AND NEVER AGAIN. Only its hash is stored,
+    so it cannot be re-read, re-sent, or recovered from the database - if the
+    client loses it, the only remedy is a new session.
+    """
+    token: str
+    token_type: str = "bearer"
+    expires_at: datetime
+    user_id: str
+    # True when this session was issued against an existing device id rather
+    # than a newly created user. The client can tell "your practice came with
+    # you" from "welcome, you are new".
+    claimed_existing: bool = False
+
+
+class MeOut(BaseModel):
+    """Who the current session belongs to.
+
+    `providers` is always empty in this phase - AuthIdentity exists but nothing
+    writes to it yet. It is present so the client has a stable shape to read
+    before Google lands, rather than a field that appears later.
+    """
+    user_id: str
+    lang: str
+    consented: bool
+    audio_consented: bool
+    consent_seen: bool
+    # Anonymous is a first-class state, not a lesser one. Derived from whether
+    # any AuthIdentity row points here - never stored, so it cannot drift.
+    is_anonymous: bool
+    email: str | None = None
+    display_name: str | None = None
+    providers: list[str] = []
+    session_expires_at: datetime
+
+
+# ── Google sign-in ────────────────────────────────────────────────────────
+
+class GoogleStartOut(BaseModel):
+    """What the client needs before it may ask Google for a credential.
+
+    The nonce is single-use and short-lived. Google embeds it in the ID token,
+    and a token carrying a nonce this server did not just issue is refused -
+    which is what stops an attacker pushing their own Google credential into
+    someone else's browser and silently signing them into the wrong account.
+    """
+    nonce: str
+    client_id: str
+    expires_in: int
+
+
+class GoogleSignInIn(BaseModel):
+    """The ID token exactly as Google handed it to the browser.
+
+    THERE IS NO `subject` FIELD AND THERE MUST NEVER BE ONE. The Google account
+    is whatever the signature proves, never what the caller says it is.
+    """
+    credential: str
+    nonce: str | None = None
+
+
+class GoogleSessionOut(SessionOut):
+    """A session, plus what just happened to the account behind it."""
+    # True when this call attached Google to an existing anonymous account.
+    # The client uses it to say "your practice came with you" rather than
+    # guessing from the absence of an error.
+    linked_now: bool = False
+    providers: list[str] = []
+    email: str | None = None
+    display_name: str | None = None

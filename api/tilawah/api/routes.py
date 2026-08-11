@@ -20,6 +20,7 @@ from ..engine.ranges import (Range, estimate_seconds, legal_cuts, n_words,
                              uthmani_of)
 from ..engine.segments import segments_for, segments_for_range
 from ..engine.target import target_for
+from .deps import current_user, require_own_device
 from .schemas import (AttemptOut, AyahBriefOut, AyahOut, AyahSegmentsOut,
                       HadithOut, MetaOut, PracticeSegmentOut, ReciterOut,
                       RecitersOut, ReviewDecisionIn, ReviewEntryOut,
@@ -36,13 +37,15 @@ router = APIRouter(prefix="/api")
 _consent_lock = threading.Lock()
 
 
-def _user(session: Session, device_id: str, lang: str) -> User:
-    user = session.get(User, device_id)
-    if user is None:
-        user = User(id=device_id, lang=lang)
-        session.add(user)
-        session.commit()
-    return user
+# _user() USED TO LIVE HERE and it was the whole authorization model: take the
+# device_id off the request, look it up, create it if absent, and serve
+# whoever asked as that person. It is gone rather than fixed. Any helper that
+# turns a caller-supplied string into a User is the vulnerability itself, and
+# leaving one in the module invites the next route to call it.
+#
+# Identity now comes from the session and only from the session - see
+# api/deps.py:current_user. A device_id on a request is a claim to be checked
+# against that session (deps.require_own_device), never a way to name a user.
 
 
 @router.get("/ayat", response_model=list[AyahOut])
@@ -151,12 +154,18 @@ async def create_attempt(
     sura: int = Form(...),
     aya: int = Form(...),
     lang: str = Form("uz"),
-    device_id: str = Form(...),
+    # ACCEPTED, VALIDATED, AND OTHERWISE IGNORED. It used to name the account
+    # this recording was filed under, which meant anyone could file a
+    # recitation against anyone. The attempt is now written for the session's
+    # user; sending someone else's device id is a 403, not a redirect.
+    # Optional so a session-only client need not send it at all.
+    device_id: str | None = Form(None),
     # The practice range, relative to the ayah. num_words=0 means whole ayah,
     # which keeps every existing client working unchanged.
     start_word: int = Form(0),
     num_words: int = Form(0),
     include_bismillah: bool = Form(False),
+    user: User = Depends(current_user),
     session: Session = Depends(get_session),
 ) -> AttemptOut:
     data = await audio.read()
@@ -165,7 +174,7 @@ async def create_attempt(
     if lang not in content.LANGS:
         lang = "uz"
 
-    user = _user(session, device_id, lang)
+    require_own_device(session, user, device_id)
 
     # Inference is CPU-bound and holds a semaphore; keep the event loop free.
     # The learner's audio consent travels with the call - the engine decides
@@ -204,11 +213,24 @@ async def create_attempt(
 
 @router.post("/attempts/{attempt_id}/wrong")
 def flag_wrong(attempt_id: int, body: WrongFlagIn,
+               user: User = Depends(current_user),
                session: Session = Depends(get_session)) -> dict:
     """The learner says the feedback was wrong. Decision 7: this is the label
-    you cannot buy - it feeds the uncertainty-prioritised expert review queue."""
+    you cannot buy - it feeds the uncertainty-prioritised expert review queue.
+
+    THIS ROUTE HAD NO OWNERSHIP CHECK AT ALL. `attempt_id` is a sequential
+    integer, so anyone could walk 1..n and write wrong_note - free text - onto
+    every learner's attempts. That is both a privacy leak and a corruption of
+    the one label this project cannot buy: the expert review queue is
+    prioritised by these flags, so poisoning them steers what the qori sees.
+
+    404 AND NOT 403 for an attempt owned by someone else. 403 would confirm the
+    row exists, which is exactly the enumeration this closes. To this caller,
+    an attempt that is not theirs and an attempt that does not exist are the
+    same thing, and the API says so.
+    """
     row = session.get(Attempt, attempt_id)
-    if row is None:
+    if row is None or row.user_id != user.id:
         raise HTTPException(404, "attempt not found")
     row.wrong_flag = True
     row.wrong_note = body.note
@@ -446,20 +468,38 @@ def meta() -> MetaOut:
 
 
 @router.post("/consent")
-def set_consent(device_id: str = Form(...), consented: bool = Form(...),
+def set_consent(consented: bool = Form(...),
                 audio_consented: bool = Form(False),
+                device_id: str | None = Form(None),
+                user: User = Depends(current_user),
                 session: Session = Depends(get_session)) -> dict:
     """Two separate permissions. Keeping a record of what you recited is not the
     same as keeping a recording of your voice, so granting the first never
-    implies the second, and audio can be revoked on its own."""
+    implies the second, and audio can be revoked on its own.
+
+    THE MOST DANGEROUS ROUTE IN THE APP, and the reason is `consented=false`:
+    it calls delete_user(), which hard-deletes every attempt and every stored
+    recording. Until now the account it deleted was named by a form field, so
+    any caller who knew - or guessed - a device id could destroy that learner's
+    entire practice history, and the server would answer 200. There is no undo
+    and no backup a learner can reach.
+
+    It now deletes the session's own account and nothing else. `device_id` is
+    accepted only so existing clients keep working, is validated against the
+    session, and is never used to choose whose data is destroyed.
+    """
     with _consent_lock:
-        user = _user(session, device_id, "uz")
+        require_own_device(session, user, device_id)
 
         # Audio consent cannot outlive attempt consent, and revoking it must
         # delete the recordings made under it - not just stop making new ones.
         audio = bool(audio_consented and consented and settings.collect_audio)
         if user.audio_consented and not audio:
-            delete_stored_audio(device_id)
+            # user.id, not the form field. Audio is named with the id that
+            # recorded it, which for every legacy account IS the device id -
+            # so this is the same file set, chosen by the session instead of
+            # by the caller.
+            delete_stored_audio(user.id)
 
         user.consented = consented
         user.audio_consented = audio
@@ -469,7 +509,10 @@ def set_consent(device_id: str = Form(...), consented: bool = Form(...),
 
         if not consented:
             from ..db import delete_user
-            delete_user(session, device_id)
+            # Deletes this user's rows AND cascades to their sessions, so the
+            # token that authorised the deletion stops working immediately -
+            # which is correct: the account it belonged to no longer exists.
+            delete_user(session, user.id)
     return {"ok": True, "consented": consented, "audio_consented": audio}
 
 
@@ -511,10 +554,26 @@ def hadith_by_id(hadith_id: str, lang: str = "uz") -> HadithOut | None:
 
 
 @router.get("/attempts", response_model=list[AttemptOut])
-def history(device_id: str, limit: int = 20,
+def history(limit: int = 20, device_id: str | None = None,
+            user: User = Depends(current_user),
             session: Session = Depends(get_session)) -> list[AttemptOut]:
+    """This learner's recent attempts. Always theirs, whatever the query says.
+
+    THE WORST OF THE OLD ROUTES. `device_id` was a REQUIRED QUERY PARAMETER and
+    the sole authorization: send someone else's and you got their whole
+    practice history. Being in the query string made it worse than the form
+    posts - it lands in access logs, browser history, referrer headers and any
+    proxy on the path, so the credential was being written down everywhere by
+    design.
+
+    The parameter survives only so existing callers do not break, is validated
+    against the session, and no longer selects anything. The scope is
+    Attempt.user_id == the session's user, full stop. Response shape is
+    unchanged.
+    """
+    require_own_device(session, user, device_id)
     rows = session.exec(
-        select(Attempt).where(Attempt.user_id == device_id)
+        select(Attempt).where(Attempt.user_id == user.id)
         .order_by(Attempt.created_at.desc()).limit(limit)
     ).all()
     # Rows written before card merging existed have no `words`, `occurrences`,
