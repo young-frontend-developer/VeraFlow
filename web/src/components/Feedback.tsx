@@ -224,6 +224,8 @@ export default function Feedback({
               lang={lang}
               error={e}
               accepted={retry.accepted.includes(id)}
+              beforeScore={attempt.score}
+              afterScore={retry.rungs[id]?.score}
             />
           );
         }
@@ -578,11 +580,21 @@ function Fixed({
   lang,
   error,
   accepted = false,
+  beforeScore,
+  afterScore,
 }: {
   lang: Lang;
   error: TajweedError;
   accepted?: boolean;
+  beforeScore?: number;
+  afterScore?: number | null;
 }) {
+  const showImprovement =
+    !accepted &&
+    beforeScore !== undefined &&
+    afterScore != null &&
+    afterScore > beforeScore;
+
   return (
     <article className="card card--fixed" role="status">
       <p className="card__kicker">
@@ -599,6 +611,13 @@ function Fixed({
       <p className="card__fixed-title">
         {t(lang, accepted ? "fixed_enough" : "fixed_title")}
       </p>
+      {showImprovement && (
+        <p className="card__improvement">
+          {t(lang, "weak_before")} {Math.round(beforeScore! * 100)}%
+          {" → "}
+          {t(lang, "weak_after")} {Math.round(afterScore! * 100)}%
+        </p>
+      )}
     </article>
   );
 }

@@ -6458,3 +6458,11 @@ button.link {
 .focus-card__cta {
   flex: 1;
 }
+
+/* ══ before/after improvement line ═══════════════════════════════════════ */
+
+.card__improvement {
+  font-size: 13px;
+  color: var(--jade);
+  margin-top: 8px;
+}
