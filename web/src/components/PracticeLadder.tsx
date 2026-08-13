@@ -8,47 +8,37 @@ import DurationMeter from "./DurationMeter";
  * canonical shape (listen, practise, re-check), which are one thing in the UI
  * because they are one thing to do: hear it, say it, prove it.
  *
- * THE LADDER DEPENDS ON THE MISTAKE, and the server has already chosen which
- * one — this component renders whatever rungs arrive, in order. See
- * engine/practice.py for why there are four shapes:
+ * ONE ACTION, NOT A LADDER — and the name is now historical. The server sends
+ * exactly one rung: the affected word, with the thing to attend to named by its
+ * focus (sound the letter you skipped / leave out the one you added / hold for
+ * the count / say it as written). This component renders whatever arrives, so
+ * it needed no change when four rungs became one.
  *
- *   articulation  letter → syllables → word → ayah
- *   omission      word_include → word → ayah
- *   insertion     word_omit → word → ayah
- *   duration      word_hold → word → ayah
+ * WHAT WAS REMOVED, AND WHY IT MATTERED:
  *
- * On an articulation error the learner meets the sound by itself before meeting
- * it inside anything, which is how a teacher introduces it. On the other three
- * that opening would be wrong: a dropped letter was never mispronounced, an
- * added one needs leaving out rather than saying, and a bare letter has no
- * duration to hold. Those ladders open on the word instead, said slowly, with
- * the thing to attend to named by the rung.
+ *   letter, syllables   the bare sound and the sound under three harakat. Both
+ *                       carried `check: "self"` because THE ENGINE HAS NO
+ *                       TARGET FOR A BARE LETTER — the phonetizer works on
+ *                       Quranic text and the model is trained on connected
+ *                       recitation, so a 300 ms isolated consonant lands in the
+ *                       muqatta'at collapse. The learner graded themselves on
+ *                       the first thing they touched.
  *
- * ── PROGRESSIVE UNLOCK (RULE 9) ────────────────────────────────────────────
+ *   ayah                appended to EVERY card. Ten corrections meant ten whole
+ *                       recitations, one per card — and card 2, fixed last,
+ *                       still demanded the entire verse after cards 8, 5 and 1
+ *                       had each already demanded it. Reciting the ayah is the
+ *                       TEST; running the test after every correction is not
+ *                       practice, it is nine redundant examinations.
  *
- * A rung opens only when the one before it is cleared. Not to gamify it: the
- * ladder is an ORDER, and a learner who jumps to the ayah is doing the test
- * again rather than the practice — which is the exact behaviour the old single
- * "re-record" button forced on everyone.
+ * The full ayah is now requested ONCE, by Feedback.tsx, gated on there being no
+ * open cards left. See engine/practice.ladder for the server half.
  *
- * Clearing means different things on different rungs, and the UI has to be
- * honest about which:
- *
- *   check: "score"   recorded, transcribed, diffed against a real target. The
- *                    engine says whether the mistake is still there and what
- *                    the range scored. Word and ayah rungs.
- *
- *   check: "self"    the learner confirms they said it. Letter and syllable
- *                    rungs, because THE ENGINE HAS NO TARGET FOR A BARE LETTER
- *                    — the phonetizer works on Quranic text, and the model is
- *                    trained on connected recitation, so a 300 ms isolated
- *                    consonant lands in the muqatta'at collapse. A percentage
- *                    there would be a number with nothing behind it, shown to a
- *                    beginner on the first rung they touch.
- *
- * So the chain is complete and the judging is not uniform. That is stated on
- * the rung rather than hidden: a self-checked rung says "men aytdim", a scored
- * one shows what it scored.
+ * Every rung that remains is `check: "score"` — recorded, transcribed and
+ * diffed against a real target — because a word range of an ayah is exactly
+ * what the engine can judge. The unlock machinery below is retained and inert:
+ * with one rung there is nothing to lock, and removing it would be a rewrite of
+ * a component that is currently correct.
  *
  * ── AUDIO (RULES 6 AND 8) ──────────────────────────────────────────────────
  *

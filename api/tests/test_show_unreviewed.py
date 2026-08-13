@@ -172,12 +172,16 @@ def test_unauthored_code_gets_a_body_without_invented_rulings(env):
     assert body["reviewed"] is False
     # It still has a learner-facing title to render under.
     assert card["kind"] == "pronunciation"
-    # ...and a ladder, because none of it needed authoring. This fixture's
-    # error was never located in a word, so there is no word rung to build —
-    # which is the point: the ladder gives what it can and omits what it
-    # cannot, rather than showing an empty row.
-    assert [r["focus"] for r in card["practice"]] == [
-        "letter", "syllables", "ayah"]
+    # ...and NO retry action, because this fixture's error was never located in
+    # a word. That is the point rather than a gap: the retry records the
+    # affected word, and where the engine could not place one there is nothing
+    # honest to record against.
+    #
+    # It used to assert ["letter", "syllables", "ayah"] — the bare-letter drill
+    # the engine could not score, plus the whole-ayah rung every card carried.
+    # Both are gone; see engine/practice.ladder and test_practice.py. The card
+    # is still LOCATED and still readable, which is what this test is about.
+    assert card["practice"] == []
 
 
 def test_no_card_carries_the_code_into_rendered_text(env):
@@ -331,22 +335,39 @@ def test_different_letters_do_not_merge(env):
     assert len(shown) == 2
 
 
-def test_merge_preserves_severity_ranking(env):
-    """Ranking happens before the fold, and the fold must not undo it."""
+def test_merge_preserves_the_ranking(env):
+    """Ranking happens before the fold, and the fold must not undo it.
+
+    THE ORDER THIS ASSERTS CHANGED, the property did not. It used to expect
+    severity order (SUB_AYN_HAMZA first, because a substituted letter outranks
+    a shortened madd); ordering is now by position in the recitation, so the
+    madd at unit 0 comes first. What is still being tested is that merging
+    preserves whatever order ranking produced - which is the thing that would
+    silently break.
+    """
     env("dev")
     many = [
         TypedError(code="MADD_SHORT", at=0, letter="ا",
-                   expected_count=4, heard_count=2),        # medium
+                   expected_count=4, heard_count=2),
         TypedError(code="SUB_AYN_HAMZA", at=9, letter="ع",
-                   expected="ع", heard="ء"),                # high
+                   expected="ع", heard="ء"),
     ]
     shown, _ = pipeline.present(many, "uz")
-    assert [s["code"] for s in shown] == ["SUB_AYN_HAMZA", "MADD_SHORT"]
+    assert [s["code"] for s in shown] == ["MADD_SHORT", "SUB_AYN_HAMZA"]
 
 
-def test_ordering_is_by_severity_then_position(env):
-    """Uncapped does not mean unordered — the most serious correction still
-    comes first, which is what the cap was really buying."""
+def test_ordering_is_by_position_in_the_recitation(env):
+    """Uncapped does not mean unordered — cards follow the reading.
+
+    Renamed and inverted from test_ordering_is_by_severity_then_position. The
+    fixture is unchanged and is a good one for this: its three errors are at
+    units 5, 9 and 1 with severities low, high and medium, so severity order
+    and position order share no pair. Under the old rule this returned
+    high/medium/low; it now returns 1, 5, 9.
+
+    See engine/pipeline._rank for why this was overridden, and
+    test_card_order.py for the fuller coverage.
+    """
     env("dev")
     errs = [
         TypedError(code="MADD_LONG", at=5, letter="ا",
@@ -357,8 +378,9 @@ def test_ordering_is_by_severity_then_position(env):
                    expected_count=4, heard_count=2),      # severity medium
     ]
     shown, _ = pipeline.present(errs, "uz")
-    assert [s["code"] for s in shown] == ["SUB_AYN_HAMZA", "GHUNNA_SHORT",
-                                          "MADD_LONG"]
+    assert [s["code"] for s in shown] == ["GHUNNA_SHORT", "MADD_LONG",
+                                          "SUB_AYN_HAMZA"]
+    assert [s["at"] for s in shown] == [1, 5, 9]
 
 
 # ───────────────────────────────────────────── the gate cannot be configured

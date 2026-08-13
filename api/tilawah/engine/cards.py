@@ -173,6 +173,11 @@ WIRE_KEYS = (
     # `sifa_name` the "which ṣifa", `articulation` the "which mouth position" -
     # the three questions a card could not previously answer at all.
     "rule_name", "sifa_name", "articulation",
+    # The rule PLACED at this error's position, as a code. Drives the card's
+    # tint and, later, the matching colour on the ayah. "" when rule_presence
+    # could not place one, which the client must read as "draw no rule colour"
+    # rather than picking a default.
+    "rule_code",
     # Where the CORRECT letter comes from and what it is like, one sentence,
     # rendered above the fix. Empty on cards that are not about producing a
     # letter - see content/makharij.py.
@@ -215,7 +220,7 @@ def ensure_shape(err: dict) -> dict:
     # are left EMPTY rather than reconstructed: `rule_name` and `articulation`
     # are authored text, and inventing either for an old attempt would put words
     # on a card that no qori wrote and no detector supported.
-    for key in ("rule_name", "sifa_name", "articulation"):
+    for key in ("rule_name", "sifa_name", "articulation", "rule_code"):
         out.setdefault(key, "")
     # `makhraj` IS reconstructed, unlike the three above, and the difference is
     # the point: those are authored text and inventing them for an old attempt

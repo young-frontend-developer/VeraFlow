@@ -266,65 +266,67 @@ def _articulation_opening(letter: str, letter_audio: str) -> list[dict]:
 
 def ladder(letter: str, word: str, word_index: int, *, code: str = "",
            expected_count: int = 0, letter_audio: str = "") -> list[dict]:
-    """The rungs for one merged card, narrowest first.
+    """The ONE thing this card asks the learner to record: the affected word.
 
-    `code` PICKS THE LADDER - see category() and the module docstring. It
-    defaults to "" so a caller that has no code still gets a working ladder, and
-    "" classifies as articulation, which is the shape every card had before the
-    branch existed.
+    ── WHAT THIS REPLACED, AND WHY THE LADDER HAD TO GO ────────────────────
 
-    Rungs that cannot be built are OMITTED rather than emitted empty: a card for
-    a ṣifa error with no single letter starts at the word, and a learner should
-    see a three-rung ladder rather than two blank rows and a real one.
+    There used to be four rungs - letter, letter+harakat, word, ayah - and the
+    last of them was the defect. `AYAH` was appended to EVERY card, so a
+    recitation with ten corrections asked for the whole ayah ten times, once
+    per card, and asked for it again after mistake ten even though mistakes one
+    through nine had each already ended in a full re-read. A learner who fixed
+    card 2 last still had to perform the entire verse for it, having already
+    performed the entire verse for card 8.
 
-    `word_index` is ayah-relative, which is what the practice-range API takes,
-    so a word rung can be handed to the recorder untouched.
+    Reciting the ayah is the TEST. Running the test after every single
+    correction is not practice, it is nine redundant examinations, and it is
+    the reason the loop felt endless rather than finishable.
 
-    `expected_count` is the harakat the reference calls for. It drives the
-    counter on the madd ladder's first rung, and where it is missing that rung
-    is dropped rather than shown with a made-up number - the ladder never states
-    a count the reference did not supply.
+    So the ayah is no longer a rung at all. It is requested ONCE, by the
+    results screen, after every card has been addressed - see
+    web/src/components/Feedback.tsx, which gates it on there being no open
+    cards left. That gate is order-independent by construction: it is derived
+    from the set of resolved cards, not from a counter, so a learner who fixes
+    card 2 after card 8 still gets exactly one final recitation, at the end.
 
-    `letter_audio` is the isolated recording for this confusion, already checked
-    against the filesystem by coaching.audio_url(). Empty means no file, and
-    empty is the signal to render no play button - never a dead one.
+    The two NARROW rungs are gone for a different reason, given in full in the
+    module docstring above: a bare letter and a letter under three harakat are
+    not the mistake for three of the four categories, and even for articulation
+    they could not be scored - `check: "self"` meant the learner graded
+    themselves on the first thing they touched. One recordable, scorable act
+    beats three, two of which the engine could not judge.
+
+    `letter_audio` IS STILL ACCEPTED AND NO LONGER USED. The isolated-letter
+    recordings stay on disk and stay in the registry: they are the right raw
+    material for an alphabet reference, which is a feature someone may build.
+    They are simply not wired into this flow any more. The parameter is kept so
+    that every existing caller - including cards.ensure_shape() replaying rows
+    written years ago - keeps working untouched.
+
+    ── WHAT SURVIVES ───────────────────────────────────────────────────────
+
+    The FOCUS still branches on the code, because the instruction differs and
+    the difference is real: sound the letter you skipped / leave out the sound
+    you added / hold for the count / say it as written. That is one action
+    described four ways, not four actions.
+
+    Returns [] when there is no word to record - a ṣifa error the engine could
+    not place in one. An empty ladder renders no recorder, which is correct:
+    there is nothing honest to record against.
     """
     kind = category(code)
-    rungs: list[dict] = []
 
-    if kind == "articulation":
-        rungs += _articulation_opening(letter, letter_audio)
-    elif word:
-        # All three non-articulation ladders open on the word, slowly, with the
-        # thing to attend to named by the focus. No opening rung at all when
-        # there is no word text: the act being practised is "say this word a
-        # particular way", and without the word there is nothing to say.
-        if kind == "omission":
-            rungs.append(_word_rung(WORD_INCLUDE, word, word_index))
-        elif kind == "insertion":
-            rungs.append(_word_rung(WORD_OMIT, word, word_index))
-        elif kind == "madd" and expected_count > 0:
-            rungs.append(_word_rung(WORD_HOLD, word, word_index,
-                                    hold=expected_count))
+    if not word:
+        return []
 
-    if word:
-        rungs.append(_word_rung(WORD, word, word_index))
+    if kind == "omission":
+        rung = _word_rung(WORD_INCLUDE, word, word_index)
+    elif kind == "insertion":
+        rung = _word_rung(WORD_OMIT, word, word_index)
+    elif kind == "madd" and expected_count > 0:
+        rung = _word_rung(WORD_HOLD, word, word_index, hold=expected_count)
+    else:
+        rung = _word_rung(WORD, word, word_index)
 
-    # Always last, always present. The ayah is on screen already, so this rung
-    # carries no text of its own - it is the way back to the test, and the point
-    # of the whole ladder.
-    #
-    # The one rung with real audio today. The URL is the client's to build - it
-    # depends on the reciter the learner picked, which the server does not hold
-    # - so this names the SOURCE and lets the client resolve it. Slow playback
-    # is the same file at a reduced rate, which is genuinely the recording
-    # slowed down rather than a second file that does not exist.
-    rungs.append(_rung(AYAH, [], recordable=True, check=SCORED,
-                       audio_source="ayah"))
-
-    # Renumbered so the client can print "1 2 3" without gaps. The `focus` is
-    # what identifies a rung; `level` is only its position on the ladder, and a
-    # ladder that starts at 3 reads as though two rungs failed to load.
-    for i, rung in enumerate(rungs, 1):
-        rung["level"] = i
-    return rungs
+    rung["level"] = 1
+    return [rung]

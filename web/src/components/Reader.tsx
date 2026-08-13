@@ -10,6 +10,8 @@ import {
 import { Lang, t } from "../lib/i18n";
 import AyahBadge from "./AyahBadge";
 import RuleBadges from "./RuleBadges";
+import PaintedArabic from "./PaintedArabic";
+import { ruleLayers } from "../lib/rules";
 import Recorder, { useElapsed } from "./Recorder";
 import {
   RecorderHandle,
@@ -467,8 +469,16 @@ export default function Reader({
           </p>
         )}
 
+        {/* THE RULES, COLOURED ONTO THE GLYPHS. The legend below this verse
+            names them with a coloured dot each; without this the dots referred
+            to nothing on screen and the strip was a key to a map that was not
+            drawn. Same spans, same tones and same precedence as the practice
+            screen — see lib/rules.ruleLayers, which both call. */}
         <p className="verse__ar" dir="rtl" lang="ar">
-          {current.uthmani}
+          <PaintedArabic
+            text={current.uthmani}
+            layers={ruleLayers(rules, showUnreviewed)}
+          />
         </p>
 
         {/* ── RECORD, ON THIS SCREEN, AT THE PRESS ───────────────────────

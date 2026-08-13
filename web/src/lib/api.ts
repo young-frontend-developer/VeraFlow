@@ -55,6 +55,41 @@ export type ErrorContent = {
   audio_pair?: string;
   /** Nothing is authored for this code; only the location is known. */
   unauthored?: boolean;
+
+  /**
+   * ── the v7 restructure ───────────────────────────────────────────────────
+   *
+   * `card_kind` decides which of two card shapes this renders as, and 0 means
+   * NEITHER — the entry has not been converted yet and keeps the old
+   * headline+fix card. 56 of 61 are still 0, so this is the common case and
+   * not an error state.
+   *
+   *   1  RULE VIOLATION      the letters were right, a ruling was not applied.
+   *                          Gets the ❔ Qoida toggle and, where authored, the
+   *                          💡 simplified level.
+   *   2  PRONUNCIATION       a sound came out wrong. No rule toggle: §4 is
+   *                          explicit that theory does not help here.
+   */
+  card_kind?: 0 | 1 | 2;
+  /** "What happened", split out of the headline so each says one thing. */
+  explanation?: string;
+  /** The one physical instruction. Same slot `fix` filled, renamed by §14. */
+  correction?: string;
+  /** The phrase to re-record, e.g. «الٓمٓ» ni qayta o'qing. */
+  retry?: string;
+  /**
+   * The ruling, condensed to a sentence, for the ❔ toggle on Kind 1 cards.
+   * NOT the old `rule` field — that was two paragraphs of theory rendered
+   * unconditionally on every card, which is why it was removed. This is
+   * shorter, collapsed by default, and Kind 1 only.
+   */
+  rule_text?: string;
+  /**
+   * The 💡 "Explain simply" level. NULL, not empty strings, when nobody has
+   * authored one — the button must not appear rather than opening onto
+   * nothing. §10: it may never contradict or replace the standard text.
+   */
+  simplified?: { explanation: string; correction: string } | null;
 };
 
 /**
@@ -220,6 +255,14 @@ export type TajweedError = {
    * back to the `kind` title, which is also a real name. Never the code.
    */
   rule_name?: string;
+  /**
+   * The rule code actually PLACED at this error's position by
+   * engine/rule_presence, e.g. "RULE_MADD_LOZIM". Empty when the engine could
+   * not place one — which must be rendered as no rule colour and no rule name,
+   * never as a default. It is what lets a card be tinted to match the same
+   * ruling's colour in the ayah above it.
+   */
+  rule_code?: string;
   /** Which ṣifa property was wrong, named. Empty for non-ṣifa errors. */
   sifa_name?: string;
   /**
@@ -787,6 +830,17 @@ export type RuleBadge = {
   target: string;
   source: string;
   reviewed: boolean;
+  /**
+   * Uthmani character ranges this rule governs, so the glyphs themselves can
+   * be coloured rather than only named in the strip below the ayah.
+   *
+   * EMPTY IS A REAL ANSWER and means "present in this passage but not placed":
+   * the idgham token-count proxy can tell that an assimilation happened but
+   * not which letter did it. Draw nothing for those — never fall back to
+   * colouring the whole word, which would claim a position the engine refused
+   * to claim.
+   */
+  spans?: [number, number][];
 };
 
 export type AyahSegments = {

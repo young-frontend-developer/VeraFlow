@@ -1,0 +1,30 @@
+warning: in the working copy of 'api/tests/test_practice.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'api/tests/test_show_unreviewed.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'api/tilawah/engine/practice.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'api/tilawah/engine/rule_presence.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'web/src/App.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'web/src/components/AyahText.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'web/src/components/Feedback.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'web/src/components/PracticeLadder.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'web/src/components/RuleBadges.tsx', LF will be replaced by CRLF the next time Git touches it
+ api/tests/test_practice.py            | 374 [32m++++++++[m[31m----------[m
+ api/tests/test_show_unreviewed.py     |  54 [32m++[m[31m-[m
+ api/tilawah/api/routes.py             |  19 [32m+[m
+ api/tilawah/api/schemas.py            |   9 [32m+[m
+ api/tilawah/content/coaching.py       | 174 [32m+++++++[m[31m-[m
+ api/tilawah/engine/cards.py           |   7 [32m+[m[31m-[m
+ api/tilawah/engine/pipeline.py        | 171 [32m+++++++[m[31m-[m
+ api/tilawah/engine/practice.py        | 122 [32m+++[m[31m---[m
+ api/tilawah/engine/rule_presence.py   | 181 [32m+++++++++[m
+ web/src/App.tsx                       |  16 [32m+[m[31m-[m
+ web/src/components/AyahText.tsx       | 155 [32m+++++++[m[31m-[m
+ web/src/components/Feedback.tsx       | 125 [32m+++++[m[31m-[m
+ web/src/components/PilotBanner.tsx    |  36 [31m--[m
+ web/src/components/PracticeLadder.tsx |  62 [32m++[m[31m-[m
+ web/src/components/Reader.tsx         |  12 [32m+[m[31m-[m
+ web/src/components/Recite.tsx         |  25 [32m+[m[31m-[m
+ web/src/components/RuleBadges.tsx     | 126 [32m++[m[31m----[m
+ web/src/index.css                     | 718 [32m++++++++++++++++++[m[31m----------------[m
+ web/src/lib/api.ts                    |  54 [32m+++[m
+ web/src/lib/i18n.ts                   |   6 [32m+[m
+ 20 files changed, 1624 insertions(+), 822 deletions(-)

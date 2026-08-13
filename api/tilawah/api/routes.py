@@ -261,6 +261,24 @@ def _rule_badges(rng: Range, uthmani: str) -> list[RuleBadgeOut]:
         spaced = quran_phonetizer(uthmani, MOSHAF, remove_spaces=False)
         codes = rules_present(flat.phonemes, flat.sifat, spaced.phonemes,
                               n_words=len(uthmani.split()))
+        # WHERE each rule sits, in the same Uthmani coordinates the error
+        # highlighting uses. Computed here rather than on the client because
+        # the client has no phonemes: it has the mushaf text and nothing that
+        # relates a ruling to a character in it.
+        #
+        # A failure costs the COLOURS, not the badges, and not the segment. The
+        # strip is still correct without them.
+        try:
+            from ..engine.rule_presence import rules_to_text_spans
+            from ..engine.segments import unit_char_spans, unit_spans_for_range
+
+            spans = rules_to_text_spans(
+                spaced.phonemes,
+                unit_char_spans(flat.phonemes),
+                unit_spans_for_range(rng.sura, rng.aya, rng.start_word,
+                                     rng.num_words))
+        except Exception:
+            spans = {}
     except Exception:
         return []
 
@@ -283,6 +301,7 @@ def _rule_badges(rng: Range, uthmani: str) -> list[RuleBadgeOut]:
             target=str(target) if target != "" else "",
             source=entry.get("source", ""),
             reviewed=is_reviewed(code),
+            spans=spans.get(code, []),
         ))
     return out
 

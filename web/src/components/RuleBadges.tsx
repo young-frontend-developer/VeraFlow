@@ -1,12 +1,12 @@
-import { useState } from "react";
 import { RuleBadge } from "../lib/api";
 import { Lang, t } from "../lib/i18n";
 
 /**
- * THE RULES THIS PASSAGE CONTAINS.
+ * THE RULES THIS PASSAGE CONTAINS — a LEGEND, not a content surface.
  *
- * A row of small pills under the ayah, one per tajweed rule that structurally
- * occurs in it, each expanding to the rule in plain Uzbek.
+ * A row of names under the ayah, one per tajweed rule that structurally occurs
+ * in it, each carrying the colour those letters are painted in above. That is
+ * the whole job: it tells you what the colours mean.
  *
  * ── WHY THIS IS NOT THE ERROR CARDS ────────────────────────────────────────
  *
@@ -14,16 +14,24 @@ import { Lang, t } from "../lib/i18n";
  * appear after a bad take. A learner who recited well was told "nothing found"
  * and learned nothing about what they had just done correctly. These fire on
  * PRESENCE: al-Baqara 1 contains a madd lozim whether or not anyone reads it,
- * and the badge says so before, during and after the recording.
+ * and the label says so before, during and after the recording.
  *
- * ── ONE PANEL AT A TIME ────────────────────────────────────────────────────
+ * ── WHY NOTHING HERE OPENS ─────────────────────────────────────────────────
  *
- * Opening a badge closes whatever else was open. Two open panels on a phone
- * push the second one off-screen the moment it appears, so the learner taps a
- * rule and watches the page jump — and with eight badges on a long ayah, a
- * free-for-all accordion turns into a wall. The open panel is tracked as ONE
- * code rather than as a set, which makes the rule structural instead of
- * something the handlers have to remember to enforce.
+ * It used to. Each name was a button with a plus sign that expanded a panel
+ * carrying the ruling, a worked example, the citation and a draft chip — an
+ * encyclopedia entry per rule, sitting under an ayah the learner had opened in
+ * order to recite it.
+ *
+ * That content has exactly one home now, and it is the feedback card: behind
+ * the ❔ toggle on a Kind 1 correction, at the moment a learner got that
+ * specific rule wrong and has a reason to read about it. Teaching the ruling to
+ * someone who just executed it correctly is an interruption; teaching it to
+ * someone who just missed it is a lesson.
+ *
+ * So there is no button, no chevron, no plus, no panel and nothing tappable.
+ * A name that looks pressable and does nothing is worse than plain text, and
+ * plain text is what a legend is.
  *
  * ── GATED, LIKE EVERYTHING ELSE ────────────────────────────────────────────
  *
@@ -41,89 +49,33 @@ export default function RuleBadges({
   /** Pilot builds show draft content, labelled. Production shows none. */
   showUnreviewed: boolean;
 }) {
-  const [open, setOpen] = useState<string | null>(null);
-
-  const shown = rules.filter((r) => r.reviewed || showUnreviewed);
+  // ONE ENTRY PER RULE. The server sends a sorted set, so duplicates should not
+  // arrive — but a legend that printed "Ixfo · Ixfo" because a rule fired twice
+  // in one ayah would read as a bug, and the cost of being certain here is one
+  // Set.
+  const seen = new Set<string>();
+  const shown = rules.filter((r) => {
+    if (!(r.reviewed || showUnreviewed)) return false;
+    if (seen.has(r.code)) return false;
+    seen.add(r.code);
+    return true;
+  });
   if (shown.length === 0) return null;
 
   return (
     <section className="rules" aria-label={t(lang, "rules_title")}>
       <p className="rules__kicker">{t(lang, "rules_title")}</p>
 
+      {/* A list, not a row of controls. The dot carries the colour tie back to
+          the painted letters; the name carries the meaning. */}
       <ul className="rules__row">
-        {shown.map((r) => {
-          const isOpen = open === r.code;
-          return (
-            <li key={r.code}>
-              <button
-                className={`rule-pill rule-pill--${r.color}${
-                  isOpen ? " rule-pill--open" : ""
-                }`}
-                aria-expanded={isOpen}
-                onClick={() => setOpen(isOpen ? null : r.code)}
-              >
-                <span className="rule-pill__dot" aria-hidden="true" />
-                {r.name}
-                {/* Plus becomes minus. A rotated plus rather than two glyphs,
-                    so the transition is the state change rather than a swap. */}
-                <span className="rule-pill__toggle" aria-hidden="true">
-                  <span className="rule-pill__bar" />
-                  <span className="rule-pill__bar rule-pill__bar--v" />
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-
-      {/* ONE PANEL, BELOW THE WHOLE ROW — not inside the pill that opened it.
-          The pills wrap onto two or three lines, and a panel opening inside the
-          row would shove the remaining pills down and re-flow the ones beside
-          it. Below the row, the row never moves. */}
-      {shown
-        .filter((r) => r.code === open)
-        .map((r) => (
-          <div className="rule-panel" key={r.code}>
-            <p className="rule-panel__rule">{r.rule}</p>
-
-            {r.target && (
-              <p className="rule-panel__target">
-                {t(lang, "rules_target")}: <strong>{r.target}</strong>{" "}
-                {t(lang, "harakat")}
-              </p>
-            )}
-
-            {/* dir="ltr", and neither "rtl" nor "auto".
-                The authored examples are Arabic words inside an UZBEK sentence:
-                "…, va الٓمٓ kabi sura boshidagi yakka harflar". `rtl` reversed the
-                Latin half. `auto` was no better - it takes the base direction
-                from the first strong character, which is Arabic, so it landed
-                on rtl too and moved "kabi sura boshidagi" to the left of the
-                examples it describes. The sentence is Uzbek, so the paragraph
-                is LTR and the bidi algorithm lays each Arabic run out
-                right-to-left inside it, in the order they were written. */}
-            {r.example && (
-              <p className="rule-panel__example" dir="ltr">
-                {r.example}
-              </p>
-            )}
-
-            <p className="rule-panel__source">
-              {r.source}
-              {!r.reviewed && (
-                <span className="rule-panel__draft">{t(lang, "draft_chip")}</span>
-              )}
-            </p>
-
-            {/* SAID ONCE, WHERE IT MATTERS. The content was transcribed in
-                Uzbek only; no Russian was authored and none was invented, so a
-                Russian UI is reading Uzbek here and is told so rather than left
-                to wonder whether the app is broken. */}
-            {lang !== "uz" && (
-              <p className="rule-panel__lang">{t(lang, "rules_uz_only")}</p>
-            )}
-          </div>
+        {shown.map((r) => (
+          <li key={r.code} className={`rule-name rule-name--${r.color}`}>
+            <span className="rule-name__dot" aria-hidden="true" />
+            {r.name}
+          </li>
         ))}
+      </ul>
     </section>
   );
 }

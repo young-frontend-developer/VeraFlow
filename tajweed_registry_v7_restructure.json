@@ -1,0 +1,152 @@
+{
+  "_meta": {
+    "generation": 7,
+    "purpose": "Kind 1 / Kind 2 restructure + the 'Explain simply' second level.",
+    "scope": "FIVE ENTRIES ONLY. The architecture demo required before the remaining 56 are touched.",
+    "shape": "OVERLAY, not a replacement. Merged with a deep update, so an entry here overrides only the keys it names and keeps its group, severity, detection_signal and source_ref from the generation that authored them.",
+    "authoring": {
+      "uz": "Headlines, explanations and corrections are re-selections and re-sequencings of text already authored in v3/v5 from «Тажвид қоидалари» (Rahim/Yunusxonov, 2011) and «Тажвид (Қуръон ўқиш қоидалари)» (Abdulhakim qori, 2018), plus the standard/simplified wording approved in sections 7-9 of the restructure spec. No ruling is stated that those sources do not state.",
+      "ru": "Rule text is the authored Russian already in v3 - NOT translated from the Uzbek. Structural sentences ('the letters were correct, the rule was not applied') and the simplified level are authored directly in Russian: they describe the learner's attempt and the physical action, which is instructional framing rather than a ruling.",
+      "boundary": "A structural sentence describes what the detector measured. A rule sentence states what the books say. Only the second is bound by the two-source constraint; the first may not contradict it."
+    },
+    "arabic_note": "Section 7-9 of the spec carried bidi-mangled Arabic from a copy-paste (مٓلٓا for الٓمٓ, نَّإِ for إِنَّ, لُبْقَ نْمِ for مِنْ قَبْلُ, طَرَٰصِ for صِرَٰطَ). The correct forms are used here. Nothing else in that wording was changed.",
+    "rule_names": {
+      "_note": "The name a Kind 1 headline puts in its {rule} slot. Uzbek comes from rule_badges.json for codes that have a badge; Russian cannot, because rule_badges.json is Uzbek-only and says outright that no Russian was authored for it. Every Russian name here is SOURCED - each already appears in the authored Russian of the v3 entry named in `from`, so none is a transliteration invented at this layer. A RULE_* code absent from this table has no authored Russian name, and a Russian Kind 1 card for it falls back to headline_no_rule rather than guessing one.",
+      "_override_note": "RULE_GHUNNA is not a badge code and never reaches rules_by_char. It exists because the badge that DOES get placed, RULE_IKHFO_GHUNNA, is named «Ixfo va g'unna» - one pill covering two rulings, which is right for a strip and wrong for a headline: a learner who dropped a ghunna would read «Ixfo va g'unna qilinmadi» and go looking for an ikhfa they never got wrong. Placement still has to come from RULE_IKHFO_GHUNNA; the override only chooses which half of that name to print, and the error code is what says which half applies.",
+      "RULE_MADD_LOZIM": {"uz": "Mad lozim", "ru": "Мадд лязим", "gender": "m", "from": "rule_badges.RULE_MADD_LOZIM.uz.name / MADD_TOO_SHORT.ru.rule"},
+      "RULE_MADD_MUTTASIL": {"uz": "Mad vojib (muttasil)", "ru": "Мадд муттасыль", "gender": "m", "from": "rule_badges.RULE_MADD_MUTTASIL.uz.name / MADD_TOO_SHORT.ru.rule"},
+      "RULE_MADD_MUNFASIL": {"uz": "Mad joiz (munfasil)", "ru": "NEEDS_AUTHORING", "gender": "m", "from": "rule_badges.RULE_MADD_MUNFASIL.uz.name; no authored Russian names this rule"},
+      "RULE_MADD_TABIIY": {"uz": "Mad tabiiy", "ru": "Естественный мадд", "gender": "m", "from": "rule_badges.RULE_MADD_TABIIY.uz.name / MADD_TOO_SHORT.ru.rule"},
+      "RULE_IKHFO_GHUNNA": {"uz": "Ixfo", "ru": "Ихфа", "gender": "n", "from": "IKHFA_MISSING.uz.name / IKHFA_MISSING.ru.name"},
+      "RULE_GHUNNA": {"uz": "G'unna", "ru": "Гунна", "gender": "f", "from": "GHUNNA_MISSING.uz.name / GHUNNA_MISSING.ru.name"},
+      "RULE_IDGHOM": {"uz": "Idg'om", "ru": "Идгам", "gender": "m", "from": "IDGHAM_MISSING.uz.name / IDGHAM_MISSING.ru.name"},
+      "RULE_QALQALA": {"uz": "Qalqala", "ru": "Калькаля", "gender": "f", "from": "QALQALAH_MISSING.uz.name / QALQALAH_MISSING.ru.name"},
+      "RULE_TAFXIM": {"uz": "Tafxim", "ru": "NEEDS_AUTHORING", "gender": "m", "from": "rule_badges.RULE_TAFXIM.uz.name; Russian pending, and RAA_/LAM_ entries stay Kind 2 regardless"}
+    }
+  },
+
+  "entries": {
+
+    "MADD_TOO_SHORT": {
+      "card_kind": 1,
+      "headline_pattern": "missing_rule",
+      "uz": {
+        "headline_no_rule": "Cho'zish qisqa qilindi",
+        "explanation": "«{word}» dagi harflar to'g'ri aytildi, ammo cho'zish {n_expected} harakat o'rniga qisqa chiqdi.",
+        "correction": "Cho'zishda ichingizda {n_expected} gacha sanang yoki barmog'ingiz bilan ritmni belgilang.",
+        "retry": "«{word}» ni qayta o'qing",
+        "rule": "Mad harflari uchta: ا، و، ي. Tabiiy mad ikki harakat cho'ziladi. Ba'zi holatlarda cho'zish 4-6 harakatgacha uzayadi.",
+        "simplified": {
+          "explanation": "«{word}» ni to'g'ri aytdingiz, faqat tovushni yetarlicha uzoq cho'zmagansiz.",
+          "correction": "Bu joyda tovushni {n_expected} hisobgacha ushlab turing."
+        }
+      },
+      "ru": {
+        "headline_no_rule": "Протяжение сделано коротким",
+        "explanation": "Буквы в «{word}» произнесены верно, но протяжение вышло короче: {n_expected} хараката не выдержаны.",
+        "correction": "Во время протяжения считайте про себя до {n_expected} или отбивайте ритм пальцем.",
+        "retry": "Прочитайте «{word}» ещё раз",
+        "rule": "Букв мадда три: ا، و، ي. Естественный мадд тянется два хараката. В отдельных случаях протяжение доходит до 4-6 харакатов.",
+        "simplified": {
+          "explanation": "Слово «{word}» вы произнесли правильно — только не дотянули звук.",
+          "correction": "Здесь удерживайте звук на счёт до {n_expected}."
+        }
+      }
+    },
+
+    "GHUNNA_MISSING": {
+      "card_kind": 1,
+      "headline_pattern": "missing_rule",
+      "rule_name_override": "RULE_GHUNNA",
+      "uz": {
+        "headline_no_rule": "G'unna qilinmadi",
+        "explanation": "«{word}» dagi harflar to'g'ri aytildi, ammo tashdidli «{letter}» da burun tovushi chiqmadi.",
+        "correction": "«{letter}» ni aytganda tovush burun orqali chiqsin va ikki harakat davom etsin.",
+        "retry": "«{word}» ni qayta o'qing",
+        "rule": "G'unna — burun bo'shlig'idan chiqadigan tovush. Tashdidli «miym» va «nuvn» g'unna bilan, ikki harakat miqdorida o'qiladi.",
+        "simplified": {
+          "explanation": "Bu joyda «{letter}» ni aytganda burun tovushi yetarli chiqmagan.",
+          "correction": "Buruningizda yengil titrashni sezishga harakat qiling va tovushni biroz ushlab turing."
+        }
+      },
+      "ru": {
+        "headline_no_rule": "Гунна не выполнена",
+        "explanation": "Буквы в «{word}» произнесены верно, но на ташдидном «{letter}» не появился носовой звук.",
+        "correction": "Произнося «{letter}», пропустите звук через нос и удержите его на два хараката.",
+        "retry": "Прочитайте «{word}» ещё раз",
+        "rule": "Гунна — звук из носовой полости. «Мийм» и «нувн» с ташдидом читаются с гунной и удерживаются на два хараката.",
+        "simplified": {
+          "explanation": "Здесь при произнесении «{letter}» носового звука почти не было.",
+          "correction": "Попробуйте почувствовать лёгкую вибрацию в носу и немного подержать звук."
+        }
+      }
+    },
+
+    "IKHFA_MISSING": {
+      "card_kind": 1,
+      "headline_pattern": "missing_rule",
+      "uz": {
+        "headline_no_rule": "Ixfo qilinmadi",
+        "explanation": "«{word}» da nun tovushi yashirilmay, juda aniq talaffuz qilindi.",
+        "correction": "Til uchingizni «{letter}» maxrajiga tekkizmang. Tovushni burunda saqlab, keyingi harfga silliq o'ting.",
+        "retry": "«{word}» ni qayta o'qing",
+        "rule": "Sukunli «nuvn» yoki tanvin ixfo harflaridan biriga yo'liqqanda, nun tovushi yashirinroq va ikki harakat miqdorida o'qiladi.",
+        "simplified": {
+          "explanation": "Bu joyda «{letter}» tovushi juda aniq aytildi.",
+          "correction": "«{letter}» ni to'liq aytib yubormang — tovushni burunda yengil ushlab, keyingi harfga silliq o'ting."
+        }
+      },
+      "ru": {
+        "headline_no_rule": "Ихфа не выполнено",
+        "explanation": "В «{word}» нун прозвучал слишком отчётливо — он должен был остаться скрытым.",
+        "correction": "Не касайтесь языком махраджа «{letter}». Удержите звук в носу и плавно перейдите к следующей букве.",
+        "retry": "Прочитайте «{word}» ещё раз",
+        "rule": "Если после нун сакина или танвина следует одна из 15 букв ихфа, нун не произносится отчётливо — он скрывается и читается с гунной в два хараката.",
+        "simplified": {
+          "explanation": "Здесь звук «{letter}» прозвучал слишком чётко.",
+          "correction": "Не произносите «{letter}» до конца — задержите звук в носу и мягко перейдите дальше."
+        }
+      }
+    },
+
+    "MAKHARIJ_SAD_TO_SEEN": {
+      "card_kind": 2,
+      "headline_pattern": "mispronounced",
+      "uz": {
+        "explanation": "«{word}» da «{expected}» harfi «{actual}» kabi ingichka aytildi.",
+        "correction": "«{expected}» ni aytganda tilning orqa qismini biroz ko'taring va og'iz bo'shlig'ini keng tuting.",
+        "retry": "«{word}» ni qayta o'qing",
+        "simplified": {
+          "explanation": "Bu joyda «{expected}» yumshoq, «{actual}» kabi chiqdi.",
+          "correction": "Tilingizning orqasini ko'tarib, tovushni yo'g'onroq ayting."
+        }
+      },
+      "ru": {
+        "explanation": "В «{word}» буква «{expected}» произнесена легко, как «{actual}».",
+        "correction": "Произнося «{expected}», приподнимите заднюю часть языка и держите полость рта широкой.",
+        "retry": "Прочитайте «{word}» ещё раз",
+        "simplified": {
+          "explanation": "Здесь «{expected}» прозвучала мягко — как «{actual}».",
+          "correction": "Приподнимите заднюю часть языка и произнесите звук потяжелее."
+        }
+      }
+    },
+
+    "LETTER_DROPPED": {
+      "card_kind": 2,
+      "headline_pattern": "letter_omitted",
+      "_no_simplified": "DELIBERATE, per §4: 'the simplified button can also be omitted when the feedback is already extremely simple'. The standard card here is «X harfi tushirib qoldirildi» / «the letter was not said at all» / «slow down and say it letter by letter» - three sentences with no tajweed term in any of them. Every simplified version drafted for it came out the same length or longer, which is the measurable form of having nothing left to simplify. Padding it would have produced a second panel restating the first, and §10 forbids exactly that. Caught by test_the_simplified_level_is_shorter_than_the_standard_one.",
+      "uz": {
+        "explanation": "«{word}» da «{expected}» harfi umuman aytilmadi.",
+        "correction": "Sekinlashtiring: so'zni harf-harf ayting, keyin normal tezlikda takrorlang.",
+        "retry": "«{word}» ni qayta o'qing"
+      },
+      "ru": {
+        "explanation": "В «{word}» буква «{expected}» не была произнесена вовсе.",
+        "correction": "Замедлитесь: произнесите слово по буквам, затем повторите в обычном темпе.",
+        "retry": "Прочитайте «{word}» ещё раз"
+      }
+    }
+
+  }
+}

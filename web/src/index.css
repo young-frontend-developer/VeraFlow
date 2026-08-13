@@ -434,7 +434,7 @@ ol {
 }
 
 .app__tool-tag {
-  font-size: 12px;
+  font-size: 15px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -499,7 +499,7 @@ ol {
 }
 
 .section-sub {
-  font-size: 15px;
+  font-size: 16.5px;
   line-height: 1.6;
   color: var(--ink-2);
   margin-bottom: 28px;
@@ -514,7 +514,7 @@ ol {
 .meter__label,
 .rung__name--cap,
 .section-label {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 500;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -522,7 +522,7 @@ ol {
 }
 
 .empty {
-  font-size: 15px;
+  font-size: 16.5px;
   color: var(--ink-2);
   padding: 32px 0;
 }
@@ -575,7 +575,7 @@ ol {
   background: var(--ivory-lift);
   -webkit-backdrop-filter: var(--blur);
   backdrop-filter: var(--blur);
-  font-size: 15px;
+  font-size: 16.5px;
   color: var(--ink);
   transition: background var(--t) var(--ease), border-color var(--t) var(--ease);
 }
@@ -586,7 +586,7 @@ ol {
 }
 
 .linkish {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--gold);
   text-underline-offset: 4px;
   text-decoration: underline;
@@ -598,7 +598,7 @@ ol {
   align-items: center;
   gap: 7px;
   margin-bottom: 22px;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--ink-2);
 }
 
@@ -713,10 +713,28 @@ ol {
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 8px 4px 6px;
+  padding: 8px 2px 6px;
   border-radius: 20px;
-  font-size: 10px;
-  letter-spacing: 0.04em;
+  /* THE ONE PLACE THE ACCESSIBILITY PASS STOPPED SHORT OF THE FLOOR, and it is
+     a width problem rather than a decision about legibility. Five tabs share a
+     360px phone, so ~72px each, and the longest Uzbek label — "Bosh sahifa" —
+     needs about 75px at 14px. At the full bump it wrapped or clipped on every
+     small phone, which costs more legibility than the extra point buys.
+
+     13px was the first attempt and STILL WRAPPED — caught in a screenshot, not
+     by reasoning, which is the whole argument for taking one. 12px with the
+     tracking removed and the horizontal padding cut fits "Bosh sahifa" on one
+     line at 390px, the narrowest phone worth targeting.
+
+     12px against the old 10px is still a 20% increase, and these labels sit
+     under icons that carry the meaning on their own — the tab bar is the one
+     place in the app where the text is the SECOND channel rather than the
+     first. `nowrap` makes the failure loud rather than silent: if a future
+     label is too long it will clip visibly instead of quietly restacking the
+     row to two lines and shifting every screen up. */
+  font-size: 12px;
+  letter-spacing: 0;
+  white-space: nowrap;
   color: var(--ink-3);
   transition: color var(--t) var(--ease);
 }
@@ -918,7 +936,7 @@ ol {
 }
 
 .choice__note {
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--ink-2);
   display: block;
   margin-top: 2px;
@@ -961,7 +979,7 @@ ol {
 
 .onboard__skip {
   align-self: center;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--ink-3);
 }
 
@@ -984,7 +1002,7 @@ ol {
 }
 
 .gate__intro {
-  font-size: 15px;
+  font-size: 16.5px;
   line-height: 1.65;
   color: var(--ink-2);
   margin-bottom: 26px;
@@ -1001,14 +1019,14 @@ ol {
 }
 
 .gate__none-title {
-  font-size: 15px;
+  font-size: 16.5px;
   font-weight: 500;
   margin-bottom: 4px;
 }
 
 .gate__none-body,
 .gate__footer {
-  font-size: 13.5px;
+  font-size: 16px;
   line-height: 1.6;
   color: var(--ink-2);
 }
@@ -1044,14 +1062,14 @@ ol {
 
 .gate__opt-label {
   display: block;
-  font-size: 15px;
+  font-size: 16.5px;
   font-weight: 500;
 }
 
 .gate__opt-help,
 .consent__help {
   display: block;
-  font-size: 13.5px;
+  font-size: 16px;
   line-height: 1.6;
   color: var(--ink-2);
   margin-top: 3px;
@@ -1087,7 +1105,7 @@ ol {
   border-radius: var(--r-chip);
   border: 1px solid var(--border);
   background: var(--card);
-  font-size: 15px;
+  font-size: 16.5px;
 }
 
 /* ══ today ════════════════════════════════════════════════════════════════ */
@@ -1101,7 +1119,7 @@ ol {
 }
 
 .today__date {
-  font-size: 13px;
+  font-size: 15.5px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -1129,7 +1147,7 @@ ol {
 }
 
 .hero__meaning {
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--ink-2);
 }
 
@@ -1154,7 +1172,7 @@ ol {
 }
 
 .hero__ref {
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
@@ -1166,7 +1184,7 @@ ol {
   margin: 18px 0 22px;
   padding-top: 18px;
   border-top: 1px solid var(--border);
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--ink-2);
 }
 
@@ -1197,7 +1215,7 @@ ol {
 }
 
 .progress__text {
-  font-size: 12px;
+  font-size: 15px;
   letter-spacing: 0.06em;
   color: var(--ink-3);
   margin-bottom: 20px;
@@ -1225,7 +1243,7 @@ ol {
 
 .suggest__why {
   display: block;
-  font-size: 13.5px;
+  font-size: 16px;
   color: var(--ink-2);
   margin-top: 3px;
 }
@@ -1274,7 +1292,7 @@ ol {
 
 .row__num {
   flex: 0 0 30px;
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
@@ -1294,14 +1312,14 @@ ol {
 
 .row__alt {
   font-family: var(--sans);
-  font-size: 13px;
+  font-size: 15.5px;
   font-weight: 400;
   color: var(--ink-2);
 }
 
 .row__meta {
   display: block;
-  font-size: 12.5px;
+  font-size: 15.5px;
   color: var(--ink-3);
   margin-top: 1px;
 }
@@ -1338,7 +1356,7 @@ ol {
 }
 
 .group__count {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
@@ -1355,7 +1373,7 @@ ol {
   -webkit-backdrop-filter: var(--blur);
   backdrop-filter: var(--blur);
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
-  font-size: 15px;
+  font-size: 16.5px;
   color: var(--ink);
   transition: border-color var(--t) var(--ease), box-shadow var(--t) var(--ease);
 }
@@ -1415,7 +1433,7 @@ ol {
 .modes__tab {
   padding: 9px 20px;
   border-radius: var(--r-chip);
-  font-size: 13.5px;
+  font-size: 16px;
   color: var(--ink-2);
   transition: background var(--t) var(--ease), color var(--t) var(--ease);
 }
@@ -1464,7 +1482,7 @@ ol {
   border: 1px solid rgba(212, 168, 83, 0.45);
   border-radius: 50%;
   font-family: var(--sans);
-  font-size: 11px;
+  font-size: 14.5px;
   line-height: 1;
   color: var(--gold);
   vertical-align: middle;
@@ -1518,7 +1536,7 @@ ol {
 }
 
 .verse__tr {
-  font-size: 15.5px;
+  font-size: 17px;
   line-height: 1.7;
   text-align: center;
   color: var(--ink-2);
@@ -1615,7 +1633,7 @@ ol {
 }
 
 .estimate {
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--ink-3);
   text-align: center;
   margin: 16px 0 20px;
@@ -1644,7 +1662,7 @@ ol {
   border: 1px solid var(--border);
   border-radius: var(--r-chip);
   background: var(--card);
-  font-size: 15px;
+  font-size: 16.5px;
   color: var(--ink);
   transition: background var(--t) var(--ease);
 }
@@ -1676,7 +1694,7 @@ ol {
 }
 
 .reciter__label {
-  font-size: 12px;
+  font-size: 15px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -1691,7 +1709,7 @@ ol {
   border-radius: var(--r-soft);
   background: var(--card-solid);
   color-scheme: dark;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--ink);
 }
 
@@ -1736,6 +1754,88 @@ ol {
   color: inherit;
 }
 
+/* ── the rule layer ───────────────────────────────────────────────────────
+   Under the error marks (z-index 1 against their 2), because a mistake must
+   win the eye over a standing fact about the verse. Same clip mechanism, so
+   the colour is on the glyph and the cursive joining is the original's.
+
+   The tone tokens are the same eight the pills use — one palette, so the pill
+   under the ayah and the letters it describes are visibly the same thing. */
+.ayah__rule {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  color: var(--rule-tone, var(--ink));
+  animation: fade 400ms var(--ease) both;
+}
+
+.ayah__rule .ayah__text {
+  color: inherit;
+}
+
+/* The chrome-free painter used by the reader. Same clip trick as .ayah__rule,
+   but inline and inheriting its type from whatever contains it, so it can sit
+   inside .verse__ar without bringing a card with it. */
+.painted {
+  position: relative;
+  display: inline-block;
+}
+
+.painted__layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: var(--rule-tone, inherit);
+}
+
+.ayah__rule--pink        { --rule-tone: #e88bb0; }
+.ayah__rule--dark-pink   { --rule-tone: #d4638f; }
+.ayah__rule--orange-red  { --rule-tone: #e8794f; }
+.ayah__rule--orange      { --rule-tone: #e8a05a; }
+.ayah__rule--green       { --rule-tone: #5cc4a6; }
+.ayah__rule--gray        { --rule-tone: #a8b0c0; }
+.ayah__rule--dark        { --rule-tone: #93a0b8; }
+.ayah__rule--blue        { --rule-tone: #7ec7e8; }
+
+/* Light mode needs the darker end of each hue: the dark-mode tones are chosen
+   against a near-black ground and wash out completely on ivory. Same values as
+   the pills' light overrides. */
+:root[data-theme="light"] .ayah__rule--pink       { --rule-tone: #c2557f; }
+:root[data-theme="light"] .ayah__rule--dark-pink  { --rule-tone: #a33a66; }
+:root[data-theme="light"] .ayah__rule--orange-red { --rule-tone: #c14e28; }
+:root[data-theme="light"] .ayah__rule--orange     { --rule-tone: #b8752a; }
+:root[data-theme="light"] .ayah__rule--green      { --rule-tone: #17724c; }
+:root[data-theme="light"] .ayah__rule--gray       { --rule-tone: #5d6470; }
+:root[data-theme="light"] .ayah__rule--dark       { --rule-tone: #2f3742; }
+:root[data-theme="light"] .ayah__rule--blue       { --rule-tone: #1f6b96; }
+
+/* ── the letter a duration card is ABOUT, marked inside its own word ──────
+   The meter names the letter ("Kerak: و — 4 harakat") and the word sits above
+   it, and the two were connected only by the learner recognising the glyph. On
+   «يَقُولُونَ», with two و, that is a guess.
+
+   Same clip-and-repaint as the ayah, for the same reason: splitting the word
+   into elements to colour one letter breaks the cursive joining. See
+   MarkedWord.tsx. The tone is the error tone, so the letter in the card and
+   the letter in the ayah above read as one conversation. */
+.mword {
+  position: relative;
+  display: inline-block;
+}
+
+.mword__mark {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: var(--terra-lift, var(--terra));
+  /* The underline is drawn on the CLIPPED copy, so it spans exactly the marked
+     letter rather than the whole word. */
+  text-decoration: underline;
+  text-decoration-color: var(--terra);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
 .ayah__mark--active {
   opacity: 1;
   color: var(--terra-lift);
@@ -1754,7 +1854,7 @@ ol {
   -webkit-backdrop-filter: var(--blur);
   backdrop-filter: var(--blur);
   border: 1px solid var(--border);
-  font-size: 10.5px;
+  font-size: 14.5px;
   letter-spacing: 0.04em;
   color: var(--ink-2);
 }
@@ -1824,7 +1924,7 @@ ol {
 .recorder__secondary {
   margin-top: 6px;
   max-width: 30ch;
-  font-size: 13.5px;
+  font-size: 16px;
   line-height: 1.55;
   text-align: center;
   color: var(--ink-3);
@@ -1960,7 +2060,7 @@ ol {
 }
 
 .verdict__body {
-  font-size: 15px;
+  font-size: 16.5px;
   line-height: 1.65;
   color: var(--ink-2);
 }
@@ -2000,7 +2100,7 @@ ol {
 }
 
 .clear__body {
-  font-size: 15px;
+  font-size: 16.5px;
   color: var(--ink-2);
 }
 
@@ -2041,7 +2141,7 @@ ol {
 }
 
 .card__body {
-  font-size: 15px;
+  font-size: 16.5px;
   line-height: 1.68;
   color: var(--ink);
 }
@@ -2057,13 +2157,101 @@ ol {
   border: 1px solid var(--border-soft);
   background: var(--ivory-sunk);
   color: var(--ink-2);
-  font-size: 14.5px;
+  font-size: 16.5px;
+}
+
+/* WHAT HAPPENED — the sentence between the headline and the instruction.
+   Sits at body weight rather than being played up: the headline already made
+   the claim, and this is the detail behind it. */
+.card__body--what {
+  margin-top: 10px;
+  color: var(--ink-2);
+}
+
+/* ── the two disclosures ─────────────────────────────────────────────────
+   Both are <details>, both closed by default, and both must read as OFFERS
+   rather than as content the card is withholding. The rule toggle is quiet;
+   the simplified one is warmer, because a learner reaches for it at the
+   moment the standard wording has just failed them and a flat grey row is a
+   poor thing to meet there. */
+.card__rule-toggle,
+.card__simple {
+  margin-top: 14px;
+}
+
+.card__rule-toggle > summary,
+.card__simple > summary {
+  cursor: pointer;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border-radius: var(--r-pill, 999px);
+  border: 1px solid var(--border-soft);
+  font-size: 15.5px;
+  font-weight: 500;
+  color: var(--ink-2);
+  transition: border-color 0.18s ease, color 0.18s ease;
+}
+
+/* Safari draws its own triangle through list-style:none. */
+.card__rule-toggle > summary::-webkit-details-marker,
+.card__simple > summary::-webkit-details-marker {
+  display: none;
+}
+
+.card__rule-toggle > summary::before {
+  content: "❔";
+  font-size: 15px;
+}
+
+.card__simple > summary {
+  border-color: var(--gold-soft, var(--border-soft));
+  color: var(--gold, var(--ink-2));
+}
+
+.card__rule-toggle > summary:hover,
+.card__simple > summary:hover {
+  border-color: var(--gold, var(--border-soft));
+  color: var(--gold, var(--ink));
+}
+
+.card__rule-toggle > summary:focus-visible,
+.card__simple > summary:focus-visible {
+  outline: 2px solid var(--gold, currentColor);
+  outline-offset: 2px;
+}
+
+.card__body--rule,
+.card__body--simple {
+  margin-top: 12px;
+  padding: 16px 18px;
+  border-radius: var(--r-soft);
+  background: var(--ivory-sunk);
+  font-size: 16.5px;
+  color: var(--ink-2);
+}
+
+/* The simplified pair reads as one passage, so the second paragraph joins the
+   first rather than opening its own panel. */
+.card__body--simple + .card__body--simple {
+  margin-top: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  padding-top: 0;
+}
+
+.card__body--simple:first-of-type:not(:last-of-type) {
+  padding-bottom: 6px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 .card__sifa {
   display: block;
   margin-bottom: 5px;
-  font-size: 11.5px;
+  font-size: 15px;
   font-weight: 500;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -2101,7 +2289,7 @@ ol {
 }
 
 .card__count {
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--ink-3);
 }
 
@@ -2121,7 +2309,7 @@ ol {
   align-items: baseline;
   gap: 2px;
   margin-top: 6px;
-  font-size: 13.5px;
+  font-size: 16px;
   color: var(--ink-2);
 }
 
@@ -2153,7 +2341,7 @@ ol {
   gap: 9px;
   flex-wrap: wrap;
   margin-bottom: 14px;
-  font-size: 12.5px;
+  font-size: 15.5px;
   line-height: 1.55;
   color: var(--ink-3);
 }
@@ -2164,7 +2352,7 @@ ol {
   padding: 3px 10px;
   border: 1px solid rgba(63, 162, 135, 0.5);
   border-radius: var(--r-chip);
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -2175,7 +2363,7 @@ ol {
 .card__retry-hint {
   display: block;
   margin-top: 14px;
-  font-size: 13.5px;
+  font-size: 16px;
   color: var(--ink-2);
 }
 
@@ -2188,7 +2376,7 @@ ol {
 
 .card__label,
 .card__said {
-  font-size: 15px;
+  font-size: 16.5px;
   color: var(--ink);
 }
 
@@ -2231,7 +2419,7 @@ ol {
   border-radius: 50%;
   border: 1px solid var(--border);
   background: var(--card);
-  font-size: 11px;
+  font-size: 14.5px;
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
@@ -2258,12 +2446,12 @@ ol {
 }
 
 .rung__name {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--ink-2);
 }
 
 .rung__tick {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--green);
 }
 
@@ -2297,7 +2485,7 @@ ol {
   border: 1px solid var(--border);
   border-radius: var(--r-chip);
   background: var(--card);
-  font-size: 13.5px;
+  font-size: 16px;
   color: var(--green);
   transition: background var(--t) var(--ease);
 }
@@ -2323,13 +2511,13 @@ ol {
 
 .rung__say,
 .rung__say--locked {
-  font-size: 13.5px;
+  font-size: 16px;
   color: var(--ink-3);
 }
 
 .rung__verdict {
   margin-top: 10px;
-  font-size: 13.5px;
+  font-size: 16px;
   color: var(--ink-2);
 }
 
@@ -2345,7 +2533,7 @@ ol {
 .card__framing {
   margin: 0 0 10px;
   color: var(--ink-2);
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.5;
 }
 
@@ -2359,7 +2547,7 @@ ol {
   margin: 18px 0 0;
   text-align: center;
   color: var(--ink-2);
-  font-size: 14px;
+  font-size: 16px;
 }
 
 /* ── the duration meter ──────────────────────────────────────────────── */
@@ -2428,7 +2616,7 @@ ol {
 
 .meter__count-text {
   flex: 0 0 auto;
-  font-size: 12.5px;
+  font-size: 15.5px;
   color: var(--ink-2);
   font-variant-numeric: tabular-nums;
 }
@@ -2439,7 +2627,7 @@ ol {
   border: 1px solid var(--border);
   border-radius: var(--r-chip);
   background: var(--card);
-  font-size: 12.5px;
+  font-size: 15.5px;
   color: var(--green);
   font-variant-numeric: tabular-nums;
 }
@@ -2456,7 +2644,7 @@ ol {
   border: 1px solid var(--border);
   border-radius: var(--r-chip);
   background: var(--card);
-  font-size: 14px;
+  font-size: 16px;
   color: var(--ink-2);
 }
 
@@ -2495,7 +2683,7 @@ ol {
 }
 
 .notice__body {
-  font-size: 14.5px;
+  font-size: 16.5px;
   line-height: 1.65;
   color: var(--ink-2);
 }
@@ -2506,7 +2694,7 @@ ol {
 
 .notice__body code {
   font-family: ui-monospace, monospace;
-  font-size: 12.5px;
+  font-size: 15.5px;
 }
 
 .notice__list {
@@ -2519,7 +2707,7 @@ ol {
 .notice__list li {
   position: relative;
   padding-left: 18px;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--ink-2);
 }
 
@@ -2538,14 +2726,14 @@ ol {
 .waiting {
   padding: 40px 26px;
   text-align: center;
-  font-size: 15px;
+  font-size: 16.5px;
   color: var(--ink-2);
 }
 
 .waiting__hint {
   display: block;
   margin-top: 6px;
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--ink-3);
 }
 
@@ -2604,7 +2792,7 @@ ol {
 }
 
 .blank__body {
-  font-size: 14.5px;
+  font-size: 16.5px;
   line-height: 1.65;
   color: var(--ink-2);
   max-width: 34ch;
@@ -2654,7 +2842,7 @@ ol {
 }
 
 .profile__sub {
-  font-size: 13.5px;
+  font-size: 16px;
   color: var(--ink-2);
   margin-top: 2px;
 }
@@ -2675,12 +2863,12 @@ ol {
 }
 
 .setting__label {
-  font-size: 15px;
+  font-size: 16.5px;
 }
 
 .setting__help {
   display: block;
-  font-size: 13px;
+  font-size: 15.5px;
   line-height: 1.55;
   color: var(--ink-2);
   margin-top: 2px;
@@ -2689,7 +2877,7 @@ ol {
 
 .setting__value {
   flex: 0 0 auto;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--ink-2);
 }
 
@@ -2706,7 +2894,7 @@ ol {
   align-items: center;
   justify-content: space-between;
   padding: 18px 0;
-  font-size: 15px;
+  font-size: 16.5px;
   cursor: pointer;
   list-style: none;
 }
@@ -2730,7 +2918,7 @@ ol {
   padding: 16px 0;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
-  font-size: 15px;
+  font-size: 16.5px;
 }
 
 .consent__row--off {
@@ -2761,11 +2949,11 @@ ol {
 
 .log__text {
   flex: 1 1 auto;
-  font-size: 15px;
+  font-size: 16.5px;
 }
 
 .log__meta {
-  font-size: 12.5px;
+  font-size: 15.5px;
   color: var(--ink-3);
 }
 
@@ -2793,7 +2981,7 @@ ol {
 }
 
 .soon__body {
-  font-size: 15px;
+  font-size: 16.5px;
   line-height: 1.7;
   color: var(--ink-2);
   max-width: 32ch;
@@ -2801,7 +2989,7 @@ ol {
 }
 
 .soon__note {
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--ink-3);
   max-width: 34ch;
   margin: 0 auto;
@@ -2840,13 +3028,13 @@ ol {
 }
 
 .pilot__title {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   margin-bottom: 4px;
 }
 
 .pilot__body {
-  font-size: 13px;
+  font-size: 15.5px;
   line-height: 1.6;
   color: var(--ink-2);
 }
@@ -2869,7 +3057,7 @@ ol {
 .lang__btn {
   padding: 6px 13px;
   border-radius: var(--r-chip);
-  font-size: 12px;
+  font-size: 15px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-2);
@@ -2884,7 +3072,7 @@ ol {
 }
 
 .level {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--ink-3);
 }
 
@@ -2916,7 +3104,7 @@ ol {
 .review__source,
 .review__status,
 .review__edited {
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--ink-2);
 }
 
@@ -2931,7 +3119,7 @@ ol {
 }
 
 .review__field-label {
-  font-size: 12px;
+  font-size: 15px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -2963,7 +3151,7 @@ ol {
   border-radius: var(--r-soft);
   background: var(--ivory-sunk);
   color-scheme: dark;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.6;
   resize: vertical;
 }
@@ -3008,7 +3196,7 @@ ol {
 
 .section-aside {
   flex: none;
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--ink-3);
   padding-bottom: 4px;
 }
@@ -3020,7 +3208,7 @@ ol {
 /* ── hero ─────────────────────────────────────────────────────────────── */
 
 .hero__caps {
-  font-size: 11.5px;
+  font-size: 15px;
   font-weight: 500;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -3036,7 +3224,7 @@ ol {
 }
 
 .hero__sub {
-  font-size: 13.5px;
+  font-size: 16px;
   color: var(--ink-2);
   margin-bottom: 22px;
 }
@@ -3045,7 +3233,7 @@ ol {
 .progress__pct {
   text-align: center;
   font-family: var(--serif);
-  font-size: 15px;
+  font-size: 16.5px;
   color: var(--ink-2);
   margin-bottom: 7px;
   font-variant-numeric: tabular-nums;
@@ -3063,7 +3251,7 @@ ol {
 }
 
 .progress__end {
-  font-size: 11.5px;
+  font-size: 15px;
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
   flex: none;
@@ -3090,7 +3278,7 @@ ol {
 .hero__aside {
   font-family: var(--serif);
   font-style: italic;
-  font-size: 15px;
+  font-size: 16.5px;
   line-height: 1.45;
   color: var(--ink-2);
 }
@@ -3145,7 +3333,7 @@ button.plan__hit:hover {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 11px;
+  font-size: 14.5px;
   font-weight: 500;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -3167,7 +3355,7 @@ button.plan__hit:hover {
 
 .plan__detail {
   display: block;
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--ink-2);
 }
 
@@ -3210,7 +3398,7 @@ button.plan__hit:hover {
 }
 
 .reflect__cite {
-  font-size: 11.5px;
+  font-size: 15px;
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -3237,7 +3425,7 @@ button.plan__hit:hover {
 }
 
 .week__letter {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--ink-3);
 }
 
@@ -3295,7 +3483,7 @@ button.plan__hit:hover {
 }
 
 .stat__label {
-  font-size: 10.5px;
+  font-size: 14.5px;
   letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -3382,7 +3570,7 @@ button.plan__hit:hover {
 }
 
 .auth__tagline {
-  font-size: 14.5px;
+  font-size: 16.5px;
   color: var(--ink-2);
   margin-top: 8px;
 }
@@ -3405,7 +3593,7 @@ button.plan__hit:hover {
   flex: 1;
   padding: 10px;
   border-radius: var(--r-chip);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   color: var(--ink-2);
   transition: all var(--t) var(--ease);
@@ -3419,7 +3607,7 @@ button.plan__hit:hover {
 
 /* Stated before the fields, not under them. */
 .auth__pending {
-  font-size: 13px;
+  font-size: 15.5px;
   line-height: 1.5;
   color: var(--ink-2);
   padding: 12px 14px;
@@ -3441,7 +3629,7 @@ button.plan__hit:hover {
 }
 
 .field__label {
-  font-size: 12px;
+  font-size: 15px;
   letter-spacing: 0.06em;
   color: var(--ink-2);
 }
@@ -3453,7 +3641,7 @@ button.plan__hit:hover {
   border-radius: var(--r-soft);
   background: var(--card);
   font-family: var(--sans);
-  font-size: 15px;
+  font-size: 16.5px;
   color: var(--ink);
   transition: border-color var(--t) var(--ease);
 }
@@ -3478,7 +3666,7 @@ button.plan__hit:hover {
   align-items: center;
   gap: 12px;
   margin: 20px 0 16px;
-  font-size: 12px;
+  font-size: 15px;
   color: var(--ink-3);
 }
 
@@ -3508,7 +3696,7 @@ button.plan__hit:hover {
   border-radius: var(--r-chip);
   background: var(--card);
   font-family: var(--sans);
-  font-size: 15px;
+  font-size: 16.5px;
   font-weight: 500;
   color: var(--ink);
   transition: background var(--t) var(--ease);
@@ -3549,7 +3737,7 @@ button.plan__hit:hover {
 .auth__google-error {
   margin: 0;
   font-family: var(--sans);
-  font-size: 13px;
+  font-size: 15.5px;
   line-height: 1.45;
   color: var(--rose, #d98b8b);
   text-align: center;
@@ -3564,7 +3752,7 @@ button.plan__hit:hover {
 }
 
 .auth__lang-label {
-  font-size: 12px;
+  font-size: 15px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -3581,7 +3769,7 @@ button.plan__hit:hover {
 }
 
 .auth__note {
-  font-size: 12.5px;
+  font-size: 15.5px;
   line-height: 1.5;
   text-align: center;
   color: var(--ink-3);
@@ -3679,7 +3867,7 @@ button.plan__hit:hover {
   position: absolute;
   bottom: 46px;
   font-family: var(--serif);
-  font-size: 14px;
+  font-size: 16px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -3700,7 +3888,7 @@ button.plan__hit:hover {
 }
 
 .onboard__count {
-  font-size: 12px;
+  font-size: 15px;
   letter-spacing: 0.12em;
   color: var(--ink-3);
   margin-bottom: 10px;
@@ -3747,7 +3935,7 @@ button.plan__hit:hover {
 }
 
 .journey__key {
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--ink-2);
   flex: none;
 }
@@ -3784,14 +3972,14 @@ button.plan__hit:hover {
 }
 
 .ready__step-min {
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--ink-2);
   font-variant-numeric: tabular-nums;
 }
 
 .ready__week,
 .ready__path {
-  font-size: 15px;
+  font-size: 16.5px;
   color: var(--ink);
   margin-top: 8px;
 }
@@ -3889,12 +4077,12 @@ button.plan__hit:hover {
 }
 
 .badges--row .badge__name {
-  font-size: 13px;
+  font-size: 15.5px;
   line-height: 1.3;
 }
 
 .badge__how {
-  font-size: 12.5px;
+  font-size: 15.5px;
   line-height: 1.45;
   color: var(--ink-2);
 }
@@ -3931,7 +4119,7 @@ button.link {
 
 .greet__meta {
   margin-top: 6px;
-  font-size: 12.5px;
+  font-size: 15.5px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -3953,7 +4141,7 @@ button.link {
   border: 1px solid var(--border);
   background: var(--green-soft);
   color: var(--gold-lift);
-  font-size: 13px;
+  font-size: 15.5px;
   font-weight: 600;
   font-variant-numeric: lining-nums tabular-nums;
   box-shadow: 0 0 16px rgba(212, 168, 83, 0.14);
@@ -3979,7 +4167,7 @@ button.link {
 }
 
 .hero__meaning {
-  font-size: 13.5px;
+  font-size: 16px;
   color: var(--ink-2);
 }
 
@@ -4107,7 +4295,7 @@ button.link {
 }
 
 .stat-tile__label {
-  font-size: 10.5px;
+  font-size: 14.5px;
   letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -4116,7 +4304,7 @@ button.link {
 }
 
 .stat-tile__note {
-  font-size: 11.5px;
+  font-size: 15px;
   color: var(--ink-3);
   margin-top: 5px;
   font-variant-numeric: lining-nums tabular-nums;
@@ -4144,7 +4332,7 @@ button.link {
 
 .stat-grid__note {
   margin-top: 14px;
-  font-size: 13px;
+  font-size: 15.5px;
   line-height: 1.6;
   color: var(--ink-3);
 }
@@ -4184,7 +4372,7 @@ button.link {
 }
 
 .rank__note {
-  font-size: 14.5px;
+  font-size: 16.5px;
   line-height: 1.6;
   color: var(--ink-2);
   margin-bottom: 18px;
@@ -4196,7 +4384,7 @@ button.link {
   justify-content: space-between;
   gap: 14px;
   margin-top: 10px;
-  font-size: 12.5px;
+  font-size: 15.5px;
   font-variant-numeric: lining-nums tabular-nums;
 }
 
@@ -4237,7 +4425,7 @@ button.link {
 }
 
 .week-cell__letter {
-  font-size: 11px;
+  font-size: 14.5px;
   letter-spacing: 0.06em;
   color: var(--ink-3);
 }
@@ -4330,7 +4518,7 @@ button.link {
   background: var(--green-soft);
   box-shadow: inset 0 0 0 1px var(--border), 0 0 14px rgba(212, 168, 83, 0.12);
   color: var(--gold);
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 600;
   font-variant-numeric: lining-nums tabular-nums;
 }
@@ -4353,7 +4541,7 @@ button.link {
 }
 
 .rail__meta {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--ink-3);
   font-variant-numeric: lining-nums tabular-nums;
 }
@@ -4403,7 +4591,7 @@ button.link {
 }
 
 .tutor__body {
-  font-size: 14.5px;
+  font-size: 16.5px;
   line-height: 1.65;
   color: var(--ink-2);
   max-width: 38ch;
@@ -4415,7 +4603,7 @@ button.link {
 
 .tutor__disclosure {
   margin-top: 14px;
-  font-size: 12px;
+  font-size: 15px;
   line-height: 1.55;
   color: var(--ink-3);
 }
@@ -4460,7 +4648,7 @@ button.link {
 
 .picker__count {
   flex: none;
-  font-size: 12.5px;
+  font-size: 15.5px;
   color: var(--ink-3);
   font-variant-numeric: lining-nums tabular-nums;
 }
@@ -4494,7 +4682,7 @@ button.link {
   border-radius: var(--r-chip);
   border: 1px solid var(--border);
   background: var(--ivory-lift);
-  font-size: 13.5px;
+  font-size: 16px;
   color: var(--ink-2);
   transition: background var(--t) var(--ease), color var(--t) var(--ease),
     border-color var(--t) var(--ease);
@@ -4540,7 +4728,7 @@ button.link {
   background: var(--green-soft);
   box-shadow: inset 0 0 0 1px var(--border), 0 0 14px rgba(212, 168, 83, 0.1);
   color: var(--gold);
-  font-size: 13px;
+  font-size: 15.5px;
   font-weight: 600;
   font-variant-numeric: lining-nums tabular-nums;
   transition: background var(--t) var(--ease), box-shadow var(--t) var(--ease);
@@ -4575,7 +4763,7 @@ button.link {
   gap: 8px;
   padding: 11px 14px;
   border-radius: var(--r-chip);
-  font-size: 14.5px;
+  font-size: 16.5px;
   color: var(--ink-2);
   transition: background var(--t) var(--ease), color var(--t) var(--ease);
 }
@@ -4600,7 +4788,7 @@ button.link {
   padding: 2px 8px;
   border-radius: var(--r-chip);
   border: 1px solid var(--border-soft);
-  font-size: 9.5px;
+  font-size: 14px;
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -4715,7 +4903,7 @@ button.link {
   -webkit-backdrop-filter: var(--blur);
   backdrop-filter: var(--blur);
   box-shadow: var(--rim);
-  font-size: 14px;
+  font-size: 16px;
   color: var(--ink);
   transition: border-color var(--t) var(--ease), background var(--t) var(--ease);
 }
@@ -4744,7 +4932,7 @@ button.link {
 
 @media (max-width: 359px) {
   .compare__btn {
-    font-size: 13px;
+    font-size: 15.5px;
     padding: 13px 8px;
   }
 }
@@ -4790,7 +4978,7 @@ button.link {
   border-radius: var(--r-chip);
   background: var(--accent-fill);
   color: var(--on-gold);
-  font-size: 10.5px;
+  font-size: 14.5px;
   font-weight: 700;
   line-height: 1;
   font-variant-numeric: lining-nums tabular-nums;
@@ -4874,7 +5062,7 @@ button.link {
   margin-top: 16px;
   padding-top: 14px;
   border-top: 1px solid var(--border-soft);
-  font-size: 12.5px;
+  font-size: 15.5px;
   line-height: 1.6;
   color: var(--ink-3);
 }
@@ -4906,7 +5094,7 @@ button.link {
 }
 
 .notif__title {
-  font-size: 11px;
+  font-size: 14.5px;
   letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -4914,14 +5102,14 @@ button.link {
 }
 
 .notif__body {
-  font-size: 15px;
+  font-size: 16.5px;
   line-height: 1.5;
   color: var(--ink);
 }
 
 .notif__when {
   margin-top: 5px;
-  font-size: 12px;
+  font-size: 15px;
   color: var(--ink-3);
 }
 
@@ -4946,7 +5134,7 @@ button.link {
 }
 
 .notif-empty__body {
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.6;
   color: var(--ink-2);
   max-width: 34ch;
@@ -4987,7 +5175,7 @@ button.link {
 
 .goal__sub {
   margin-top: 8px;
-  font-size: 15px;
+  font-size: 16.5px;
   line-height: 1.6;
   color: var(--ink-2);
   max-width: 32ch;
@@ -5044,7 +5232,7 @@ button.link {
 .goal-pick__body {
   display: block;
   margin-top: 4px;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.5;
   color: var(--ink-2);
 }
@@ -5077,7 +5265,7 @@ button.link {
 }
 
 .goal-custom__label {
-  font-size: 11px;
+  font-size: 14.5px;
   letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -5101,7 +5289,7 @@ button.link {
   border: 1px solid var(--border);
   background: var(--ivory-lift);
   color: var(--ink-2);
-  font-size: 14.5px;
+  font-size: 16.5px;
   transition: background var(--t) var(--ease), color var(--t) var(--ease);
 }
 
@@ -5163,7 +5351,7 @@ button.link {
 }
 
 .stepper__unit {
-  font-size: 12.5px;
+  font-size: 15.5px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -5195,7 +5383,7 @@ button.link {
 .goal-remind__help {
   display: block;
   margin-top: 3px;
-  font-size: 13px;
+  font-size: 15.5px;
   line-height: 1.5;
   color: var(--ink-3);
 }
@@ -5294,7 +5482,7 @@ button.link {
 }
 
 .goal-invite__body {
-  font-size: 14.5px;
+  font-size: 16.5px;
   line-height: 1.6;
   color: var(--ink-2);
   max-width: 32ch;
@@ -5330,7 +5518,7 @@ button.link {
   justify-content: space-between;
   gap: 12px;
   margin-top: 10px;
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--ink-3);
 }
 
@@ -5369,7 +5557,7 @@ button.link {
 
 .eyebrow__range {
   margin-top: 4px;
-  font-size: 12px;
+  font-size: 15px;
   letter-spacing: 0.08em;
   color: var(--ink-3);
   font-variant-numeric: lining-nums tabular-nums;
@@ -5401,7 +5589,7 @@ button.link {
 }
 
 .ayah-badge__label {
-  font-size: 9.5px;
+  font-size: 14px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -5443,7 +5631,7 @@ button.link {
 }
 
 .rules__kicker {
-  font-size: 10.5px;
+  font-size: 14.5px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -5458,174 +5646,42 @@ button.link {
   gap: 7px;
 }
 
-.rule-pill {
+/* ── the legend ──────────────────────────────────────────────────────────
+   Plain names, one per rule, each with its hue as a dot. NOT controls: this
+   strip stopped being tappable when the panels moved into the feedback card,
+   and anything that still looked pressable would be promising an interaction
+   that no longer exists. No border, no background, no hover, no focus ring —
+   a <li> that reads as text because it is text.
+
+   The dot is small enough that eight of them read as a key rather than as
+   decoration, and it survives greyscale because the name is always beside it:
+   the colour is a second channel, never the only one. */
+.rule-name {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 7px 11px 7px 10px;
-  border-radius: var(--r-chip);
-  border: 1px solid var(--rule-tone-soft, var(--border));
-  background: var(--ivory-lift);
+  padding: 2px 2px;
   color: var(--ink-2);
-  font-size: 13px;
-  line-height: 1.2;
-  transition: border-color var(--t) var(--ease), background var(--t) var(--ease),
-    color var(--t) var(--ease);
+  font-size: 15.5px;
+  line-height: 1.3;
 }
 
-.rule-pill:hover,
-.rule-pill--open {
-  color: var(--ink);
-  border-color: var(--rule-tone, var(--border));
-  background: var(--rule-tone-wash, var(--ivory-lift));
-}
-
-/* The hue, as a 7px dot. Small enough that eight of them read as a key rather
-   than as decoration, and it survives being read in greyscale because the pill
-   also carries the rule's NAME — the colour is a second channel, never the
-   only one. */
-.rule-pill__dot {
-  width: 7px;
-  height: 7px;
+.rule-name__dot {
+  width: 9px;
+  height: 9px;
   flex: 0 0 auto;
   border-radius: 50%;
   background: var(--rule-tone, var(--gold));
 }
 
-/* PLUS BECOMES MINUS, by rotating the vertical bar out of existence. Two
-   glyphs swapped at the same position read as a flicker; one bar turning is
-   the state change itself. */
-.rule-pill__toggle {
-  position: relative;
-  width: 11px;
-  height: 11px;
-  flex: 0 0 auto;
-  margin-left: 1px;
-}
-
-.rule-pill__bar {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  width: 11px;
-  height: 1.4px;
-  border-radius: 1px;
-  background: currentColor;
-  transform: translateY(-50%);
-  opacity: 0.7;
-}
-
-.rule-pill__bar--v {
-  transform: translateY(-50%) rotate(90deg);
-  transition: transform var(--t) var(--ease), opacity var(--t) var(--ease);
-}
-
-.rule-pill--open .rule-pill__bar--v {
-  transform: translateY(-50%) rotate(0deg);
-  opacity: 0;
-}
-
-/* ONE PANEL, BELOW THE WHOLE ROW. See the note in RuleBadges.tsx for why it is
-   not inside the pill that opened it. */
-.rule-panel {
-  margin-top: 12px;
-  padding: 16px 18px;
-  border-radius: var(--r-soft);
-  border: 1px solid var(--border-soft);
-  background: var(--ivory-sunk);
-  animation: panel var(--t) var(--ease) both;
-}
-
-/* The same rise the cards use, plus a height sweep so the panel grows out of
-   the row rather than appearing over it. `max-height` rather than `height`
-   because the copy is authored and its length is not ours to predict. */
-@keyframes panel {
-  from {
-    opacity: 0;
-    max-height: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    max-height: 460px;
-    transform: none;
-  }
-}
-
-.rule-panel__rule {
-  font-size: 14.5px;
-  line-height: 1.65;
-  color: var(--ink);
-}
-
-.rule-panel__target {
-  margin-top: 10px;
-  font-size: 13px;
-  color: var(--ink-2);
-}
-
-.rule-panel__target strong {
-  color: var(--gold);
-  font-variant-numeric: lining-nums tabular-nums;
-}
-
-/* The Arabic runs at reading size; the Uzbek that surrounds it in some of the
-   authored examples falls back to the sans, so a mixed string does not come out
-   in a font that has to synthesise its Latin. */
-.rule-panel__example {
-  margin-top: 12px;
-  font-family: var(--arabic), var(--sans);
-  font-size: 19px;
-  line-height: 2.15;
-  color: var(--ink);
-  text-align: center;
-}
-
-.rule-panel__source {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border-soft);
-  font-size: 11.5px;
-  color: var(--ink-3);
-}
-
-/* THE GATE, STATED ON THE PANEL. Every one of these entries is draft — no qori
-   has signed the strings off — and a build that shows them says so on each
-   one rather than once in a banner nobody re-reads. */
-.rule-panel__draft {
-  padding: 2px 7px;
-  border-radius: var(--r-chip);
-  border: 1px solid var(--terra-soft);
-  color: var(--terra);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-}
-
-.rule-panel__lang {
-  margin-top: 8px;
-  font-size: 11.5px;
-  line-height: 1.5;
-  color: var(--ink-3);
-}
-
-/* ── the eight hues ──────────────────────────────────────────────────────
-   Dark first. Each is a mid-to-light tone that holds against near-black; the
-   light block below deepens all eight, for the same reason the stat marks are
-   deepened there — a hairline on paper has to be darker to carry equal weight.
-   `--rule-tone-soft` is the resting rim and `--rule-tone-wash` the open
-   background, both derived from the same hue at low alpha. */
-.rule-pill--pink        { --rule-tone: #e88bb0; --rule-tone-soft: rgba(232,139,176,.3); --rule-tone-wash: rgba(232,139,176,.1); }
-.rule-pill--dark-pink   { --rule-tone: #d4638f; --rule-tone-soft: rgba(212,99,143,.3);  --rule-tone-wash: rgba(212,99,143,.1); }
-.rule-pill--orange-red  { --rule-tone: #e8794f; --rule-tone-soft: rgba(232,121,79,.3);  --rule-tone-wash: rgba(232,121,79,.1); }
-.rule-pill--orange      { --rule-tone: #e8a05a; --rule-tone-soft: rgba(232,160,90,.3);  --rule-tone-wash: rgba(232,160,90,.1); }
-.rule-pill--green       { --rule-tone: #5cc4a6; --rule-tone-soft: rgba(92,196,166,.3);  --rule-tone-wash: rgba(92,196,166,.1); }
-.rule-pill--gray        { --rule-tone: #a8b0c0; --rule-tone-soft: rgba(168,176,192,.3); --rule-tone-wash: rgba(168,176,192,.1); }
-.rule-pill--dark        { --rule-tone: #93a0b8; --rule-tone-soft: rgba(147,160,184,.3); --rule-tone-wash: rgba(147,160,184,.1); }
-.rule-pill--blue        { --rule-tone: #7ec7e8; --rule-tone-soft: rgba(126,199,232,.3); --rule-tone-wash: rgba(126,199,232,.1); }
+.rule-name--pink        { --rule-tone: #e88bb0; --rule-tone-soft: rgba(232,139,176,.3); --rule-tone-wash: rgba(232,139,176,.1); }
+.rule-name--dark-pink   { --rule-tone: #d4638f; --rule-tone-soft: rgba(212,99,143,.3);  --rule-tone-wash: rgba(212,99,143,.1); }
+.rule-name--orange-red  { --rule-tone: #e8794f; --rule-tone-soft: rgba(232,121,79,.3);  --rule-tone-wash: rgba(232,121,79,.1); }
+.rule-name--orange      { --rule-tone: #e8a05a; --rule-tone-soft: rgba(232,160,90,.3);  --rule-tone-wash: rgba(232,160,90,.1); }
+.rule-name--green       { --rule-tone: #5cc4a6; --rule-tone-soft: rgba(92,196,166,.3);  --rule-tone-wash: rgba(92,196,166,.1); }
+.rule-name--gray        { --rule-tone: #a8b0c0; --rule-tone-soft: rgba(168,176,192,.3); --rule-tone-wash: rgba(168,176,192,.1); }
+.rule-name--dark        { --rule-tone: #93a0b8; --rule-tone-soft: rgba(147,160,184,.3); --rule-tone-wash: rgba(147,160,184,.1); }
+.rule-name--blue        { --rule-tone: #7ec7e8; --rule-tone-soft: rgba(126,199,232,.3); --rule-tone-wash: rgba(126,199,232,.1); }
 
 /* ══ THE MUSHAF, PAGED ════════════════════════════════════════════════════
  * Five ayat to a page with the arrows at the top, the same shape the verse
@@ -5638,7 +5694,7 @@ button.link {
 }
 
 .mushaf__page-of {
-  font-size: 12px;
+  font-size: 15px;
   letter-spacing: 0.12em;
   color: var(--ink-3);
   font-variant-numeric: lining-nums tabular-nums;
@@ -5647,14 +5703,14 @@ button.link {
 /* The eight rule hues, DEEPENED for paper. Same eight rules, same order; each
    dark stop moved toward its saturated end so a 7px dot and a hairline rim
    carry the same weight on #f7f3ec that they carry on #0b0f1a. */
-:root[data-theme="light"] .rule-pill--pink       { --rule-tone: #c2557f; --rule-tone-soft: rgba(194,85,127,.32); --rule-tone-wash: rgba(194,85,127,.09); }
-:root[data-theme="light"] .rule-pill--dark-pink  { --rule-tone: #a33a66; --rule-tone-soft: rgba(163,58,102,.32); --rule-tone-wash: rgba(163,58,102,.09); }
-:root[data-theme="light"] .rule-pill--orange-red { --rule-tone: #c14e28; --rule-tone-soft: rgba(193,78,40,.32);  --rule-tone-wash: rgba(193,78,40,.09); }
-:root[data-theme="light"] .rule-pill--orange     { --rule-tone: #b8752a; --rule-tone-soft: rgba(184,117,42,.32); --rule-tone-wash: rgba(184,117,42,.09); }
-:root[data-theme="light"] .rule-pill--green      { --rule-tone: #17724c; --rule-tone-soft: rgba(23,114,76,.32);  --rule-tone-wash: rgba(23,114,76,.09); }
-:root[data-theme="light"] .rule-pill--gray       { --rule-tone: #5d6470; --rule-tone-soft: rgba(93,100,112,.32); --rule-tone-wash: rgba(93,100,112,.09); }
-:root[data-theme="light"] .rule-pill--dark       { --rule-tone: #2f3742; --rule-tone-soft: rgba(47,55,66,.32);   --rule-tone-wash: rgba(47,55,66,.08); }
-:root[data-theme="light"] .rule-pill--blue       { --rule-tone: #1f6b96; --rule-tone-soft: rgba(31,107,150,.32); --rule-tone-wash: rgba(31,107,150,.09); }
+:root[data-theme="light"] .rule-name--pink       { --rule-tone: #c2557f; --rule-tone-soft: rgba(194,85,127,.32); --rule-tone-wash: rgba(194,85,127,.09); }
+:root[data-theme="light"] .rule-name--dark-pink  { --rule-tone: #a33a66; --rule-tone-soft: rgba(163,58,102,.32); --rule-tone-wash: rgba(163,58,102,.09); }
+:root[data-theme="light"] .rule-name--orange-red { --rule-tone: #c14e28; --rule-tone-soft: rgba(193,78,40,.32);  --rule-tone-wash: rgba(193,78,40,.09); }
+:root[data-theme="light"] .rule-name--orange     { --rule-tone: #b8752a; --rule-tone-soft: rgba(184,117,42,.32); --rule-tone-wash: rgba(184,117,42,.09); }
+:root[data-theme="light"] .rule-name--green      { --rule-tone: #17724c; --rule-tone-soft: rgba(23,114,76,.32);  --rule-tone-wash: rgba(23,114,76,.09); }
+:root[data-theme="light"] .rule-name--gray       { --rule-tone: #5d6470; --rule-tone-soft: rgba(93,100,112,.32); --rule-tone-wash: rgba(93,100,112,.09); }
+:root[data-theme="light"] .rule-name--dark       { --rule-tone: #2f3742; --rule-tone-soft: rgba(47,55,66,.32);   --rule-tone-wash: rgba(47,55,66,.08); }
+:root[data-theme="light"] .rule-name--blue       { --rule-tone: #1f6b96; --rule-tone-soft: rgba(31,107,150,.32); --rule-tone-wash: rgba(31,107,150,.09); }
 
 /* ══ LIGHT MODE — THE SAME SYSTEM, RE-HUED ════════════════════════════════
  *
@@ -6217,7 +6273,7 @@ button.link {
 .weakness-board__more {
   width: 100%;
   margin-top: 6px;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .weakness-row {
@@ -6263,14 +6319,14 @@ button.link {
 
 .weakness-row__kind {
   display: block;
-  font-size: 15px;
+  font-size: 16.5px;
   font-weight: 500;
   line-height: 1.3;
 }
 
 .weakness-row__count {
   display: block;
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--ink-2);
   line-height: 1.4;
 }
@@ -6293,7 +6349,7 @@ button.link {
 
 .weakness-row__l1 {
   flex: none;
-  font-size: 11px;
+  font-size: 14.5px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -6309,45 +6365,45 @@ button.link {
 }
 
 .weakness-row__headline {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--ink-2);
   line-height: 1.55;
   margin-bottom: 8px;
 }
 
 .weakness-row__trend {
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--ink-2);
   margin-bottom: 6px;
 }
 
 .weakness-row__rate {
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--jade);
   margin-bottom: 8px;
 }
 
 .weakness-row__fix {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--ink);
   line-height: 1.55;
   margin-bottom: 8px;
 }
 
 .weakness-row__rule {
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--gold);
   margin-bottom: 4px;
 }
 
 .weakness-row__makhraj {
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--ink-3);
   margin-bottom: 8px;
 }
 
 .weakness-row__teacher {
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--terra);
   font-style: italic;
   margin-bottom: 8px;
@@ -6355,7 +6411,7 @@ button.link {
 
 .weakness-row__listen,
 .weakness-row__practice {
-  font-size: 13px;
+  font-size: 15.5px;
   padding: 8px 16px;
   margin-right: 8px;
   margin-top: 4px;
@@ -6388,7 +6444,7 @@ button.link {
 }
 
 .focus-card__kicker {
-  font-size: 11px;
+  font-size: 14.5px;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -6433,19 +6489,19 @@ button.link {
 }
 
 .focus-card__headline {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--ink-2);
   line-height: 1.5;
   margin-bottom: 4px;
 }
 
 .focus-card__meta {
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--terra);
 }
 
 .focus-card__makhraj {
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--ink-3);
   margin-top: 4px;
 }
@@ -6462,7 +6518,7 @@ button.link {
 /* ══ before/after improvement line ═══════════════════════════════════════ */
 
 .card__improvement {
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--jade);
   margin-top: 8px;
 }

@@ -23,6 +23,7 @@ from .audio import DecodeInfo, check_quality, decode
 from . import cards
 from .collapse import looks_collapsed
 from .debug_capture import capture
+from . import headlines
 from .model import transcribe
 from . import practice
 from .ranges import Range, is_legal_range, n_words, reference
@@ -42,13 +43,18 @@ log = logging.getLogger(__name__)
 # and combined with the content gate below it was usually a cap on nothing -
 # the gate had already emptied the list. If the engine found five, show five.
 #
-# WHAT REPLACED IT IS NOT A CAP. Every card is still sent, ranked into teaching
-# tiers (see engine/teaching.py), and each carries `reveal_order`. The CLIENT
+# WHAT REPLACED IT IS NOT A CAP. Every card is still sent, ordered by POSITION
+# IN THE RECITATION (see _rank), and each carries `reveal_order`. The CLIENT
 # opens one at a time and unlocks the next when the current one is fixed - so
 # the learner meets one correction at a time while the engine still reports
 # everything it found, and "hali N ta bor" can be honest about the rest because
 # the rest is actually there.
 
+# Retained but NO LONGER CONSULTED BY THE SORT. `severity` used to break ties
+# inside a teaching tier; ordering is now purely positional and two errors
+# cannot share a unit index, so there are no ties left to break. It stays
+# because the registry still carries the field and the review tool still reads
+# it - deleting it here would not remove it from the content.
 SEVERITY_RANK = {"high": 0, "medium": 1, "low": 2}
 
 
@@ -293,18 +299,38 @@ def _kind_of(e: TypedError) -> str:
 
 
 def _rank(e: TypedError) -> tuple:
-    """Teaching order: tier first, then severity, then position.
+    """RECITATION ORDER. Where the mistake happened, and nothing else.
 
-    THE TIER OUTRANKS SEVERITY, and that is the change. `severity` is a
-    property of the registry ENTRY - how bad this class of mistake is in
-    general - so ranking by it alone put a high-severity madd card above a
-    substituted letter in the same word, and told the learner to fix the length
-    of a sound that was itself wrong. See engine/teaching.py for why the four
-    tiers are ordered as they are.
+    ── THIS IS A DELIBERATE OVERRIDE, NOT A MERGE ─────────────────────────
+    It reverses the teaching-tier ordering documented in engine/teaching.py,
+    under which cards were sorted by what the mistake DID - wrong letter, then
+    articulation, then ruling, then timing - with severity breaking ties inside
+    a tier and position breaking ties inside that.
+
+    The two systems are NOT combined. Tier is no longer consulted here at all,
+    because a hybrid would be the worst of both: cards would look
+    position-ordered until two mistakes of different tiers sat close together,
+    and then jump, which is harder to follow than either rule applied
+    consistently. If the tier ordering is ever wanted back it should replace
+    this outright rather than be folded into it.
+
+    THE ARGUMENT FOR POSITION. A learner works through the cards with the ayah
+    in front of them, and reading is left to right through the recitation. Cards
+    in recitation order let them walk the verse once, fixing each spot as they
+    reach it. Tier order made them jump around the ayah - fix a letter at the
+    end, then an articulation at the start, then a ruling in the middle - which
+    is three passes over the text to do one pass of work.
+
+    WHAT IS LOST, STATED PLAINLY. The dependency argument in teaching.py is
+    real and this does not refute it: correcting the length of a sound whose
+    letter is wrong still teaches holding a wrong sound for the right count.
+    That case now depends on the two mistakes being close together in the ayah,
+    which they usually are - they are typically the same word - but not always.
+
+    teaching.tier() IS STILL USED, and still by this module: it sets `tier` on
+    each card for the client's reveal chain. Only the SORT stopped reading it.
     """
-    rule = content.rules().get(e.code, {})
-    return (teaching.tier(_kind_of(e)),
-            SEVERITY_RANK.get(rule.get("severity", "medium"), 1), e.at)
+    return (e.at,)
 
 
 def _unauthored_body(code: str) -> dict:
@@ -392,8 +418,101 @@ def accuracy(n_units: int, errors: list[TypedError]) -> float:
     return max(0.0, 1.0 - len({e.at for e in errors}) / n_units)
 
 
+# ── which placed rule a given error is ABOUT ──────────────────────────────
+# A unit can carry more than one ruling at once - the ا in ضضَااااااللِۦۦۦۦن is a
+# madd lozim sitting inside a word that also contains an istila letter - so
+# "the rule at this position" is a set, and the card needs one member of it.
+#
+# The ERROR CODE picks. A shortened madd is about the madd ruling and not about
+# the tafkheem that happens to share the sound, and the registry group already
+# says which family the code belongs to. Preference is ordered within a family
+# because the madd subtypes are mutually exclusive at a position but the set is
+# not ordered: lozim before muttasil before munfasil before tabiiy, longest
+# first, so a six-count is never reported as the two-count it also technically
+# matches.
+_RULE_PREFERENCE = {
+    "madd": ("RULE_MADD_LOZIM", "RULE_MADD_MUTTASIL", "RULE_MADD_MUNFASIL",
+             "RULE_MADD_TABIIY"),
+    "ghunna": ("RULE_IKHFO_GHUNNA",),
+    "ahkam": ("RULE_IKHFO_GHUNNA", "RULE_IDGHOM"),
+    "sifat": ("RULE_QALQALA", "RULE_TAFXIM"),
+    "shadda": ("RULE_IKHFO_GHUNNA",),
+}
+
+
+def _rules_at(uthmani: str, phonemes: str) -> dict[int, list[str]]:
+    """Unit index -> the rules governing it, for the range being analysed.
+
+    A SECOND PHONETIZER RUN, and it is not avoidable. `target.phonemes` is the
+    flat string, and remove_spaces=True destroys the one thing that separates
+    madd muttasil from madd munfasil. The spaced run is thrown away immediately
+    after the map is built.
+
+    FAILING HERE COSTS RULE NAMES, NOT THE ATTEMPT. Same trade as the badge
+    strip in routes._rule_badges: a learner who has just recorded an ayah must
+    get their corrections back even if the rule layer cannot be computed, and a
+    card with no rule name is exactly the degraded-but-honest state the whole
+    §12 fallback path is built for.
+    """
+    try:
+        from quran_transcript import quran_phonetizer
+
+        from .moshaf import MOSHAF
+        from .rule_presence import rules_by_unit
+
+        spaced = quran_phonetizer(uthmani, MOSHAF, remove_spaces=False)
+        return rules_by_unit(spaced.phonemes, unit_char_spans(phonemes))
+    except Exception:
+        log.warning("rule placement unavailable; cards will name no rules")
+        return {}
+
+
+def _placed_rule(group: str, placed: list[str]) -> str:
+    """The one rule code this card may name, or "" if none of them fit.
+
+    "" when the error's family has no preference listed, when nothing was
+    placed at the position, or when what was placed belongs to a different
+    family. All three are the same answer - we cannot say which ruling this is -
+    and all three must produce a headline that names no rule.
+    """
+    for code in _RULE_PREFERENCE.get(group, ()):
+        if code in placed:
+            return code
+    return ""
+
+
+def _headline(body: dict, e: TypedError, lang: str,
+              placed: list[str]) -> tuple[str, str]:
+    """(headline, rule name) for a restructured card. ("", "") for the rest.
+
+    THE ONLY PLACE A RULE NAME IS ALLOWED TO REACH A LEARNER-FACING SENTENCE.
+    Everything upstream deals in rule CODES; everything downstream renders a
+    string. If the name is empty here, no pattern that needs one can build, and
+    the entry's own `headline_no_rule` is used instead.
+    """
+    pattern = body.get("headline_pattern", "")
+    if not pattern or not body.get("card_kind"):
+        return "", ""
+
+    rule_code = _placed_rule(body.get("group", ""), placed)
+    # An entry may name a MORE PRECISE title than the placed badge carries -
+    # see v7's _override_note on «Ixfo va g'unna». The override never creates a
+    # placement, it only renames one that already happened, so a card with no
+    # placed rule stays nameless no matter what it asks for.
+    if rule_code:
+        rule_code = body.get("rule_name_override") or rule_code
+    rule_name = coaching.rule_title(rule_code, lang) if rule_code else ""
+    gender = coaching.rule_gender(rule_code) if rule_code else ""
+
+    letter = e.expected or e.letter
+    return headlines.build(pattern, lang, rule_name=rule_name, letter=letter,
+                           gender=gender,
+                           fallback=body.get("headline_no_rule", "")), rule_name
+
+
 def present(raw: list[TypedError], lang: str, *, uthmani: str = "",
-            spans: dict[int, tuple[int, int]] | None = None
+            spans: dict[int, tuple[int, int]] | None = None,
+            rules_at: dict[int, list[str]] | None = None
             ) -> tuple[list[dict], list[dict]]:
     """Detected errors -> (shown to the learner, logged only).
 
@@ -464,6 +583,16 @@ def present(raw: list[TypedError], lang: str, *, uthmani: str = "",
         guide = sifat.guidance(e.sifa, e.letter, lang)
         body = _name_the_sifat(e, body, guide)
 
+        # THE RESTRUCTURED HEADLINE. Built from the entry's pattern and the
+        # rule actually PLACED at this unit - never from the ayah-wide badge
+        # set, which would let a madd lozim three words away name a card about
+        # a different sound entirely. An unconverted entry (card_kind 0) gets
+        # ("", "") back and keeps the headline its own generation authored.
+        placed = (rules_at or {}).get(e.at, [])
+        built, rule_named = _headline(body or {}, e, lang, placed)
+        if built:
+            body = {**(body or {}), "headline": built}
+
         record = {
             **e.dict(), "status": status, "content": body,
             "draft": False, "needs_teacher": status == "teacher",
@@ -499,8 +628,17 @@ def present(raw: list[TypedError], lang: str, *, uthmani: str = "",
             # ṣifa's name - and left EMPTY rather than invented when neither
             # exists. The client falls back to the `kind` title, which is a real
             # name too; what it must never fall back to is the code.
-            "rule_name": (body or {}).get("label", "") or (
+            # A PLACED rule name outranks the entry's own label. The label is a
+            # property of the entry ("Cho'zish (mad) qisqa qilingan" - true of
+            # every shortened madd anywhere); the placed name is a property of
+            # THIS position ("Mad lozim"), which is the thing the learner can
+            # look up and the thing the ayah's colour coding will agree with.
+            "rule_name": rule_named or (body or {}).get("label", "") or (
                 guide or {}).get("name", ""),
+            # The rule CODE, so the client can tint the card to match the same
+            # rule's colour in the ayah above it. Empty whenever no rule was
+            # placed - there is no "probably this one" here.
+            "rule_code": _placed_rule((body or {}).get("group", ""), placed),
             "sifa_name": (guide or {}).get("name", ""),
             # The physical instruction. Separate from `fix` because they answer
             # different questions: `fix` is what to do about THIS mistake,
@@ -671,7 +809,8 @@ def analyze(audio: bytes, sura: int, aya: int, lang: str = "uz", *,
     raw, within_tolerance = apply_tolerances(detected, pred.mean_prob)
 
     spans = unit_spans_for_range(sura, aya, rng.start_word, rng.num_words)
-    shown, silent = present(raw, lang, uthmani=uthmani, spans=spans)
+    shown, silent = present(raw, lang, uthmani=uthmani, spans=spans,
+                            rules_at=_rules_at(uthmani, target.phonemes))
     # RULE 9's gate. Measured over the RANGE that was actually recited, so a
     # word-rung re-read is scored against that word and not against the ayah it
     # came from.

@@ -64,6 +64,10 @@ V5 = _ROOT / "tajweed_registry_v5_gaps.json"
 # words for - SHADDA_SHORT, SHADDA_LONG, GHUNNA_LONG, SUB_HA_HEH. Each rendered
 # the unauthored stand-in: a located card with nothing to say.
 V6 = _ROOT / "tajweed_registry_v6_gaps.json"
+# v7 is the Kind 1 / Kind 2 restructure and the "Explain simply" second level.
+# It is an OVERLAY and merges differently from every generation before it - see
+# _deep_update. Five entries so far; the demo the remaining 56 are gated on.
+V7 = _ROOT / "tajweed_registry_v7_restructure.json"
 
 # What the REGISTRIES author. All four are still parsed, still validated, and
 # still available to the review tool, which reads the registry directly.
@@ -85,6 +89,20 @@ FIELDS = ("headline", "fix", "rule", "drill")
 #
 # Neither is deleted from the registries. They are simply not part of the card.
 CARD_FIELDS = ("headline", "fix")
+
+# What a v7 entry adds on top. `explanation` splits "what happened" out of the
+# headline, which previously had to be both; `correction` is `fix` under the
+# name the restructure spec uses; `retry` names the phrase to re-record; `rule`
+# is PROMOTED BACK ONTO THE CARD, behind the ❔ toggle, for Kind 1 only.
+#
+# `rule` returning is not a reversal of the decision that removed it. It was
+# removed because it rendered UNCONDITIONALLY, on every card, as 13-44 words of
+# theory a beginner has no use for mid-correction. It comes back collapsed, on
+# the half of the registry where understanding the ruling IS the correction, and
+# never on a Kind 2 card - where, as §4 puts it, additional theory would not
+# help.
+V7_FIELDS = ("explanation", "correction", "retry", "rule", "headline_no_rule")
+
 
 # Any {placeholder} left after substitution.
 _BRACE = re.compile(r"\{[^}]*\}")
@@ -205,24 +223,108 @@ def _load(path: Path, *, adapt=None) -> dict:
     return entries
 
 
+def _deep_update(base: dict, overlay: dict) -> dict:
+    """Recursive update, for the one generation that is an OVERLAY.
+
+    v3-v6 each REPLACE an entry wholesale, which is right for them: each was
+    authored as a complete entry and a later one supersedes an earlier one.
+
+    v7 is not that. It names only the keys the restructure changes - the two
+    card kinds, the headline pattern, the split explanation, the simplified
+    level - and everything it does not name must survive: `group` (which
+    cards.kind_of routes on), `severity` (which the ranking reads),
+    `detection_signal` (which substitution_pairs parses) and `source_ref`
+    (which is the citation). A plain dict.update() would silently drop all four
+    and take the makharij letter-pair table with them, so an entry that gained
+    a simplified explanation would stop being detectable at all.
+    """
+    out = dict(base)
+    for key, value in overlay.items():
+        if isinstance(value, dict) and isinstance(out.get(key), dict):
+            out[key] = _deep_update(out[key], value)
+        else:
+            out[key] = value
+    return out
+
+
 @lru_cache(maxsize=1)
 def registry() -> dict:
-    """code -> entry, v5 over v4 over v3.
+    """code -> entry, v7 over v6 over v5 over v4 over v3.
 
     Later generations win on a collision: each was authored to improve on the
     one before it. v3 supplies breadth (36 specific corrections), v4 rewrites
-    their wording, v5 adds the categories all of them missed.
+    their wording, v5 adds the categories all of them missed, v6 closes four
+    engine codes nobody had written words for.
+
+    v7 alone is layered rather than substituted - see _deep_update.
     """
     merged = _load(V3, adapt=_adapt_v3)
     merged.update(_load(V4))
     merged.update(_load(V5))
     merged.update(_load(V6))
+    for code, spec in _load(V7).items():
+        merged[code] = _deep_update(merged.get(code, {}), spec)
     return merged
+
+
+@lru_cache(maxsize=1)
+def rule_names() -> dict:
+    """RULE_* code -> {uz, ru} for the {rule} slot in a Kind 1 headline.
+
+    Lives in v7's `_meta` rather than in rule_badges.json because half of it is
+    Russian and rule_badges.json is Uzbek-only BY DECISION - it says so, and
+    adding Russian there would look like a qori had reviewed it. Here each name
+    carries a `from` naming the authored string it was taken out of, so the
+    provenance travels with the text.
+
+    NEEDS_AUTHORING is a value, not an absence: it marks a rule whose Russian
+    nobody has written, which headline() must treat as no name at all.
+    """
+    if not V7.exists():
+        return {}
+    meta = json.loads(V7.read_text(encoding="utf-8-sig")).get("_meta", {})
+    return {code: names
+            for code, names in meta.get("rule_names", {}).items()
+            if not code.startswith("_")}
+
+
+def rule_title(rule_code: str, lang: str) -> str:
+    """The authored name of one rule, or "" when none is authored.
+
+    "" is the §12 refusal in its smallest form. A headline that needs this and
+    gets "" does not fall back to the Uzbek, to a transliteration, or to the
+    code - it falls back to a headline that names no rule at all.
+    """
+    names = rule_names().get(rule_code) or {}
+    name = str(names.get(lang) or "")
+    return "" if name == "NEEDS_AUTHORING" else name
+
+
+def rule_gender(rule_code: str) -> str:
+    """m | f | n for one rule name, or "" when none is recorded.
+
+    Russian headlines agree with the rule name and Uzbek ones do not, so this
+    is consulted for one language and ignored by the other. The value is read
+    off the authored Russian the name came from - «Гунна не выполнена» is
+    feminine because a qori wrote it that way - rather than being decided here.
+    """
+    return str((rule_names().get(rule_code) or {}).get("gender") or "")
+
+
+def restructured() -> list[str]:
+    """Codes v7 has actually been authored for.
+
+    The other 56 still render the pre-restructure card, and that is deliberate
+    rather than pending: mixing a half-converted entry into the new template
+    would produce a card with a Kind 1 frame and no explanation to put in it.
+    Surfaced so "which entries are done" is a question with an answer.
+    """
+    return sorted(_load(V7))
 
 
 def missing_sources() -> list[str]:
     """Registry files this module expects but cannot find."""
-    return [p.name for p in (V3, V4, V5, V6) if not p.exists()]
+    return [p.name for p in (V3, V4, V5, V6, V7) if not p.exists()]
 
 
 def has(code: str) -> bool:
@@ -548,4 +650,70 @@ def render(code: str, lang: str, fields: dict) -> dict | None:
     # review gate applies, and nothing here has been signed off by a qori.
     out["reviewed"] = spec.get("status", "draft") == "reviewed"
     out["unauthored"] = False
+    _add_v7(out, spec, block, safe, code=code)
     return out
+
+
+# ── the v7 layer ──────────────────────────────────────────────────────────
+# Kept in its own function, and additive to `out` rather than replacing it, for
+# one reason: 56 of the 61 entries have no v7 block yet. Those must keep
+# rendering exactly the card they render today - same headline, same fix, same
+# everything - while the five that do have one gain the new shape. A rewrite of
+# render() would have made the restructure all-or-nothing across the registry,
+# which is precisely what the staged rollout is trying to avoid.
+
+
+def _add_v7(out: dict, spec: dict, block: dict, safe: dict, *,
+            code: str) -> None:
+    """Attach the restructured fields, or mark the card as not yet converted.
+
+    `card_kind` is 0 for an unconverted entry, and the client reads 0 as "render
+    the old card". Not 1: defaulting an unconverted entry to Kind 1 would put a
+    ❔ Qoida toggle on 56 cards whose `rule` text is the very theory the card
+    budget removed, and defaulting to Kind 2 would strip the explanation slot
+    from entries that need it. Neither guess is better than saying so.
+    """
+    kind = spec.get("card_kind", 0)
+    out["card_kind"] = kind
+    out["headline_pattern"] = spec.get("headline_pattern", "")
+    out["rule_name_override"] = spec.get("rule_name_override", "")
+    if not kind:
+        out["explanation"] = ""
+        out["correction"] = ""
+        out["retry"] = ""
+        out["headline_no_rule"] = ""
+        out["rule_text"] = ""
+        out["simplified"] = None
+        return
+
+    for key in V7_FIELDS:
+        # `rule` collides with the v3-adapted field of the same name, which is
+        # the long two-paragraph ruling. The v7 one is the condensed sentence
+        # written for the toggle, so it travels under its own name and the old
+        # one is left exactly where it was.
+        target = "rule_text" if key == "rule" else key
+        # KIND 2 TAKES NO RULE TEXT, and this guard is load-bearing rather than
+        # belt-and-braces. Because v7 is a DEEP merge, an entry that does not
+        # author a `rule` key still has the one its own earlier generation
+        # wrote - so reading the block unconditionally handed every Kind 2 card
+        # the two paragraphs of theory §4 exists to keep off it. Caught by
+        # test_kind_2_gets_no_rule_toggle; the entries look correct in the JSON
+        # and it is the merge that puts the field back.
+        if target == "rule_text" and kind != 1:
+            out[target] = ""
+            continue
+        out[target] = _fill(block.get(key, ""), safe, code=code, key=key)
+
+    # THE SIMPLIFIED LEVEL. Absent rather than empty when unauthored: §10 says
+    # it must never contradict or replace the standard card, and the safest
+    # form of "we have not written this yet" is a button that does not appear.
+    simple = block.get("simplified") or {}
+    if simple.get("explanation"):
+        out["simplified"] = {
+            "explanation": _fill(simple.get("explanation", ""), safe,
+                                 code=code, key="simplified.explanation"),
+            "correction": _fill(simple.get("correction", ""), safe,
+                                code=code, key="simplified.correction"),
+        }
+    else:
+        out["simplified"] = None

@@ -109,6 +109,15 @@ class RuleBadgeOut(BaseModel):
     target: str = ""
     source: str = ""
     reviewed: bool = False
+    #: Uthmani character ranges this rule governs, so the client can colour the
+    #: GLYPHS and not just name the rule underneath them. Same coordinates as an
+    #: error mark's `span`, from the same map, so a rule colour and an error
+    #: mark on one sound cannot disagree about where that sound is.
+    #:
+    #: Empty is a real answer and means "found in this passage but not placed" -
+    #: the idgham token-count proxy is the standing example. The client must
+    #: draw nothing for those rather than fall back to colouring the whole word.
+    spans: list[list[int]] = []
 
 
 class PracticeSegmentOut(BaseModel):

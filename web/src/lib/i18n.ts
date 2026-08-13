@@ -444,6 +444,10 @@ const STRINGS = {
     more_remaining: "Hali {n} ta joy bor — buni tugatgach koʻrsatamiz",
     // Opens every card. Not a diagnosis, an invitation.
     card_framing: "Keling, shu joyni tuzataylik",
+    // The two disclosures on a restructured card. UI copy, not tajweed — the
+    // sentences they reveal are authored and gated; these labels are not.
+    card_rule_toggle: "Qoida",
+    card_explain_simply: "Oddiy qilib tushuntiring",
     verdict_again: "Oyatni qaytadan oʻqish",
 
     // all clear
@@ -1255,6 +1259,8 @@ const STRINGS = {
       "Остальное прочитано верно — мы занимались только этим местом. Теперь прочитайте аят с начала.",
     more_remaining: "Осталось ещё {n} — покажем, когда закончите это",
     card_framing: "Давайте поправим это место",
+    card_rule_toggle: "Правило",
+    card_explain_simply: "Объяснить проще",
     verdict_again: "Прочитать аят снова",
 
     clear_title: "Прекрасно",

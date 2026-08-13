@@ -29,9 +29,36 @@ export type Mark = {
   note?: string;
 };
 
+/**
+ * One rule's territory on the text, for colouring the GLYPHS it governs.
+ *
+ * WHY THIS IS NOT A Mark. A mark says "you got this wrong" and belongs to a
+ * card; this says "this ruling applies here" and is true of the ayah whether or
+ * not anyone has recited it — the same distinction rule_presence draws against
+ * the error registry. They share the paint mechanism and nothing else.
+ */
+export type RuleSpan = {
+  /** RULE_MADD_LOZIM etc. Only used as a React key and for debugging. */
+  code: string;
+  /** One of the eight: pink | dark-pink | orange-red | orange | green | gray | dark | blue. */
+  color: string;
+  /** Uthmani character ranges, from the server. EMPTY means "not placed". */
+  spans: [number, number][];
+};
+
 type Props = {
   uthmani: string;
   segments: Segment[];
+  /**
+   * The rules governing this text, coloured onto the glyphs themselves.
+   *
+   * Drawn UNDER the error marks, deliberately. A learner looking at a result
+   * needs the mistake to win the eye; the rule colour is the standing fact
+   * behind it. Where a rule and an error cover the same letter, the letter
+   * reads as the error and the rule colour is simply not visible there — which
+   * is correct, because at that moment the mistake is the more urgent thing.
+   */
+  rules?: RuleSpan[];
   /**
    * EVERY errored letter, not just the first. One entry per occurrence, so a
    * letter mispronounced four times is marked in all four places even though
@@ -85,10 +112,14 @@ type Hit = Box & {
  * Remeasured on resize and after the Arabic webfont loads: measuring against a
  * fallback face would clip the wrong letters.
  */
+/** A painted rule rectangle: same geometry as a Hit, no card and no tap. */
+type RuleHit = Box & { code: string; color: string; clipLeft: number; clipTop: number };
+
 export default function AyahText({
   uthmani,
   segments,
   marks = [],
+  rules = [],
   activeCardId = null,
   onPick,
   mode = "still",
@@ -96,19 +127,27 @@ export default function AyahText({
   const hostRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
   const [hits, setHits] = useState<Hit[]>([]);
+  const [ruleHits, setRuleHits] = useState<RuleHit[]>([]);
   /** Where the text sits inside the container, so the red copy lands on it. */
   const [textBox, setTextBox] = useState<Box | null>(null);
 
   // Marks change identity on every render otherwise, which would remeasure on
   // every parent update.
   const key = marks.map((m) => `${m.at}:${m.cardId}`).join("|");
+  const ruleKey = rules
+    .map((r) => `${r.code}:${r.spans.map((s) => s.join("-")).join(",")}`)
+    .join("|");
 
   const measure = useCallback(() => {
     const host = hostRef.current;
     const span = textRef.current;
     const node = span?.firstChild;
-    if (!host || !span || !node || marks.length === 0) {
+    // Rules alone are enough to need a measurement now: an ayah with no
+    // mistakes still colours its rulings, which is the whole point of them
+    // being facts about the text rather than about the recitation.
+    if (!host || !span || !node || (marks.length === 0 && rules.length === 0)) {
       setHits([]);
+      setRuleHits([]);
       setTextBox(null);
       return;
     }
@@ -129,6 +168,54 @@ export default function AyahText({
       height: tb.height,
     });
 
+    /** Client rects for one character range of the text node. */
+    const rectsFor = (from: number, to: number): DOMRect[] => {
+      if (to <= from) return [];
+      const range = document.createRange();
+      try {
+        range.setStart(node, from);
+        range.setEnd(node, to);
+      } catch {
+        return []; // offsets outside the node; nothing to point at
+      }
+      const out = Array.from(range.getClientRects()).filter(
+        (r) => r.width > 0.5,
+      );
+      range.detach?.();
+      return out;
+    };
+
+    // ── the rule layer, measured first because it is drawn first ──────────
+    const nextRules: RuleHit[] = [];
+    const ruleSeen = new Set<string>();
+    for (const rule of rules) {
+      for (const [from, to] of rule.spans) {
+        for (const r of rectsFor(from, to)) {
+          // Two rules CAN legitimately cover one letter — the نَّ of ٱلنَّاسِ is
+          // both an idgham and a ghunna — and painting both stacks two
+          // translucent copies into a muddier third colour. First writer wins,
+          // which is `rules` order, which is the server's sorted order: stable
+          // across renders, so a letter does not change colour on a resize.
+          const key = `${Math.round(r.left)}:${Math.round(r.top)}:${Math.round(
+            r.width,
+          )}`;
+          if (ruleSeen.has(key)) continue;
+          ruleSeen.add(key);
+          nextRules.push({
+            code: rule.code,
+            color: rule.color,
+            left: r.left - padLeft,
+            top: r.top - padTop,
+            width: r.width,
+            height: r.height,
+            clipLeft: r.left - tb.left,
+            clipTop: r.top - tb.top,
+          });
+        }
+      }
+    }
+    setRuleHits(nextRules);
+
     const next: Hit[] = [];
     // SEVERAL ERRORS CAN SHARE ONE LETTER-GROUP. A segment covers a whole
     // group, so two errors on different units inside it measure to the SAME
@@ -146,16 +233,8 @@ export default function AyahText({
       const seg = segments.find((s) => s.units.includes(mark.at));
       const from = mark.span?.[0] ?? seg?.start;
       const to = mark.span?.[1] ?? seg?.end;
-      if (from === undefined || to === undefined || to <= from) continue;
-      const range = document.createRange();
-      try {
-        range.setStart(node, from);
-        range.setEnd(node, to);
-      } catch {
-        continue; // offsets outside the node; nothing to point at
-      }
-      for (const r of Array.from(range.getClientRects())) {
-        if (r.width <= 0.5) continue;
+      if (from === undefined || to === undefined) continue;
+      for (const r of rectsFor(from, to)) {
         const left = r.left - padLeft;
         const top = r.top - padTop;
         const key = `${Math.round(left)}:${Math.round(top)}:${Math.round(
@@ -175,11 +254,10 @@ export default function AyahText({
           clipTop: r.top - tb.top,
         });
       }
-      range.detach?.();
     }
     setHits(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, segments, uthmani]);
+  }, [key, ruleKey, segments, uthmani]);
 
   useLayoutEffect(() => {
     measure();
@@ -205,6 +283,57 @@ export default function AyahText({
       <span className="ayah__text" dir="rtl" lang="ar" ref={textRef}>
         {uthmani}
       </span>
+
+      {/*
+        THE RULE LAYER, under everything. Same mechanism as the red layer
+        below — the whole ayah painted again and clipped to one rectangle — so
+        the colour is ON THE GLYPH and the cursive joining is the original's.
+        A coloured box behind the text would read as a highlighter, which is
+        the tone this app avoids, and on Arabic it would also sit under the
+        letters it is meant to identify rather than on them.
+
+        FIRST IN THE DOM, so the error marks paint over it. A rule colour and
+        an error on the same letter is not a conflict to resolve — the mistake
+        wins the eye and the rule is still named in the strip below.
+      */}
+      {textBox &&
+        // PAINTED IN REVERSE PRIORITY ORDER, so the highest-priority rule ends
+        // up LAST in the DOM and therefore on top.
+        //
+        // The geometry dedupe above only protects IDENTICAL rectangles, and the
+        // contested case is not identical — it is NESTED. On الٓمٓ the madd
+        // lozim covers لٓمٓ and the ghunna covers مٓ inside it, two different
+        // widths, so both survive dedupe and the later one simply paints over
+        // the earlier. Painted in array order that made the winner "whichever
+        // sorted last", which is not a decision. Reversed, it is the priority
+        // in Recite.rulePriority.
+        //
+        // Caught in a screenshot: green was in the DOM with the right colour
+        // and the right clip, and no green pixel reached the screen.
+        ruleHits
+          .slice()
+          .reverse()
+          .map((b, i) => (
+          <span
+            key={`${b.code}-${i}`}
+            className={`ayah__rule ayah__rule--${b.color}`}
+            aria-hidden="true"
+            style={{
+              left: textBox.left,
+              top: textBox.top,
+              width: textBox.width,
+              clipPath: `polygon(${b.clipLeft}px ${b.clipTop}px, ${
+                b.clipLeft + b.width
+              }px ${b.clipTop}px, ${b.clipLeft + b.width}px ${
+                b.clipTop + b.height
+              }px, ${b.clipLeft}px ${b.clipTop + b.height}px)`,
+            }}
+          >
+            <span className="ayah__text" dir="rtl" lang="ar">
+              {uthmani}
+            </span>
+          </span>
+        ))}
 
       {/*
         The red layer. One absolutely-positioned copy per rectangle, each

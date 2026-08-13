@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Attempt, PracticeRung, TajweedError, flagWrong } from "../lib/api";
 import { Key, Lang, retryCopy, t } from "../lib/i18n";
 import DurationMeter from "./DurationMeter";
+import MarkedWord from "./MarkedWord";
 import ErrorBoundary from "./ErrorBoundary";
 import PracticeLadder, { RungState } from "./PracticeLadder";
 
@@ -156,8 +157,14 @@ export default function Feedback({
   const open = attempt.errors.filter((e) => !retry.fixed.includes(cardId(e)));
 
   /* ── ONE AT A TIME (progressive reveal) ────────────────────────────────
-     The server sends every card it found, ranked into teaching tiers, each
-     carrying `reveal_order`. The learner meets ONE.
+     The server sends every card it found, in RECITATION ORDER — the first
+     mistake in the ayah first, the last one last — each carrying
+     `reveal_order`. The learner meets ONE.
+
+     Position order, not teaching-tier order, and that is a deliberate
+     override: the learner works with the ayah in front of them, so cards that
+     follow the reading let them walk the verse once instead of jumping back
+     and forth across it. See engine/pipeline._rank.
 
      Eight cards is not eight lessons — it is a defect report handed to a
      beginner, and the reliable outcome is that they close the screen. So the
@@ -271,15 +278,35 @@ export default function Feedback({
         </p>
       )}
 
-      {/* The way out. After working through the cards the learner should be
-          able to read the whole ayah again in one tap — that IS the practice,
-          and leaving them to scroll back up to find the record button makes
-          the loop feel unfinished. */}
-      <div className="actions">
-        <button className="btn-quiet" onClick={onRetry}>
-          {t(lang, "verdict_again")}
-        </button>
-      </div>
+      {/* THE FULL AYAH, ONCE, AT THE END — and `open.length === 0` is the
+          whole mechanism.
+
+          Reciting the ayah is the TEST, and it belongs after the work rather
+          than during it. This button used to render unconditionally, from the
+          moment the results screen opened, while every card ALSO ended its own
+          ladder on a whole-ayah rung — so a ten-mistake attempt offered the
+          full recitation eleven times and demanded it ten. The per-card rung
+          is gone (see engine/practice.ladder); this is the one that remains.
+
+          ORDER-INDEPENDENT BY CONSTRUCTION. `open` is a filter over the
+          resolved-card SET, not a cursor, so it empties on whichever card
+          happens to be resolved last. A learner who fixes card 2 after card 8
+          reaches exactly the same single prompt, at the same moment — there is
+          no index to get out of step and no counter to reset.
+
+          NOTHING IS SHOWN IN ITS PLACE while cards are open. A sentence
+          announcing "you will read the whole ayah once you have finished
+          everything" is scaffolding: it explains a behaviour the learner meets
+          naturally the moment it happens, and it occupies the bottom of the
+          screen on every single render to do it. The button appearing when the
+          work is done says the same thing better, and says it once. */}
+      {open.length === 0 && (
+        <div className="actions">
+          <button className="btn-quiet" onClick={onRetry}>
+            {t(lang, "verdict_again")}
+          </button>
+        </div>
+      )}
 
       <WrongFlag lang={lang} attemptId={attempt.id} />
     </>
@@ -426,9 +453,26 @@ function Correction({
               {" · "}
             </span>
           )}
+          {/* THE WORD, WITH THE LETTER THE CARD IS ABOUT MARKED IN IT.
+              Marked only when the card actually singles a letter out — which
+              is what `meter` means: a duration card names one letter and one
+              count, and that is the case where "which و?" is a real question.
+              On a card with no meter the whole word is the subject and marking
+              one letter inside it would narrow a claim the card did not make.
+
+              `ordinal` comes from the first occurrence, which is the one the
+              "2-chi «و»" line above is also counting. */}
           {error.words.map((w, i) => (
             <span key={`${w}-${i}`} className="card__word" dir="rtl" lang="ar">
-              {w}
+              {meter && error.letter ? (
+                <MarkedWord
+                  word={w}
+                  letter={error.letter}
+                  ordinal={error.occurrences?.[i]?.ordinal ?? 1}
+                />
+              ) : (
+                w
+              )}
             </span>
           ))}
         </p>
@@ -458,8 +502,16 @@ function Correction({
         )}
       </div>
 
-      {/* 4. WHAT HAPPENED. */}
+      {/* 4. WHAT HAPPENED. The headline states the mistake; `explanation`
+             says what the learner actually did. On a restructured entry these
+             are two sentences doing one job each — the headline used to carry
+             both, which is why it ran long and read like a diagnosis. An
+             unconverted entry has no `explanation` and the headline still
+             carries everything, so this renders identically for the 56. */}
       {c.headline && <h3 className="card__headline">{c.headline}</h3>}
+      {c.explanation && (
+        <p className="card__body card__body--what">{c.explanation}</p>
+      )}
 
       {/* ...and where the mistake IS a length, the two lengths side by side.
           "Held for 2 instead of 6" is a sentence the learner has to convert
@@ -494,7 +546,9 @@ function Correction({
              all — where the tongue, throat or lips go. A card that named the
              ṣifa and stopped ("the ṣifa did not come out right") answered
              neither, and it was the most-shown correction in the app. */}
-      {c.fix && <p className="card__body card__body--fix">{c.fix}</p>}
+      {(c.correction || c.fix) && (
+        <p className="card__body card__body--fix">{c.correction || c.fix}</p>
+      )}
       {error.articulation && (
         <p className="card__body card__body--how">
           {error.sifa_name && (
@@ -502,6 +556,49 @@ function Correction({
           )}
           {error.articulation}
         </p>
+      )}
+
+      {/* 5c. THE RULING, COLLAPSED, KIND 1 ONLY.
+              `rule` was removed from the card once already, and this is not
+              that decision being reversed. It was removed because it rendered
+              unconditionally as 13–44 words of theory carrying terms a
+              beginner does not have — on every card, including the ones where
+              a letter was simply mispronounced and no ruling was at issue. It
+              returns collapsed, one sentence, and only where understanding the
+              ruling IS the correction. §4: on a Kind 2 card additional theory
+              would not help, so there is no toggle at all. */}
+      {c.card_kind === 1 && c.rule_text && (
+        <details className="card__rule-toggle">
+          <summary>{t(lang, "card_rule_toggle")}</summary>
+          <p className="card__body card__body--rule">{c.rule_text}</p>
+        </details>
+      )}
+
+      {/* 5d. 💡 EXPLAIN SIMPLY.
+              REVEALS, never replaces — §13 is explicit, and the reason is that
+              a learner who taps this has not rejected the standard text, they
+              have failed to parse one part of it. Swapping the card out would
+              take away the sentence they had already understood. So the simple
+              version appears BELOW the full one and can be closed again.
+
+              Rendered from `simplified` being non-null, which the server sends
+              only where one was actually authored. There is no generated
+              fallback: a "simpler" explanation nobody wrote is the machine
+              paraphrase §10 forbids. */}
+      {c.simplified && (
+        <details className="card__simple">
+          <summary>
+            <span aria-hidden="true">💡</span> {t(lang, "card_explain_simply")}
+          </summary>
+          <p className="card__body card__body--simple">
+            {c.simplified.explanation}
+          </p>
+          {c.simplified.correction && (
+            <p className="card__body card__body--simple">
+              {c.simplified.correction}
+            </p>
+          )}
+        </details>
       )}
 
       {/* 6, 7, 8. LISTEN, PRACTISE, RE-CHECK. */}

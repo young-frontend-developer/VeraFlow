@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import AyahText, { Mark } from "./AyahText";
+import AyahText, { Mark, RuleSpan } from "./AyahText";
 import ErrorBoundary from "./ErrorBoundary";
 import Feedback, {
   EMPTY_RUNGS,
@@ -18,6 +18,7 @@ import {
   submitAttempt,
 } from "../lib/api";
 import { Lang, t } from "../lib/i18n";
+import { ruleLayers } from "../lib/rules";
 import AyahBadge from "./AyahBadge";
 import RuleBadges from "./RuleBadges";
 import { Chevron, Close } from "./Ornament";
@@ -30,6 +31,7 @@ import Recorder, { useElapsed } from "./Recorder";
 import { Failure } from "./States";
 
 type Phase = "idle" | "recording" | "waiting";
+
 
 const mmss = (s: number) =>
   `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
@@ -496,6 +498,21 @@ export default function Recite({
       })),
     );
 
+  /**
+   * The rules to paint onto the glyphs.
+   *
+   * TWO FILTERS, AND BOTH ARE REFUSALS. `reviewed || showUnreviewed` is the
+   * same content gate the strip uses — production shows nothing a qori has not
+   * signed. `spans.length` drops any rule the engine found but could not
+   * PLACE: the idgham token-count proxy knows an assimilation happened without
+   * knowing which letter did it, and a colour has to land on a specific glyph
+   * or it is a claim nobody made.
+   */
+  // Gating, placement filter and precedence all live in lib/rules, shared with
+  // the reader — the same ayah must not be coloured two different ways
+  // depending on which screen the learner reached it from.
+  const ruleSpans: RuleSpan[] = ruleLayers(segment.rules, showUnreviewed);
+
   function scrollToCard(id: string) {
     setActiveCardId(id);
     cardRefs.current[id]?.scrollIntoView({
@@ -584,6 +601,12 @@ export default function Recite({
         uthmani={segment.uthmani}
         segments={segment.text_segments}
         marks={marks}
+        // The rules governing these glyphs, coloured onto the text. Gated the
+        // same way the strip below is — nothing here has a qori's signature —
+        // and filtered to the ones the engine could actually PLACE, so a rule
+        // it found but could not locate is named in the strip and painted
+        // nowhere. See RuleBadge.spans.
+        rules={ruleSpans}
         activeCardId={activeCardId}
         onPick={scrollToCard}
         mode={

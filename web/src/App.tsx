@@ -10,7 +10,6 @@ import { Journey, adjustJourney, hasJourney, storedJourney } from "./lib/journey
 import LangToggle from "./components/LangToggle";
 import ConsentGate from "./components/ConsentGate";
 import Onboarding, { Experience } from "./components/Onboarding";
-import PilotBanner from "./components/PilotBanner";
 import Picker, { Selection } from "./components/Picker";
 import Profile from "./components/Profile";
 import { ReadMode } from "./components/Reader";
@@ -640,12 +639,15 @@ function LearnerApp() {
         </div>
       )}
 
-      {info?.pilot && (
-        <PilotBanner
-          lang={lang}
-          showUnreviewed={info?.show_unreviewed ?? false}
-        />
-      )}
+      {/* THE PILOT BANNER IS GONE, and what it said is not.
+          It stood above every screen for the whole session saying the tajweed
+          corrections were unreviewed — true, and already said in the one place
+          it can be acted on: the QORALAMA chip on each card, next to the
+          specific sentence that has not been signed off. A standing banner
+          repeats that claim on screens with no corrections on them at all, and
+          a warning shown everywhere is one testers stop seeing exactly where it
+          matters. The per-card chip is the same information at the point of
+          use, which is where a caveat belongs. */}
 
       <main className="app__main" key={tab}>
         {failed ? (
