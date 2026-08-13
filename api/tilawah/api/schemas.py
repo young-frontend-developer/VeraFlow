@@ -249,6 +249,7 @@ class AttemptOut(BaseModel):
     #
     # 0 on a range that cannot be resolved. Never a guess.
     letters: int = 0
+    wrong_flag: bool = False
 
 
 class HadithOut(BaseModel):

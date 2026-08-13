@@ -18,6 +18,7 @@ import { Goal } from "../lib/goals";
 import { RecentAchievements } from "./Achievements";
 import { recent, signalsFrom } from "../lib/achievements";
 import { totals as totalsOf } from "../lib/progress";
+import FocusCard from "./FocusCard";
 import { hasJourney, storedJourney } from "../lib/journey";
 import { Blank, Loading } from "./States";
 import { ArchOrnament, Chevron } from "./Ornament";
@@ -256,6 +257,14 @@ export default function Today({
           <RankCard lang={lang} totals={totals} />
           <WeekRow lang={lang} rows={rows} />
         </>
+      )}
+
+      {consented && rows !== null && rows.length > 0 && (
+        <FocusCard
+          lang={lang}
+          rows={rows}
+          onPractice={(sura, aya) => onPick(sura, aya)}
+        />
       )}
 
       {/* ── 2b. THE GOAL ────────────────────────────────────────────────

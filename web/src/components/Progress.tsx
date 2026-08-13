@@ -8,6 +8,7 @@ import { award, signalsFrom } from "../lib/achievements";
 import { hasJourney, storedJourney } from "../lib/journey";
 import { Blank, Loading } from "./States";
 import { ArchOrnament } from "./Ornament";
+import WeaknessBoard from "./WeaknessBoard";
 
 /**
  * PROGRESS — the fourth tab, and the room everything countable moved into.
@@ -43,6 +44,7 @@ export default function Progress({
   rows,
   consented,
   onBrowse,
+  onPick,
 }: {
   lang: Lang;
   suras: Sura[];
@@ -50,6 +52,7 @@ export default function Progress({
   rows: Attempt[] | null;
   consented: boolean;
   onBrowse: () => void;
+  onPick?: (sura: number, aya: number) => void;
 }) {
   if (!consented) {
     return (
@@ -102,6 +105,10 @@ export default function Progress({
           consented={consented}
           onBrowse={onBrowse}
         />
+      </section>
+
+      <section className="today__block">
+        <WeaknessBoard lang={lang} rows={rows} onPractice={onPick} />
       </section>
 
       <section className="today__block">
