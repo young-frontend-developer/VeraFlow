@@ -739,6 +739,11 @@ function LearnerApp() {
               setSelection(null);
               setTab("practice");
             }}
+            onPick={(sura, aya) => {
+              setPlace({ sura, aya });
+              setSelection(null);
+              setTab("practice");
+            }}
           />
         ) : tab === "practice" ? (
           suras.length === 0 ? (

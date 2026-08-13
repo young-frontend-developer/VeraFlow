@@ -6198,3 +6198,271 @@ button.link {
    Which is the better outcome on its own terms: the one place in the app that
    deliberately broke the palette was also the one place that kept managing to
    render charcoal on charcoal. */
+
+/* ══ weakness board ══════════════════════════════════════════════════════ */
+
+.section-subtitle {
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--ink);
+  margin-bottom: 14px;
+}
+
+.weakness-board {
+  padding: 4px 0;
+}
+
+.weakness-board__more {
+  width: 100%;
+  margin-top: 6px;
+  font-size: 14px;
+}
+
+.weakness-row {
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.weakness-row:last-child {
+  border-bottom: none;
+}
+
+.weakness-row__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 0;
+  background: none;
+  border: none;
+  color: var(--ink);
+  text-align: start;
+  cursor: pointer;
+}
+
+.weakness-row__letter {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--ivory-lift);
+  border: 1px solid var(--border);
+  font-family: var(--arabic);
+  font-size: 20px;
+  color: var(--gold);
+}
+
+.weakness-row__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.weakness-row__kind {
+  display: block;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.weakness-row__count {
+  display: block;
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.4;
+}
+
+.weakness-row__recent {
+  color: var(--terra);
+}
+
+.weakness-row__arrow {
+  flex: none;
+  font-size: 18px;
+  font-weight: 600;
+  width: 24px;
+  text-align: center;
+}
+
+.trend--down { color: var(--jade); }
+.trend--up { color: var(--terra); }
+.trend--neutral { color: var(--ink-3); }
+
+.weakness-row__l1 {
+  flex: none;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: var(--r-chip);
+  background: var(--sage-soft);
+  color: var(--jade);
+}
+
+.weakness-row__detail {
+  padding: 0 0 16px 50px;
+  animation: rise var(--t) var(--ease) both;
+}
+
+.weakness-row__headline {
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.55;
+  margin-bottom: 8px;
+}
+
+.weakness-row__trend {
+  font-size: 13px;
+  color: var(--ink-2);
+  margin-bottom: 6px;
+}
+
+.weakness-row__rate {
+  font-size: 13px;
+  color: var(--jade);
+  margin-bottom: 8px;
+}
+
+.weakness-row__fix {
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.55;
+  margin-bottom: 8px;
+}
+
+.weakness-row__rule {
+  font-size: 13px;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+
+.weakness-row__makhraj {
+  font-size: 13px;
+  color: var(--ink-3);
+  margin-bottom: 8px;
+}
+
+.weakness-row__teacher {
+  font-size: 13px;
+  color: var(--terra);
+  font-style: italic;
+  margin-bottom: 8px;
+}
+
+.weakness-row__listen,
+.weakness-row__practice {
+  font-size: 13px;
+  padding: 8px 16px;
+  margin-right: 8px;
+  margin-top: 4px;
+}
+
+.sparkline {
+  display: block;
+  margin: 8px 0 12px;
+}
+
+.sparkline__bar {
+  fill: var(--gold);
+  opacity: 0.65;
+}
+
+/* ══ focus card ══════════════════════════════════════════════════════════ */
+
+.focus-card {
+  position: relative;
+  isolation: isolate;
+  background: var(--card);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border: 1px solid rgba(212, 168, 83, 0.24);
+  border-radius: var(--r-card);
+  box-shadow: var(--lift);
+  padding: 22px 26px;
+  margin-bottom: 18px;
+  animation: rise var(--t) var(--ease) both;
+}
+
+.focus-card__kicker {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+
+.focus-card__body {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.focus-card__letter {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--ivory-lift);
+  border: 1px solid var(--border);
+  font-family: var(--arabic);
+  font-size: 26px;
+  color: var(--gold);
+  box-shadow: 0 0 20px rgba(212, 168, 83, 0.15);
+}
+
+.focus-card__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.focus-card__kind {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.3;
+  margin-bottom: 4px;
+}
+
+.focus-card__headline {
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+.focus-card__meta {
+  font-size: 13px;
+  color: var(--terra);
+}
+
+.focus-card__makhraj {
+  font-size: 13px;
+  color: var(--ink-3);
+  margin-top: 4px;
+}
+
+.focus-card__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.focus-card__cta {
+  flex: 1;
+}
+
+/* ══ before/after improvement line ═══════════════════════════════════════ */
+
+.card__improvement {
+  font-size: 13px;
+  color: var(--jade);
+  margin-top: 8px;
+}

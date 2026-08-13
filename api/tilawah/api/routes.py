@@ -597,5 +597,6 @@ def history(limit: int = 20, device_id: str | None = None,
                        # at all.
                        letters=letters.in_range(
                            r.sura, r.aya, r.start_word,
-                           r.num_words or n_words(r.sura, r.aya)))
+                           r.num_words or n_words(r.sura, r.aya)),
+                       wrong_flag=r.wrong_flag)
             for r in rows]

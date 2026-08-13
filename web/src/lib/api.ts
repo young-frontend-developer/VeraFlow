@@ -330,6 +330,7 @@ export type Attempt = {
    * the field, and absent means 0, not "about this many".
    */
   letters?: number;
+  wrong_flag?: boolean;
 };
 
 /**
