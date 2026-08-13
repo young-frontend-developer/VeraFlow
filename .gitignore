@@ -1,3 +1,6 @@
+# claude code
+.claude/
+
 # python
 .venv/
 __pycache__/
