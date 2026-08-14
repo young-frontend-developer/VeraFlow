@@ -16,6 +16,7 @@ from ..config import settings
 from ..content import coaching
 from ..db import init_db
 from .auth_routes import router as auth_router
+from .lesson_routes import router as lesson_router
 from .routes import router
 
 logging.basicConfig(level=logging.INFO)
@@ -171,6 +172,7 @@ app.include_router(router)
 # Sessions. Additive in this phase: nothing in `router` requires one yet, and
 # the device_id endpoints are untouched. See api/auth_routes.py.
 app.include_router(auth_router)
+app.include_router(lesson_router)
 
 # The isolated letter recordings a coaching card's practice section plays.
 # Mounted unconditionally: the directory is checked in (with a README) so the
