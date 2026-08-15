@@ -70,6 +70,8 @@ export default function Feedback({
   onSelfCheck,
   onFocusLetter,
   onRetry,
+  onStep,
+  canStep,
   cardRefs,
 }: {
   lang: Lang;
@@ -86,6 +88,10 @@ export default function Feedback({
   /** Card tapped: light its letters in the ayah. */
   onFocusLetter: (id: string | null) => void;
   onRetry: () => void;
+  /** Move to the ayah either side. Offered ONLY once every correction on this
+   *  one is resolved - see the completion bar at the foot of the results. */
+  onStep: (delta: -1 | 1) => void;
+  canStep: { prev: boolean; next: boolean };
   cardRefs: React.MutableRefObject<Record<string, HTMLElement | null>>;
 }) {
   if (attempt.status === "retry_recording") {
@@ -300,11 +306,49 @@ export default function Feedback({
           naturally the moment it happens, and it occupies the bottom of the
           screen on every single render to do it. The button appearing when the
           work is done says the same thing better, and says it once. */}
+      {/* ── THE COMPLETION BAR ────────────────────────────────────────────
+             Every correction on this ayah is resolved. The learner has one
+             obvious thing to do next, and until now they had to find it: two
+             36px chevrons in a row at the TOP of the screen, a full results
+             page away from where they finished reading. An icon pair is a
+             navigation control, and what is needed here is a conclusion.
+
+             So the arrows are replaced — not duplicated — by one bar carrying
+             the named action. `Keyingi oyat` is a primary button at the full
+             width of the column; `Oldingi` sits beside `yana` underneath it in
+             the quiet treatment, because going back and re-reading are both
+             real but neither is what most people want next.
+
+             STICKY, ABOVE THE FLOATING NAV rather than fixed over it. A bar
+             pinned to the viewport bottom would sit under the tab bar, which
+             already owns that space; this one rides up from the end of the
+             results and parks clear of it, so both stay tappable.
+
+             DISABLED, NOT HIDDEN, at the ends of a sura. The last ayah still
+             shows `Keyingi oyat` greyed rather than dropping the button and
+             reflowing everything under it — a control that vanishes reads as a
+             bug, and its absence answers no question. */}
       {open.length === 0 && (
-        <div className="actions">
-          <button className="btn-quiet" onClick={onRetry}>
-            {t(lang, "verdict_again")}
+        <div className="donebar">
+          <button
+            className="btn-primary donebar__next"
+            disabled={!canStep.next}
+            onClick={() => onStep(1)}
+          >
+            {t(lang, "next_ayah")}
           </button>
+          <div className="donebar__quiet">
+            <button
+              className="btn-quiet"
+              disabled={!canStep.prev}
+              onClick={() => onStep(-1)}
+            >
+              {t(lang, "prev_ayah")}
+            </button>
+            <button className="btn-quiet" onClick={onRetry}>
+              {t(lang, "verdict_again")}
+            </button>
+          </div>
         </div>
       )}
 

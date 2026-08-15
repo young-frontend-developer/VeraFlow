@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { GoogleSignInError, googleSignIn, googleStart } from "../lib/api";
 import { Lang, t } from "../lib/i18n";
+import { withBrand } from "../lib/brand";
+import { GoogleMark } from "./Ornament";
 
 /**
  * "Google bilan davom etish", wired to the real thing.
@@ -76,6 +78,17 @@ export default function GoogleButton({
   const slot = useRef<HTMLDivElement | null>(null);
   const [error, setError] = useState<"conflict" | "failed" | null>(null);
   const [busy, setBusy] = useState(false);
+  /**
+   * True once GIS has actually drawn its button into the slot.
+   *
+   * IT MATTERS MORE THAN IT USED TO. This is now the only control on the
+   * account screen, so before it arrives — a slow nonce fetch, a slow script,
+   * an unreachable API — the card it lives in is an EMPTY BOX. With the email
+   * form beside it that was invisible; alone it is the whole screen showing
+   * nothing. So the slot is held open by a disabled button of the right shape
+   * until the real one replaces it.
+   */
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let dead = false;
@@ -132,6 +145,7 @@ export default function GoogleButton({
         logo_alignment: "center",
         width: 300,
       });
+      setReady(true);
 
       renew = window.setTimeout(
         () => arm().catch(() => {}),
@@ -141,6 +155,7 @@ export default function GoogleButton({
 
     arm().catch((e) => {
       if (dead) return;
+      setReady(false);
       if (e instanceof GoogleSignInError && e.isUnavailable) onUnavailable();
       else setError("failed");
     });
@@ -156,10 +171,21 @@ export default function GoogleButton({
 
   return (
     <div className="auth__google">
-      <div ref={slot} aria-busy={busy} />
+      {/* Holds the space and the shape while GIS is on its way, and keeps
+          holding it if it never arrives. Disabled, because it is not a
+          control — the real one lands on top of it. */}
+      {!ready && (
+        <button className="btn-provider" disabled>
+          <GoogleMark />
+          {t(lang, "auth_google")}
+        </button>
+      )}
+      <div ref={slot} aria-busy={busy} hidden={!ready} />
       {error && (
         <p className="auth__google-error" role="alert">
-          {t(lang, error === "conflict" ? "auth_google_conflict" : "auth_google_failed")}
+          {withBrand(
+            t(lang, error === "conflict" ? "auth_google_conflict" : "auth_google_failed"),
+          )}
         </p>
       )}
     </div>

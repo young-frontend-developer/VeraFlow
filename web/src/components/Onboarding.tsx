@@ -2,6 +2,7 @@ import { useState } from "react";
 import ConsentGate from "./ConsentGate";
 import { ArchOrnament, StarOrnament, Tick } from "./Ornament";
 import { Lang, t } from "../lib/i18n";
+import { withBrand } from "../lib/brand";
 import { Level, QUESTIONS, levelFrom, storeLevel } from "../lib/level";
 
 /**
@@ -63,11 +64,22 @@ export default function Onboarding({
 
   return (
     <div className="onboard">
-      <div className="onboard__step" key={step}>
+      {/* The same centred column and card as Welcome, Personalize and the
+          account screen. The consent step is exempt: ConsentGate draws its own
+          panel, and a panel inside a card is two nested cards. */}
+      <div className="onboard__inner">
+        <div
+          key={step}
+          className={
+            step === 4
+              ? "onboard__step"
+              : "card onboard__card onboard__step"
+          }
+        >
         {step === 0 && (
           <>
             <StarOrnament className="onboard__ornament" size={46} />
-            <h2 className="onboard__display">{t(lang, "onboard_welcome")}</h2>
+            <h2 className="onboard__display">{withBrand(t(lang, "onboard_welcome"))}</h2>
             <p className="onboard__lede">{t(lang, "onboard_welcome_body")}</p>
             <div className="onboard__foot">
               <button className="btn-primary" onClick={() => setStep(1)}>
@@ -220,15 +232,16 @@ export default function Onboarding({
             onDecide={(c, a) => onDone(c, a, experience)}
           />
         )}
-      </div>
+        </div>
 
-      <div className="onboard__dots" aria-hidden="true">
-        {Array.from({ length: STEPS }, (_, i) => (
-          <span
-            key={i}
-            className={i === step ? "onboard__dot onboard__dot--on" : "onboard__dot"}
-          />
-        ))}
+        <div className="onboard__dots" aria-hidden="true">
+          {Array.from({ length: STEPS }, (_, i) => (
+            <span
+              key={i}
+              className={i === step ? "onboard__dot onboard__dot--on" : "onboard__dot"}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

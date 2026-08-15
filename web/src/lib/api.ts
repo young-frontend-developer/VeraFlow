@@ -623,6 +623,180 @@ export async function googleSignIn(
   return body;
 }
 
+/* ── email / password sign-in ─────────────────────────────────────────────
+
+   THE SAME SESSION SYSTEM AS GOOGLE. The server hands back the same opaque
+   token from the same table, so everything below stores it with keepToken()
+   and the rest of the app cannot tell which provider produced it.
+
+   NO PASSWORD IS EVER STORED, LOGGED OR RETRIED HERE. It goes into one fetch
+   body and out of scope. In particular it is never kept in order to "retry
+   after refresh" — a stored password waiting for a second attempt is a
+   password sitting in memory for as long as the tab is open. */
+
+export type EmailSession = {
+  token: string;
+  user_id: string;
+  expires_at: string;
+  /** True when email was just attached to the anonymous account in hand —
+   *  i.e. the learner kept their history rather than starting over. */
+  linked_now: boolean;
+  providers: string[];
+  email: string | null;
+  display_name: string | null;
+  email_verified: boolean;
+};
+
+/** Registration that produced no session because the address needs confirming
+ *  first. Distinguished from EmailSession by `verification_required`. */
+export type Registered = {
+  verification_required: true;
+  email: string;
+  /** Whether a message actually went out. False means no mail provider is
+   *  wired on the server yet — see api/tilawah/mailer.py. */
+  sent: boolean;
+};
+
+/**
+ * A refused email-auth request, carrying the server's machine codes.
+ *
+ * CODES AND NOT SENTENCES. The server does not write the learner's error
+ * message — it cannot, because the message has to arrive in Uzbek or Russian
+ * depending on a preference this client owns. `code` and `problems` are stable
+ * strings that i18n maps to real wording; nothing from the API is ever
+ * rendered to a learner verbatim.
+ */
+export class EmailAuthError extends Error {
+  constructor(
+    readonly status: number,
+    readonly code: string,
+    readonly problems: string[] = [],
+    readonly retryAfter = 0,
+  ) {
+    super(`email_auth_${code}`);
+  }
+}
+
+async function emailAuth<T>(path: string, body: unknown): Promise<T> {
+  // DELIBERATELY NOT authedFetch, for the same reason googleSignIn is not:
+  // that wrapper reacts to a 401 by discarding the session and bootstrapping a
+  // new one, which here would throw away the very anonymous account we are
+  // trying to attach an email TO — and silently replace it with a fresh empty
+  // one. The current token is sent as-is or not at all.
+  const current = storedToken();
+  const r = await fetch(`${BASE}${path}`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(current ? { Authorization: `Bearer ${current}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!r.ok) {
+    // The server's shape is {detail: {code, problems, retry_after}}. A 500 or
+    // a proxy error page has neither, so anything unparseable becomes one
+    // honest "something went wrong" rather than a crash inside a form.
+    let code = "unknown";
+    let problems: string[] = [];
+    let retryAfter = 0;
+    try {
+      const d = (await r.json())?.detail;
+      if (d && typeof d === "object") {
+        code = String(d.code ?? "unknown");
+        problems = Array.isArray(d.problems) ? d.problems.map(String) : [];
+        retryAfter = Number(d.retry_after ?? 0);
+      }
+    } catch {
+      /* keep the defaults */
+    }
+    throw new EmailAuthError(r.status, code, problems, retryAfter);
+  }
+  return r.json();
+}
+
+/**
+ * Create an account, or attach email to the anonymous one already in hand.
+ *
+ * TWO POSSIBLE SUCCESS SHAPES and the caller must check which. With
+ * verification required the server mints NO session and returns `Registered`;
+ * otherwise it returns a full `EmailSession`. Reading `.token` off the first
+ * would store `undefined` and log the learner out on the next request.
+ */
+export async function register(
+  email: string,
+  password: string,
+  // A plain string, not the Lang union: this module imports NOTHING, and
+  // pulling i18n in for one type would couple the wire layer to the copy
+  // layer. The value is passed straight through to the server.
+  lang: string,
+): Promise<EmailSession | Registered> {
+  const body = await emailAuth<EmailSession | Registered>("/api/auth/register", {
+    email,
+    password,
+    lang,
+  });
+  if ("token" in body && body.token) keepToken(body.token);
+  return body;
+}
+
+export async function login(
+  email: string,
+  password: string,
+): Promise<EmailSession> {
+  const body = await emailAuth<EmailSession>("/api/auth/login", {
+    email,
+    password,
+  });
+  // The server rotated the session; whatever token was held is already dead.
+  keepToken(body.token);
+  return body;
+}
+
+/**
+ * Ask for a password reset link. ALWAYS RESOLVES on a reachable server, for
+ * registered and unregistered addresses alike — the server deliberately gives
+ * the same answer either way, so the UI must not imply it learned anything.
+ */
+export async function forgotPassword(email: string, lang: string): Promise<void> {
+  await emailAuth<{ ok: boolean }>("/api/auth/forgot-password", { email, lang });
+}
+
+/** Send the confirmation link again. Same constant-response rule as above. */
+export async function resendVerification(
+  email: string,
+  lang: string,
+): Promise<void> {
+  await emailAuth<{ ok: boolean }>("/api/auth/verification/resend", {
+    email,
+    lang,
+  });
+}
+
+/** Confirm an address from a mailed link. Mints no session by design. */
+export async function verifyEmail(token: string): Promise<void> {
+  await emailAuth<{ ok: boolean }>("/api/auth/verify-email", { token });
+}
+
+/**
+ * Set a new password from a mailed link.
+ *
+ * EVERY SESSION DIES WHEN THIS SUCCEEDS, including this browser's — that is
+ * the point of a reset, and the reason the local token is dropped here rather
+ * than left to fail on the next request.
+ */
+export async function resetPassword(
+  token: string,
+  newPassword: string,
+): Promise<void> {
+  await emailAuth<{ ok: boolean }>("/api/auth/reset-password", {
+    token,
+    new_password: newPassword,
+  });
+  clearSession();
+}
+
 /** Who the current session belongs to. Shape mirrors MeOut on the server. */
 export type Me = {
   user_id: string;

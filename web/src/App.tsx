@@ -3,11 +3,13 @@ import Achievements from "./components/Achievements";
 import Auth from "./components/Auth";
 import Opening from "./components/Opening";
 import Personalize from "./components/Personalize";
+import LanguagePick from "./components/LanguagePick";
 import Welcome from "./components/Welcome";
 import { CreateJourney, JourneyReady } from "./components/JourneySetup";
 import { BRAND } from "./lib/brand";
 import { Journey, adjustJourney, hasJourney, storedJourney } from "./lib/journey";
 import LangToggle from "./components/LangToggle";
+import MailAction from "./components/MailAction";
 import ConsentGate from "./components/ConsentGate";
 import Onboarding, { Experience } from "./components/Onboarding";
 import Picker, { Selection } from "./components/Picker";
@@ -114,9 +116,35 @@ function initialMode(): ReadMode {
  * would call hooks conditionally and break the moment the path changed.
  */
 export default function App() {
-  const isReview =
-    window.location.pathname.replace(/\/+$/, "").toLowerCase() === "/review";
-  return isReview ? <ReviewApp /> : <LearnerApp />;
+  const path = window.location.pathname.replace(/\/+$/, "").toLowerCase();
+
+  // WHERE A LINK FROM AN EMAIL LANDS. Both are one-shot screens with no tab
+  // bar, no consent gate and no session assumed - see MailAction.tsx. They are
+  // dispatched here for the same reason /review is: an early return inside
+  // LearnerApp would call hooks conditionally and break the moment the path
+  // changed.
+  if (path === "/verify-email" || path === "/reset-password") {
+    return <MailActionApp kind={path === "/verify-email" ? "verify" : "reset"} />;
+  }
+  return path === "/review" ? <ReviewApp /> : <LearnerApp />;
+}
+
+function MailActionApp({ kind }: { kind: "verify" | "reset" }) {
+  // The learner arrives here from their inbox, possibly on a device that has
+  // never opened the app - so the language comes from the same stored
+  // preference the app uses, falling back to the browser's, and nothing here
+  // needs a session.
+  const [lang] = useState<Lang>(initialLang);
+  return (
+    <MailAction
+      kind={kind}
+      lang={lang}
+      // Straight to the app's front door. A full navigation rather than a
+      // state change, so the app boots normally instead of inheriting this
+      // screen's assumptions - and the token is already out of the URL.
+      onDone={() => window.location.assign("/")}
+    />
+  );
 }
 
 function ReviewApp() {
@@ -178,8 +206,8 @@ function LearnerApp() {
     () => localStorage.getItem(ENTRY_KEY) === "1",
   );
   const [entry, setEntry] = useState<
-    "basmala" | "welcome" | "personalize" | "create" | "ready" | "account"
-    | "consent"
+    "basmala" | "language" | "welcome" | "personalize" | "create" | "ready"
+    | "account" | "consent"
   >("basmala");
   /**
    * The journey being assembled during onboarding.
@@ -363,15 +391,33 @@ function LearnerApp() {
   // ── THE ENTRY EXPERIENCE ──────────────────────────────────────────────
   // One continuous flow, in order, before anything else in the app renders:
   //
-  //   Basmala -> Welcome -> Personalization -> Create My Journey ->
-  //   Journey Ready -> Account
+  //   Basmala -> LANGUAGE -> Welcome -> Personalization -> Create My Journey ->
+  //   Journey Ready -> Account -> Consent
+  //
+  // LANGUAGE COMES FIRST, immediately after the Basmala, because every screen
+  // after it is prose. It used to be settled near the END of this flow, on the
+  // account screen, which meant the welcome and all five personalization
+  // questions were put to the learner in whichever language the app happened to
+  // default to. An answer given to a question you cannot read is not an answer.
+  // See LanguagePick.tsx.
   //
   // Each stage hands to the next; nothing here is a dead end and every stage
-  // after the Basmala can be skipped. It runs ONCE - see ENTRY_KEY - because a
-  // ceremonial opening on the fourth launch is an obstacle, not a moment.
+  // after the Basmala can be skipped EXCEPT the language step, where skipping
+  // would cost the learner every screen that follows. It runs ONCE - see
+  // ENTRY_KEY - because a ceremonial opening on the fourth launch is an
+  // obstacle, not a moment.
   if (!entryDone) {
     if (entry === "basmala") {
-      return <Opening onDone={() => setEntry("welcome")} />;
+      return <Opening onDone={() => setEntry("language")} />;
+    }
+    if (entry === "language") {
+      return (
+        <LanguagePick
+          lang={lang}
+          onLang={setLang}
+          onDone={() => setEntry("welcome")}
+        />
+      );
     }
     if (entry === "welcome") {
       return <Welcome lang={lang} onDone={() => setEntry("personalize")} />;
@@ -453,9 +499,10 @@ function LearnerApp() {
   // sign-in belongs, and it is skippable because Tilawah genuinely works
   // without an account — everything runs against an anonymous device id.
   //
-  // Once dismissed it stays dismissed. There are no accounts to sign into yet
-  // (see Auth.tsx), so re-presenting it every launch would be nagging toward a
-  // door that does not open.
+  // Once dismissed it stays dismissed. There are real accounts now - email and
+  // Google both work - but anonymous is still a first-class way to use this
+  // app, not a trial of it, and re-presenting the screen every launch would be
+  // nagging somebody towards a decision they have already made.
   if (!authSeen) {
     return (
       <Auth

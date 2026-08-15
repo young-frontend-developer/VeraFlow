@@ -14,6 +14,12 @@ alembic
 # rather than delegated, because those are the claims that decide WHO the
 # caller is. Needs `requests`, which uvicorn[standard] already pulls in.
 google-auth
+# Password hashing for the email/password identity. Argon2id and not bcrypt:
+# bcrypt silently truncates at 72 bytes (a long passphrase is not the password
+# the user typed) and is memory-cheap, which is precisely what a GPU cracking
+# rig is good at. Argon2id is the current recommendation and the parameters are
+# pinned in tilawah/passwords.py rather than left to the library default.
+argon2-cffi
 
 # engine - same pins the spike verified on Python 3.13
 quran-muaalem

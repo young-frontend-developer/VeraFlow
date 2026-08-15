@@ -31,7 +31,8 @@ from sqlmodel import Session, SQLModel, create_engine  # noqa: F401 - SQLModel r
 
 from ..config import settings
 from .models import (Attempt, AuthIdentity, AuthSession,  # noqa: F401
-                     Device, OAuthNonce, User)             # - registers tables
+                     Device, EmailToken, OAuthNonce,       # - registers tables
+                     User)
 
 _is_sqlite = settings.database_url.startswith("sqlite")
 _connect_args = {"check_same_thread": False} if _is_sqlite else {}
@@ -116,11 +117,12 @@ def delete_user(session: Session, user_id: str) -> int:
     failed. Attempts first, user second - as it already did, but by luck rather
     than by rule until now. Do not reorder these two statements.
 
-    auth_identity, device and auth_session need no lines here: they declare ON
-    DELETE CASCADE and sqlite removes them with the user. That is deliberate -
-    a leftover identity row would hold UNIQUE(provider, subject) against a
-    person who no longer exists and lock that Google account out of signing up
-    again.
+    auth_identity, device, auth_session and email_token need no lines here:
+    they declare ON DELETE CASCADE and sqlite removes them with the user. That
+    is deliberate - a leftover identity row would hold UNIQUE(provider,
+    subject) against a person who no longer exists and lock that Google account
+    out of signing up again, and a leftover email_token row would be a live
+    password-reset credential for an account that no longer exists.
     """
     delete_stored_audio(user_id)
     rows = session.query(Attempt).filter(Attempt.user_id == user_id).delete()

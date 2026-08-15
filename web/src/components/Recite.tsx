@@ -474,6 +474,21 @@ export default function Recite({
 
   const errors = result?.status === "ok" ? result.errors : [];
 
+  /**
+   * The results are open and there is nothing left to correct on this ayah.
+   *
+   * Computed the SAME WAY Feedback computes it — a filter over the resolved
+   * SET, not a counter — so the two cannot drift out of step and leave the
+   * screen showing both the arrows and the completion bar, or neither. It is
+   * false while a recording or a check is in flight, because the bar offering
+   * the next ayah must not appear over a take that has not landed yet.
+   */
+  const correctionsDone =
+    !!result &&
+    phase === "idle" &&
+    errors.length > 0 &&
+    errors.every((e) => retry.fixed.includes(cardId(e)));
+
   // EVERY errored letter, not just the first — one mark per occurrence, each
   // tagged with the card that explains it. Cards the learner has already fixed
   // drop out, so the ayah clears as they work through it.
@@ -554,18 +569,24 @@ export default function Recite({
              reader, and tapping the ayah below the one you just did. Three
              steps to go one verse forward.
 
-             Now the two are separate and shaped like what they do: an X that
-             LEAVES, straight out to the full 114-sura list, and arrows that
-             MOVE, to the ayah either side without unwinding anything. The
-             arrows are the common action and sit under the thumb on the right;
-             the X is the rare one and sits where a close control always is. */}
-      <div className="ayah-nav">
-        <button
-          className="ayah-nav__close"
-          aria-label={t(lang, "exit_practice")}
-          onClick={onChange}
-        >
+             Now the two are separate and shaped like what they do: one control
+             that LEAVES, straight out to the full 114-sura list, and arrows
+             that MOVE, to the ayah either side without unwinding anything.
+
+             ── THE LEAVE CONTROL IS A LABELLED BUTTON, NOT AN X ─────────────
+
+             It was a 36px circle carrying a close glyph and an aria-label, and
+             an aria-label is not a label — nobody looking at the screen can
+             read it. "Choose a different sura" is a thing learners genuinely
+             want early and often, and it was the least visible control on the
+             screen: an unnamed icon, at icon size, in the muted ink. So it now
+             says what it does, in words, in a contained shape at the top of the
+             screen where the decision is actually made. The glyph stays beside
+             the text, because the icon was never the problem. */}
+      <div className="ayah-nav ayah-nav--stacked">
+        <button className="btn-switch" onClick={onChange}>
           <Close />
+          {t(lang, "exit_practice")}
         </button>
 
         {/* THE AYAH NUMBER, BETWEEN THE CONTROLS. An early draft put
@@ -575,8 +596,16 @@ export default function Recite({
             sits here because this is where the reader's verse view puts it, in
             the middle of its own arrow row. Same component, same slot, so the
             number does not move when the recording starts. */}
+        <div className="ayah-nav__place">
         <AyahBadge lang={lang} aya={ayah.aya} />
 
+        {/* REPLACED, NOT DUPLICATED. Once the results are open and every
+            correction on this ayah is resolved, the completion bar at the foot
+            of the results carries the named move instead - see Feedback's
+            `donebar`. Two ways to do the same thing, one of them silent
+            chevrons at the far end of the screen, is how the learner ends up
+            using neither. */}
+        {!correctionsDone && (
         <div className="ayah-nav__steps">
           <button
             className="ayah-nav__arrow"
@@ -594,6 +623,8 @@ export default function Recite({
           >
             <Chevron size={16} />
           </button>
+        </div>
+        )}
         </div>
       </div>
 
@@ -782,6 +813,11 @@ export default function Recite({
             onSelfCheck={selfCheck}
             onFocusLetter={setActiveCardId}
             onRetry={start}
+            // The ayah-to-ayah move, handed to the results view so it can end
+            // on a named action instead of sending the learner back up to a
+            // pair of chevrons. Same handler the arrows used.
+            onStep={onStep}
+            canStep={canStep}
             cardRefs={cardRefs}
           />
         </ErrorBoundary>

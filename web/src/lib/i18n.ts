@@ -255,35 +255,112 @@ const STRINGS = {
     day_sun: "Y",
 
     // ── the account screen ────────────────────────────────────────────
+    // TWO PROVIDERS NOW, so the tab pair is back - and this time with a
+    // backend behind it. The strings deleted when the inert email form was
+    // removed are rewritten rather than restored: the old set said "not ready
+    // yet", which is exactly what is no longer true.
     auth_tagline: "Qurʼonni ovoz chiqarib oʻqing, tinch izoh oling.",
-    auth_signup: "Roʻyxatdan oʻtish",
-    auth_login: "Kirish",
-    auth_email: "Email",
-    auth_password: "Parol",
-    auth_or: "yoki",
     auth_google: "Google bilan davom etish",
-    auth_apple: "Apple bilan davom etish",
     auth_lang: "Til",
     auth_continue: "Hisobsiz davom etish",
     auth_anon_note:
-      "Tilawah hozir hisobsiz ishlaydi. Barcha imkoniyatlar shu qurilmada toʻliq ochiq.",
-    // Said before the fields, not after. A learner should know the form is
-    // inert before they type into it. NARROWED when Google went live: email
-    // and password are still inert, but "accounts are not connected" stopped
-    // being true and a stale disclaimer is its own kind of lie.
-    auth_pending:
-      "Email va parol bilan kirish hali tayyor emas. Google orqali kiring yoki hisobsiz davom eting.",
+      "{brand} hozir hisobsiz ishlaydi. Barcha imkoniyatlar shu qurilmada toʻliq ochiq.",
+    // Shown ONLY when the server has no Google client configured, beneath the
+    // disabled provider button. It no longer mentions email and password,
+    // because there is no longer an email form to be pending - naming a method
+    // the screen does not offer is how a stale disclaimer becomes a promise.
+    auth_google_off:
+      "Google orqali kirish hozir mavjud emas. Hisobsiz davom eting — hammasi shu qurilmada ishlaydi.",
     // Shown when this Google account already belongs to another Tilawah
     // account. Says what happened and what the learner can actually do -
     // nothing was lost and nothing was changed.
     auth_google_conflict:
-      "Bu Google hisobi boshqa Tilawah hisobiga ulangan. Hech narsa oʻzgarmadi. Shu hisobda qolish uchun hisobsiz davom eting.",
+      "Bu Google hisobi boshqa {brand} hisobiga ulangan. Hech narsa oʻzgarmadi. Shu hisobda qolish uchun hisobsiz davom eting.",
     auth_google_failed:
       "Google orqali kirib boʻlmadi. Qaytadan urinib koʻring yoki hisobsiz davom eting.",
 
+    // ── email va parol ────────────────────────────────────────────────
+    auth_tab_login: "Kirish",
+    auth_tab_signup: "Roʻyxatdan oʻtish",
+    auth_email: "Email",
+    auth_password: "Parol",
+    auth_email_ph: "siz@misol.com",
+    // Said BEFORE they type, not after they are refused. A rule a learner
+    // meets for the first time inside an error message is a rule they were
+    // never given.
+    auth_password_hint: "Kamida 10 ta belgi.",
+    auth_show_password: "Parolni koʻrsatish",
+    auth_hide_password: "Parolni yashirish",
+    auth_do_login: "Kirish",
+    auth_do_signup: "Hisob yaratish",
+    auth_or: "yoki",
+    auth_working: "Bajarilmoqda…",
+
+    // Parolni tiklash.
+    auth_forgot: "Parolni unutdingizmi?",
+    auth_forgot_title: "Parolni tiklash",
+    auth_forgot_body:
+      "Email manzilingizni kiriting. Agar shu manzilda hisob boʻlsa, tiklash havolasini yuboramiz.",
+    auth_forgot_send: "Havola yuborish",
+    // DELIBERATELY SAYS "AGAR". The server answers the same thing for a
+    // registered and an unregistered address, so this sentence must not
+    // pretend it learned which one it was.
+    auth_forgot_sent:
+      "Agar shu manzilda hisob boʻlsa, tiklash havolasi yuborildi. Pochtangizni tekshiring.",
+    auth_back: "Orqaga",
+
+    auth_check_email:
+      "Emailingizga tasdiqlash havolasi yuborildi. Havolani oching, soʻng kiring.",
+    // Shown only when the server says nothing was actually sent - i.e. no mail
+    // provider is wired yet. A developer must not be left wondering where the
+    // message went, and a learner must not be told to check an empty inbox.
+    auth_mail_off:
+      "Eslatma: serverda pochta xizmati hali ulanmagan, shuning uchun xat yuborilmadi.",
+
+    // ── xatolar. Hech qachon serverdan kelgan matn emas ────────────────
+    // The server sends machine codes; these are the sentences. Nothing from
+    // the API is ever printed to a learner as-is.
+    auth_err_email: "Email manzil notoʻgʻri koʻrinadi.",
+    auth_err_email_empty: "Email manzilingizni kiriting.",
+    auth_err_password_empty: "Parolni kiriting.",
+    auth_err_taken:
+      "Bu email allaqachon roʻyxatdan oʻtgan. Kiring yoki parolni tiklang.",
+    auth_err_has_email: "Bu hisobga allaqachon email ulangan.",
+    // ONE SENTENCE FOR BOTH "wrong password" and "no such account", because
+    // the server deliberately does not say which - and a client that guessed
+    // would undo that.
+    auth_err_credentials: "Email yoki parol notoʻgʻri.",
+    auth_err_unverified:
+      "Email hali tasdiqlanmagan. Pochtangizdagi havolani oching.",
+    auth_err_throttled:
+      "Juda koʻp urinish boʻldi. Bir necha daqiqadan soʻng qayta urinib koʻring.",
+    auth_err_token:
+      "Havola eskirgan yoki ishlatilgan. Yangi havola soʻrang.",
+    auth_err_network:
+      "Serverga ulanib boʻlmadi. Internetni tekshirib, qayta urinib koʻring.",
+    auth_err_unknown: "Nimadir xato ketdi. Qaytadan urinib koʻring.",
+
+    // Parol siyosati. Har bir kod - alohida gap.
+    auth_pw_too_short: "Parol kamida 10 ta belgidan iborat boʻlsin.",
+    auth_pw_too_long: "Parol juda uzun.",
+    auth_pw_too_common: "Bu parol juda oddiy — boshqasini tanlang.",
+    auth_pw_looks_like_email: "Parolda email manzilingiz boʻlmasin.",
+    auth_pw_blank: "Parol faqat boʻsh joydan iborat boʻlmasin.",
+
+    // ── pochtadagi havola ochilgan sahifalar ──────────────────────────
+    mail_verify_title: "Emailni tasdiqlash",
+    mail_verify_working: "Tekshirilmoqda…",
+    mail_verify_ok: "Emailingiz tasdiqlandi. Endi kirishingiz mumkin.",
+    mail_reset_title: "Yangi parol",
+    mail_reset_body:
+      "Yangi parolni kiriting. Xavfsizlik uchun barcha qurilmalarda qaytadan kirishingiz kerak boʻladi.",
+    mail_reset_do: "Parolni saqlash",
+    mail_reset_ok: "Parol yangilandi. Endi yangi parol bilan kiring.",
+    mail_open_app: "Ilovaga oʻtish",
+
     // ── onboarding. No sign up, no log in: there are no accounts, and the
     // consent step is the real decision being made here.
-    onboard_welcome: "Tilawahga xush kelibsiz",
+    onboard_welcome: "{brand}ga xush kelibsiz",
     onboard_welcome_body:
       "Qurʼonni ovoz chiqarib oʻqing, tajvid boʻyicha tinch va aniq izoh oling. Baho ham, reyting ham yoʻq — faqat siz va matn.",
     onboard_begin: "Boshlash",
@@ -394,6 +471,10 @@ const STRINGS = {
     profile_initials: "﷽",
     profile_name: "Sizning mashqlaringiz",
     profile_sub: "Hisob yoʻq — hammasi shu qurilmada saqlanadi.",
+    profile_group_account: "Hisob",
+    profile_group_prefs: "Sozlamalar",
+    profile_group_privacy: "Maxfiylik",
+    profile_group_about: "Ilova haqida",
     profile_history: "Tarix",
     profile_all: "Barchasi",
     profile_settings: "Sozlamalar",
@@ -802,7 +883,7 @@ const STRINGS = {
     // prev_ayah / next_ayah are NOT redefined here: the verse-by-verse reader
     // already has them, with the same words. The practice arrows point at the
     // same idea and reuse the same strings.
-    exit_practice: "Suralar roʻyxatiga chiqish",
+    exit_practice: "Boshqa sura tanlash",
 
     // ── appearance ───────────────────────────────────────────────────────
     theme_label: "Koʻrinish",
@@ -1101,25 +1182,79 @@ const STRINGS = {
     day_sun: "В",
 
     auth_tagline: "Читайте Коран вслух и получайте спокойный разбор.",
-    auth_signup: "Регистрация",
-    auth_login: "Вход",
-    auth_email: "Email",
-    auth_password: "Пароль",
-    auth_or: "или",
     auth_google: "Продолжить с Google",
-    auth_apple: "Продолжить с Apple",
     auth_lang: "Язык",
     auth_continue: "Продолжить без аккаунта",
     auth_anon_note:
-      "Сейчас Tilawah работает без аккаунта. Все возможности полностью доступны на этом устройстве.",
-    auth_pending:
-      "Вход по email и паролю пока не готов. Войдите через Google или продолжите без аккаунта.",
+      "Сейчас {brand} работает без аккаунта. Все возможности полностью доступны на этом устройстве.",
+    auth_google_off:
+      "Вход через Google сейчас недоступен. Продолжите без аккаунта — всё работает на этом устройстве.",
     auth_google_conflict:
-      "Этот аккаунт Google уже привязан к другому аккаунту Tilawah. Ничего не изменилось. Чтобы остаться в текущем, продолжите без аккаунта.",
+      "Этот аккаунт Google уже привязан к другому аккаунту {brand}. Ничего не изменилось. Чтобы остаться в текущем, продолжите без аккаунта.",
     auth_google_failed:
       "Не удалось войти через Google. Попробуйте ещё раз или продолжите без аккаунта.",
 
-    onboard_welcome: "Добро пожаловать в Tilawah",
+    auth_tab_login: "Вход",
+    auth_tab_signup: "Регистрация",
+    auth_email: "Email",
+    auth_password: "Пароль",
+    auth_email_ph: "вы@пример.com",
+    auth_password_hint: "Не менее 10 символов.",
+    auth_show_password: "Показать пароль",
+    auth_hide_password: "Скрыть пароль",
+    auth_do_login: "Войти",
+    auth_do_signup: "Создать аккаунт",
+    auth_or: "или",
+    auth_working: "Выполняется…",
+
+    auth_forgot: "Забыли пароль?",
+    auth_forgot_title: "Сброс пароля",
+    auth_forgot_body:
+      "Введите email. Если на этот адрес есть аккаунт, мы отправим ссылку для сброса.",
+    auth_forgot_send: "Отправить ссылку",
+    auth_forgot_sent:
+      "Если на этот адрес есть аккаунт, ссылка для сброса отправлена. Проверьте почту.",
+    auth_back: "Назад",
+
+    auth_check_email:
+      "На ваш email отправлена ссылка для подтверждения. Откройте её, затем войдите.",
+    auth_mail_off:
+      "Примечание: почтовый сервис на сервере ещё не подключён, поэтому письмо не отправлено.",
+
+    auth_err_email: "Email выглядит неверно.",
+    auth_err_email_empty: "Введите ваш email.",
+    auth_err_password_empty: "Введите пароль.",
+    auth_err_taken:
+      "Этот email уже зарегистрирован. Войдите или сбросьте пароль.",
+    auth_err_has_email: "К этому аккаунту уже привязан email.",
+    auth_err_credentials: "Неверный email или пароль.",
+    auth_err_unverified:
+      "Email ещё не подтверждён. Откройте ссылку из письма.",
+    auth_err_throttled:
+      "Слишком много попыток. Попробуйте через несколько минут.",
+    auth_err_token:
+      "Ссылка устарела или уже использована. Запросите новую.",
+    auth_err_network:
+      "Не удалось связаться с сервером. Проверьте интернет и попробуйте снова.",
+    auth_err_unknown: "Что-то пошло не так. Попробуйте ещё раз.",
+
+    auth_pw_too_short: "Пароль должен быть не короче 10 символов.",
+    auth_pw_too_long: "Пароль слишком длинный.",
+    auth_pw_too_common: "Этот пароль слишком простой — выберите другой.",
+    auth_pw_looks_like_email: "Пароль не должен содержать ваш email.",
+    auth_pw_blank: "Пароль не может состоять из одних пробелов.",
+
+    mail_verify_title: "Подтверждение email",
+    mail_verify_working: "Проверяем…",
+    mail_verify_ok: "Ваш email подтверждён. Теперь можно войти.",
+    mail_reset_title: "Новый пароль",
+    mail_reset_body:
+      "Введите новый пароль. В целях безопасности потребуется войти заново на всех устройствах.",
+    mail_reset_do: "Сохранить пароль",
+    mail_reset_ok: "Пароль обновлён. Теперь войдите с новым паролем.",
+    mail_open_app: "Перейти в приложение",
+
+    onboard_welcome: "Добро пожаловать в {brand}",
     onboard_welcome_body:
       "Читайте Коран вслух и получайте спокойный, точный разбор по таджвиду. Ни оценок, ни рейтингов — только вы и текст.",
     onboard_begin: "Начать",
@@ -1219,6 +1354,10 @@ const STRINGS = {
     profile_initials: "﷽",
     profile_name: "Ваша практика",
     profile_sub: "Аккаунта нет — всё хранится на этом устройстве.",
+    profile_group_account: "Аккаунт",
+    profile_group_prefs: "Настройки",
+    profile_group_privacy: "Конфиденциальность",
+    profile_group_about: "О приложении",
     profile_history: "История",
     profile_all: "Все",
     profile_settings: "Настройки",
@@ -1521,7 +1660,7 @@ const STRINGS = {
     study_memorize: "Заучивание",
     coming_soon: "Скоро",
 
-    exit_practice: "Выйти к списку сур",
+    exit_practice: "Выбрать другую суру",
 
     theme_label: "Оформление",
     theme_dark: "Ночное",

@@ -1,13 +1,16 @@
-<<<<<<< HEAD
-# Tilawah
+# VeyraFlow
 
-Tajweed feedback for Uzbek and Russian speakers. You pick an ayah, recite it, and
-get at most two named mistakes with a fix and a drill — in your own language.
+VeyraFlow helps people learn to recite the Qur'an correctly. It listens to a
+recitation, detects pronunciation and Tajweed errors, highlights the mistake in
+the text, and explains the correction — in Uzbek or Russian.
+
+You pick an ayah, recite it, and get at most two named mistakes with a fix and a
+drill, in your own language.
 
 Not a score. Not a teacher replacement.
 
 ```
-Tilawah/
+VeyraFlow/
   api/      FastAPI + the tajweed engine
   web/      Vite + React PWA
   spike/    the de-risking spike (frozen — do not build on it)
@@ -178,7 +181,3 @@ coverage, real accounts, payments.
 
 The typed error profile is the spine; all of those derive from it. Ship the loop,
 get real attempts, then build the rest on evidence.
-=======
-# VeraFlow
-VeyraFlow is an AI-powered platform that helps users learn to recite the Quran correctly. It analyzes recitation, detects pronunciation and Tajweed errors, highlights mistakes in the Quran text, and provides clear corrections. Users can practice difficult letters and words, learn Tajweed, set memorization goals, and track progress.
->>>>>>> fa2f3fd42423b3eaf2ffb149b631f595d7db438d

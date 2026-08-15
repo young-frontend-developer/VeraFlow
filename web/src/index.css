@@ -613,6 +613,79 @@ ol {
   margin-top: 20px;
 }
 
+/* ── THE COMPLETION BAR ───────────────────────────────────────────────────
+ *
+ * Shown once every correction on an ayah is resolved, in place of the two
+ * chevrons that used to carry the same move from the top of the screen. One
+ * named primary action at the full width of the column, the two lesser ones
+ * quiet underneath it.
+ *
+ * STICKY, NOT FIXED, and parked clear of the floating nav. `position: fixed`
+ * would put it underneath the tab bar, which already owns the bottom of the
+ * viewport at `bottom: 22px` and stands about 74px tall. Sticky means it rides
+ * up with the end of the results and then holds, so the learner who is still
+ * reading the last card can see where the screen is going without losing the
+ * card, and the one who has finished does not have to scroll to leave.
+ */
+.donebar {
+  position: sticky;
+  bottom: 106px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 14px;
+  border-radius: var(--r-card);
+  border: 1px solid rgba(212, 168, 83, 0.28);
+  background: linear-gradient(
+    170deg,
+    rgba(24, 31, 52, 0.9) 0%,
+    rgba(11, 15, 26, 0.94) 100%
+  );
+  -webkit-backdrop-filter: blur(26px) saturate(150%);
+  backdrop-filter: blur(26px) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 18px 44px rgba(0, 0, 0, 0.5);
+}
+
+.donebar__next {
+  min-height: 54px;
+  font-size: 17px;
+}
+
+/* Back and re-read, side by side and visibly lesser. They are real actions —
+   neither is hidden — but the bar exists to make ONE of the three obvious. */
+.donebar__quiet {
+  display: flex;
+  gap: 10px;
+}
+
+.donebar__quiet .btn-quiet {
+  flex: 1 1 0;
+  min-height: 46px;
+  padding: 11px 14px;
+  font-size: 15.5px;
+}
+
+.donebar__quiet .btn-quiet:disabled {
+  opacity: 0.34;
+  cursor: default;
+}
+
+:root[data-theme="light"] .donebar {
+  border-color: rgba(20, 96, 63, 0.24);
+  background: linear-gradient(
+    170deg,
+    rgba(255, 253, 248, 0.94) 0%,
+    rgba(246, 240, 228, 0.96) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 18px 44px rgba(58, 46, 28, 0.16);
+}
+
 /* ══ card ═════════════════════════════════════════════════════════════════ */
 
 /* ══ LAYER 3 — THE GLASS ══════════════════════════════════════════════════
@@ -854,70 +927,123 @@ ol {
   }
 }
 
-/* ══ onboarding ═══════════════════════════════════════════════════════════ */
+/* ══ onboarding ═══════════════════════════════════════════════════════════
+ *
+ * ── THE SAME CARD AS THE ACCOUNT SCREEN, NOT A SECOND LAYOUT ──────────────
+ *
+ * These screens used to be full-bleed: a bare column that took whatever width
+ * the viewport gave it, with the step content pinned left and the dots floating
+ * in open space below. On a phone that reads as a slightly airy page. On a
+ * desktop browser — and in any Capacitor webview wider than a phone — it reads
+ * as a website, because a 38px serif line and a row of edge-to-edge option
+ * plates stretched across 1400px is a website. The account screen, three files
+ * away, was already doing the correct thing: a centred column with a hard
+ * max-width and the content inside a card.
+ *
+ * So the onboarding shell is now the auth shell. `.onboard` is the centring
+ * frame (`.auth`), `.onboard__inner` is the 420px column (`.auth__inner`), and
+ * `.onboard__card` is a plain `.card` with the same padding as `.auth__card`.
+ * The width is a max-width rather than a fixed width, so a narrow phone still
+ * gets the full screen minus the gutter and nothing overflows.
+ *
+ * ONE QUESTION PER SCREEN, one card, one primary action, progress dots
+ * directly under the card — the ordinary shape of a step-based mobile
+ * onboarding. What makes it this app's rather than anyone else's is everything
+ * inside it: the ground gradient, the brass ornament, the serif display face
+ * and the emerald selection state were all already here.
+ */
 
 .onboard {
-  min-height: 78vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px var(--pad);
+  animation: fade var(--t) var(--ease) both;
+}
+
+/* The mobile column. Same number as `.auth__inner`, and it needs to STAY the
+   same number — these screens run back to back with the account screen and a
+   card that changes width between two consecutive steps reads as a layout
+   bug. */
+.onboard__inner {
+  width: 100%;
+  max-width: 420px;
+}
+
+/* Same padding and radius as `.auth__card`; it is the same card. */
+.onboard__card {
+  padding: 26px 22px;
+  margin-bottom: 0;
+}
+
+/* Onboarding rendered INSIDE the app shell (the legacy consent-only path)
+   already sits in a 560px column under a header, so it must not also claim a
+   full viewport and its own gutter. */
+.app .onboard {
+  min-height: 0;
+  padding: 0;
+}
+
+.onboard__step {
   display: flex;
   flex-direction: column;
   animation: fade var(--t) var(--ease) both;
 }
 
-.onboard__step {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 8px 0 40px;
-}
-
-/* The welcome. One sentence, set large, with air above and below it — the
-   only screen in the app that is allowed to be mostly empty. */
+/* Centred, and sized for the card rather than for a page. The old 38px was
+   drawn against an unbounded column; at 420px it wraps a three-word title onto
+   three lines. */
 .onboard__display {
   font-family: var(--serif);
-  font-size: 38px;
+  font-size: clamp(25px, 6.4vw, 29px);
   font-weight: 400;
-  line-height: 1.2;
+  line-height: 1.25;
   letter-spacing: 0.004em;
-  margin-bottom: 18px;
+  text-align: center;
+  margin-bottom: 12px;
 }
 
 .onboard__lede {
   font-size: 16px;
-  line-height: 1.7;
+  line-height: 1.65;
   color: var(--ink-2);
-  margin-bottom: 40px;
+  text-align: center;
+  margin: 0 auto 24px;
   max-width: 34ch;
 }
 
 .onboard__ornament {
-  width: 46px;
-  height: 46px;
-  margin-bottom: 32px;
+  width: 44px;
+  height: 44px;
+  align-self: center;
+  margin-bottom: 18px;
   color: var(--gold);
   filter: drop-shadow(0 0 16px var(--gold-glow));
 }
 
-/* Language as an editorial choice, not a dropdown: two full-width plates,
-   each showing the language in its own script at reading size. */
+/* Options are tappable plates inside the card, not rows of text spanning the
+   screen. 52px+ of height each, which clears the 44px touch minimum with room
+   for a fat thumb, and they stop at the card edge. */
 .choice {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 32px;
+  gap: 10px;
+  margin-bottom: 22px;
 }
 
 .choice__item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 14px;
   width: 100%;
-  padding: 22px 24px;
+  min-height: 54px;
+  padding: 14px 16px;
   text-align: left;
   border: 1px solid var(--border);
   border-radius: var(--r-soft);
-  background: var(--card);
+  background: var(--ivory-sunk);
   transition: border-color var(--t) var(--ease), background var(--t) var(--ease);
 }
 
@@ -929,14 +1055,15 @@ ol {
 
 .choice__name {
   font-family: var(--serif);
-  font-size: 23px;
+  font-size: 19px;
   font-weight: 500;
-  line-height: 1.2;
+  line-height: 1.3;
   display: block;
 }
 
 .choice__note {
-  font-size: 15.5px;
+  font-size: 14.5px;
+  line-height: 1.45;
   color: var(--ink-2);
   display: block;
   margin-top: 2px;
@@ -952,17 +1079,22 @@ ol {
   opacity: 1;
 }
 
+/* `.btn-primary` is already width:100%, which is why the continue button used
+   to span the viewport: its parent did. Bounded by the card, the same rule now
+   gives a button the width of the card. */
 .onboard__foot {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
+/* Progress belongs to the card, so it sits directly under it rather than
+   floating at the bottom of an empty screen. */
 .onboard__dots {
   display: flex;
   justify-content: center;
   gap: 7px;
-  padding: 22px 0 6px;
+  padding: 18px 0 0;
 }
 
 .onboard__dot {
@@ -2847,15 +2979,93 @@ ol {
   margin-top: 2px;
 }
 
+/* ══ SETTINGS, IN GROUPS ══════════════════════════════════════════════════
+ *
+ * The profile screen used to be one undifferentiated run: an avatar, an
+ * achievement wall, a level picker, a history list, then eight settings and two
+ * consent checkboxes, separated only by the odd label and a hand-written
+ * `style={{ marginTop: 38 }}`. Everything had the same weight, so finding the
+ * delete control meant reading the whole page.
+ *
+ * It is now the pattern every phone already teaches: GROUPS with a header, each
+ * group a card of ROWS, each row a leading mark, a label, and a trailing value
+ * or control. That shape is worth copying precisely because it is not novel —
+ * a learner has used it in every app on their phone, so nothing here has to be
+ * learned. The visual system is entirely this app's own: the same glass card,
+ * the same brass hairline, the same serif and the same emerald selection.
+ */
+
+.settings-group {
+  margin-bottom: 26px;
+}
+
+.settings-group__head {
+  display: block;
+  margin: 0 0 8px 4px;
+}
+
+/* The rows sit in one card per group, so a group reads as a single object and
+   the hairlines between rows never touch the card's own edge. */
+.settings-card {
+  padding: 0 16px;
+  margin-bottom: 0;
+}
+
+/* A row's leading mark. Brass, at the same size in every row — the icon
+   identifies the row, it does not rank it. */
+.setting__mark {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--border-soft);
+  background: var(--ivory-sunk);
+  color: var(--gold);
+}
+
+/* The label column, and the reason the row WRAPS.
+   A settings row is label-left / value-right until the value is a three-option
+   segmented picker, at which point 386px of phone cannot hold both and the
+   label column collapses to about eight characters — "Bilim darajasi" stacked
+   one word per line beside a full-width control. So the row is allowed to
+   wrap: the label keeps a majority basis, and any control that cannot fit
+   beside it drops to its own line and stays right-aligned there. */
+.setting__body {
+  flex: 1 1 58%;
+  min-width: 0;
+}
+
+/* The trailing chevron on a row that opens something. Rows that merely STATE a
+   value do not get one — a chevron on a row that goes nowhere is the most
+   common lie in a settings screen. */
+.setting__go {
+  flex: 0 0 auto;
+  display: inline-flex;
+  color: var(--ink-3);
+}
+
 .setting {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 10px 14px;
   width: 100%;
-  padding: 18px 0;
+  padding: 14px 0;
   text-align: left;
   border-bottom: 1px solid var(--border);
+}
+
+/* Whatever trails the label - a segmented picker, a select, a plain value -
+   hugs the right edge, on the same line when it fits and on its own line when
+   it does not. */
+.setting > .setting__control,
+.setting > .setting__value,
+.setting > select {
+  margin-left: auto;
 }
 
 .setting:last-child {
@@ -2883,6 +3093,26 @@ ol {
 
 .setting__danger {
   color: var(--terra);
+}
+
+/* The destructive row keeps the group shape and changes only its ink — a red
+   panel would make the whole Privacy group read as an alarm, when the two rows
+   above it are ordinary consent toggles. */
+.setting__mark--danger {
+  color: var(--terra);
+  border-color: rgba(196, 106, 78, 0.34);
+}
+
+/* Consent lives inside a group card now, so it needs the row's rhythm rather
+   than its old standalone spacing. */
+.settings-card .consent__row {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-card .consent__row:last-child,
+.settings-card .setting:last-child {
+  border-bottom: none;
 }
 
 .disclosure {
@@ -3579,95 +3809,200 @@ button.plan__hit:hover {
   padding: 24px 22px;
 }
 
-.auth__switch {
+/* ── the email/password form ──────────────────────────────────────────────
+
+   THE STYLES CAME BACK WITH THE MARKUP, not before it. This block was deleted
+   when the inert form was removed, deliberately — an orphaned block of styles
+   for a form nobody renders is how a deleted feature grows back. It is
+   rewritten here because there is a working form again; see Auth.tsx.
+
+   NOTHING NEW IS INVENTED. The input is the same sunk glass well as `.search`,
+   the submit is `.btn-primary`, the link is `.linkish`, and the tabs are the
+   `.chip` treatment laid out as a pair. This is a content change to an
+   existing screen, so it uses the screen's existing vocabulary. */
+
+.emailauth__tabs {
   display: flex;
-  gap: 4px;
-  padding: 4px;
-  border-radius: var(--r-chip);
-  border: 1px solid var(--border-soft);
-  background: var(--ivory-sunk);
+  gap: 8px;
   margin-bottom: 18px;
 }
 
-.auth__tab {
+.emailauth__tab {
   flex: 1;
-  padding: 10px;
+  padding: 11px 14px;
+  border: 1px solid var(--border-soft);
   border-radius: var(--r-chip);
+  background: transparent;
   font-size: 16px;
-  font-weight: 500;
   color: var(--ink-2);
-  transition: all var(--t) var(--ease);
+  transition: background var(--t) var(--ease), border-color var(--t) var(--ease),
+    color var(--t) var(--ease);
 }
 
-.auth__tab.is-on {
-  background: var(--green-soft);
-  color: var(--gold);
-  box-shadow: inset 0 0 0 1px var(--border);
+.emailauth__tab:hover:not(.emailauth__tab--on) {
+  border-color: rgba(212, 168, 83, 0.3);
+  color: var(--ink);
 }
 
-/* Stated before the fields, not under them. */
-.auth__pending {
+/* The selected tab is lit by the brass hairline and a faint wash — the same
+   way `.chip--on` marks a choice everywhere else on this screen. It is not a
+   filled gold block: that is `.btn-primary`, which is the SUBMIT, and two gold
+   surfaces in one card would leave neither reading as the action. */
+.emailauth__tab--on {
+  border-color: rgba(212, 168, 83, 0.5);
+  background: rgba(212, 168, 83, 0.09);
+  color: var(--ink);
+}
+
+.emailauth__form {
+  display: flex;
+  flex-direction: column;
+}
+
+.emailauth__lead {
   font-size: 15.5px;
   line-height: 1.5;
   color: var(--ink-2);
-  padding: 12px 14px;
-  border-radius: var(--r-soft);
-  background: var(--ivory-sunk);
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
-.auth__form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.field__label {
-  font-size: 15px;
+.emailauth__label {
+  font-size: 14px;
   letter-spacing: 0.06em;
-  color: var(--ink-2);
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 7px;
 }
 
-.field__input {
+/* Same glass well as `.search`: sunk rather than raised, with the focus state
+   lighting the brass rim instead of drawing a browser ring. */
+.emailauth__input {
   width: 100%;
   padding: 14px 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-soft);
-  background: var(--card);
-  font-family: var(--sans);
+  margin-bottom: 16px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-chip);
+  background: var(--ivory-sunk);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
   font-size: 16.5px;
   color: var(--ink);
-  transition: border-color var(--t) var(--ease);
+  transition: border-color var(--t) var(--ease), box-shadow var(--t) var(--ease);
 }
 
-.field__input:focus {
-  outline: none;
-  border-color: rgba(212, 168, 83, 0.5);
-  box-shadow: 0 0 0 3px rgba(212, 168, 83, 0.1);
-}
-
-.field__input:disabled {
-  background: rgba(0, 0, 0, 0.28);
+/* 16px MINIMUM ON THE FIELDS AND IT IS NOT A TASTE DECISION: iOS Safari zooms
+   the whole page when a focused input's text is smaller than 16px, and the
+   learner is left on a magnified, half-scrolled sign-in screen. */
+.emailauth__input::placeholder {
   color: var(--ink-3);
 }
 
-.auth__submit {
-  margin-top: 4px;
+.emailauth__input:focus {
+  outline: none;
+  border-color: rgba(212, 168, 83, 0.5);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.3),
+    0 0 0 3px rgba(212, 168, 83, 0.1);
 }
 
+.emailauth__input:disabled {
+  opacity: 0.55;
+}
+
+/* The reveal toggle sits INSIDE the field's box, so the field keeps its full
+   width and the control does not become a second column that shoves the layout
+   about when it appears. */
+.emailauth__pw {
+  position: relative;
+}
+
+.emailauth__pw .emailauth__input {
+  padding-right: 52px;
+}
+
+.emailauth__reveal {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 52px;
+  width: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  opacity: 0.6;
+  transition: opacity var(--t) var(--ease);
+}
+
+.emailauth__reveal:hover {
+  opacity: 1;
+}
+
+.emailauth__hint {
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--ink-3);
+  margin: -8px 0 16px;
+}
+
+/* ERRORS ARE ROSE, NOT GOLD, and they are a list rather than a paragraph. The
+   server can refuse a password for several reasons at once and a learner
+   should see all of them, not be walked through a one-at-a-time interrogation
+   of their own password. */
+.emailauth__errors {
+  list-style: none;
+  padding: 12px 14px;
+  margin: 0 0 16px;
+  border: 1px solid rgba(217, 139, 139, 0.35);
+  border-radius: var(--r-soft);
+  background: rgba(217, 139, 139, 0.08);
+  font-size: 15.5px;
+  line-height: 1.5;
+  color: var(--rose, #d98b8b);
+}
+
+.emailauth__errors li + li {
+  margin-top: 6px;
+}
+
+/* A completed action that produced no session — "check your email". Neutral
+   rather than rose: nothing went wrong here. */
+.emailauth__notice {
+  padding: 12px 14px;
+  margin: 0 0 16px;
+  border-radius: var(--r-soft);
+  background: var(--ivory-sunk);
+  font-size: 15.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.emailauth__notice p + p {
+  margin-top: 8px;
+  color: var(--ink-3);
+}
+
+.emailauth__submit {
+  margin-top: 2px;
+}
+
+.emailauth__link {
+  align-self: center;
+  margin-top: 14px;
+  background: none;
+}
+
+/* The divider between the form and the providers. A hairline with the word
+   sitting in a gap in it, rather than a line above and a word below — the two
+   halves are alternatives, and the rule has to read as separating them. */
 .auth__or {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 20px 0 16px;
-  font-size: 15px;
+  margin: 22px 0 18px;
   color: var(--ink-3);
+  font-size: 14.5px;
 }
 
 .auth__or::before,
@@ -3675,7 +4010,19 @@ button.plan__hit:hover {
   content: "";
   flex: 1;
   height: 1px;
-  background: var(--border);
+  background: var(--border-soft);
+}
+
+/* Shown under the disabled provider button and nowhere else: not "accounts are
+   not ready" — they are — but "Google is not configured on this server". */
+.auth__pending {
+  font-size: 15.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  padding: 12px 14px;
+  border-radius: var(--r-soft);
+  background: var(--ivory-sunk);
+  margin: 0;
 }
 
 .auth__providers {
@@ -3710,11 +4057,6 @@ button.plan__hit:hover {
   opacity: 0.45;
 }
 
-.btn-provider__apple {
-  display: inline-flex;
-  color: var(--ink);
-}
-
 /* GOOGLE RENDERS ITS OWN BUTTON HERE and we do not restyle its insides — that
    is an iframe, and their brand terms cover what is in it. What this does is
    centre it and give it the same rhythm as the Apple button beside it, so the
@@ -3732,6 +4074,12 @@ button.plan__hit:hover {
   justify-content: center;
   min-height: 44px;
   color-scheme: light;
+}
+
+/* `display: flex` above beats the UA rule for [hidden], so the empty slot has
+   to be hidden explicitly while the placeholder button stands in for it. */
+.auth__google > div[hidden] {
+  display: none;
 }
 
 .auth__google-error {
@@ -3887,16 +4235,20 @@ button.plan__hit:hover {
   }
 }
 
+/* The step counter, centred over the question the way the dots are centred
+   under the card. */
 .onboard__count {
-  font-size: 15px;
+  font-size: 14px;
   letter-spacing: 0.12em;
   color: var(--ink-3);
-  margin-bottom: 10px;
+  text-align: center;
+  margin-bottom: 8px;
   font-variant-numeric: tabular-nums;
 }
 
 .choice--tight .choice__item {
-  padding: 13px 16px;
+  min-height: 48px;
+  padding: 11px 14px;
 }
 
 /* Selection is never colour alone: border, background AND a check mark, plus
@@ -4814,6 +5166,67 @@ button.link {
   justify-self: end;
 }
 
+/* TWO ROWS, NOT THREE COLUMNS — PRACTICE ONLY. The leave control carries a
+   full label there and will not share a 386px line with the ayah badge and a
+   pair of arrows, so it takes the top row on its own and the position controls
+   sit under it. A modifier rather than a change to `.ayah-nav` itself, because
+   the reader's verse view and the goal sheet still use the three-column form
+   with a real X in the first cell. */
+.ayah-nav--stacked {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.ayah-nav__place {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 36px;
+}
+
+/* THE LEAVE CONTROL, SAID OUT LOUD. Previously a bare 36px circle holding a
+   close glyph, findable only by someone who already knew it was there. Now a
+   named action in the app's own quiet-button treatment: contained shape, brass
+   hairline, comfortable target, sitting at the top of the screen where the
+   "actually, a different sura" thought happens. */
+.btn-switch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  align-self: flex-start;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 10px 18px;
+  border-radius: var(--r-chip);
+  border: 1px solid rgba(212, 168, 83, 0.34);
+  background: var(--ivory-lift);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  font-family: var(--sans);
+  font-size: 15.5px;
+  font-weight: 500;
+  color: var(--ink);
+  transition: background var(--t) var(--ease), border-color var(--t) var(--ease);
+}
+
+.btn-switch svg {
+  flex: 0 0 auto;
+  color: var(--gold);
+}
+
+.btn-switch:hover {
+  background: var(--green-soft);
+  border-color: rgba(212, 168, 83, 0.55);
+}
+
+/* STILL A CIRCLE WHERE IT IS STILL A CLOSE. Practice swapped its X for the
+   labelled `.btn-switch` above, but Goal and the reader's verse view use this
+   as a genuine dismiss control on a sheet — where an X is the convention and
+   needs no label. */
 .ayah-nav__close {
   flex: 0 0 auto;
   display: inline-flex;
@@ -6137,13 +6550,11 @@ button.link {
 /* ── sunk surfaces and inputs ───────────────────────────────────────────
    A well is darker than its pane in both themes; here that is a warm tint
    rather than black. Focus lights the accent rim exactly as it does in dark. */
-:root[data-theme="light"] .search,
-:root[data-theme="light"] .field__input {
+:root[data-theme="light"] .search {
   box-shadow: inset 0 1px 3px rgba(58, 46, 28, 0.07);
 }
 
-:root[data-theme="light"] .search:focus,
-:root[data-theme="light"] .field__input:focus {
+:root[data-theme="light"] .search:focus {
   border-color: rgba(20, 96, 63, 0.45);
   box-shadow:
     inset 0 1px 3px rgba(58, 46, 28, 0.07),

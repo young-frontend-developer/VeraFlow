@@ -413,3 +413,96 @@ class GoogleSessionOut(SessionOut):
     providers: list[str] = []
     email: str | None = None
     display_name: str | None = None
+
+
+# ── email / password sign-in ──────────────────────────────────────────────
+#
+# NO TYPE IN THIS SECTION CARRIES A PASSWORD OUTWARDS. The two `In` models take
+# one and nothing else does - a response model has no password field to
+# accidentally populate, which is a stronger guarantee than remembering to
+# strip one. Do not add `password` to any `Out`.
+
+class RegisterIn(BaseModel):
+    """Create an email identity.
+
+    The password is validated SERVER-SIDE by passwords.password_problems(),
+    not by a pydantic constraint. Two reasons: the policy is more than a
+    length (a blocklist, and a check against the address itself), and a
+    pydantic violation returns 422 with the offending value echoed back inside
+    the error detail - which would put the password in the response body and,
+    from there, into whatever logs the client's errors.
+    """
+    email: str
+    password: str
+    #: Which language the verification mail should be written in. Defaults to
+    #: the app's default rather than being required; a missing preference is
+    #: not worth a 422 on a signup.
+    lang: str = "uz"
+
+
+class LoginIn(BaseModel):
+    email: str
+    password: str
+
+
+class EmailSessionOut(SessionOut):
+    """The result of a register or login that produced a session.
+
+    Shaped like GoogleSessionOut on purpose: the client stores the token the
+    same way whichever provider produced it, because it is the same session
+    system underneath.
+    """
+    #: True when this call attached email to an existing ANONYMOUS account -
+    #: i.e. the learner kept their practice history instead of starting over.
+    linked_now: bool = False
+    providers: list[str] = []
+    email: str | None = None
+    display_name: str | None = None
+    #: Whether this address has been confirmed. False is a normal state, not an
+    #: error: with verification not required, an account works unverified.
+    email_verified: bool = False
+
+
+class RegisteredOut(BaseModel):
+    """Registration that did NOT produce a session, because verification is
+    required and this address has not been confirmed yet.
+
+    A SEPARATE SHAPE FROM EmailSessionOut, so the client cannot read a `token`
+    field that is absent and treat "" as a session. The two responses are
+    distinguished by `verification_required`.
+    """
+    verification_required: bool = True
+    email: str
+    #: Whether a message actually went out. False means no provider is wired -
+    #: surfaced so a developer sees why no mail arrived instead of assuming a
+    #: bug. It is NOT a per-address answer and never leaks whether an address
+    #: exists; see the forgot-password route.
+    sent: bool = False
+
+
+class VerifyEmailIn(BaseModel):
+    token: str
+
+
+class ForgotPasswordIn(BaseModel):
+    email: str
+    lang: str = "uz"
+
+
+class ResetPasswordIn(BaseModel):
+    token: str
+    new_password: str
+
+
+class EmailAuthErrorOut(BaseModel):
+    """The body of a refused email-auth request.
+
+    `code` is a STABLE MACHINE STRING and `problems` are the password policy
+    codes from passwords.password_problems(). The client renders its own
+    sentence in the learner's language; the server does not choose the wording
+    and never returns a raw exception. See web/src/lib/i18n.ts.
+    """
+    code: str
+    problems: list[str] = []
+    #: Seconds until a throttled caller may retry. 0 when not throttled.
+    retry_after: int = 0

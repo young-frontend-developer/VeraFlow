@@ -172,6 +172,95 @@ class Settings:
     google_nonce_ttl_seconds: int = int(
         os.getenv("TILAWAH_GOOGLE_NONCE_TTL_SECONDS", 300))
 
+    # ── email / password sign-in ──────────────────────────────────────────
+    #
+    # No flag switches this off. Unlike Google, it needs no external
+    # credential to work: registration, login and password hashing are all
+    # local, so there is no state where the endpoints exist but cannot
+    # function. What DOES need external setup is the mail, and only the parts
+    # that actually send mail are gated - see below.
+
+    # WHETHER A VERIFIED ADDRESS IS REQUIRED BEFORE SIGNING IN.
+    #
+    # OFF BY DEFAULT, AND THAT DEFAULT IS FOR DEVELOPMENT ONLY. There is no
+    # email provider wired yet (tilawah/mailer.py), so a required verification
+    # would mean nobody can ever log in - the flow would be complete, correct
+    # and totally unusable. With it off, registration mints a session
+    # immediately and the account is simply marked unverified.
+    #
+    # ON THE OPEN INTERNET THIS MUST BE 1. Without it, anybody can register
+    # any address they do not own: signups are free, unlimited and
+    # attributable to strangers. api/main.py warns loudly at boot when
+    # production runs with it off, and refuses to start when it is on with no
+    # provider behind it - the one combination that locks every learner out.
+    require_email_verification: bool = os.getenv(
+        "TILAWAH_REQUIRE_EMAIL_VERIFICATION", "0") == "1"
+
+    # resend | sendgrid | ses | smtp. Empty means no provider is wired, which
+    # is the state today: mailer._deliver() logs instead of sending.
+    email_provider: str = os.getenv("TILAWAH_EMAIL_PROVIDER", "")
+    email_api_key: str = os.getenv("TILAWAH_EMAIL_API_KEY", "")
+    # The From address. Its domain must be one the provider has verified, or
+    # every message is rejected or silently filed as spam.
+    email_from: str = os.getenv("TILAWAH_EMAIL_FROM", "")
+    email_from_name: str = os.getenv("TILAWAH_EMAIL_FROM_NAME", "Tilawah")
+
+    # Where the links in those emails point - the WEB CLIENT's origin, not the
+    # API's. Taken from configuration and never from the request's Host header:
+    # a header is attacker-controlled, and this URL is about to be mailed to
+    # somebody as though we chose it.
+    app_base_url: str = os.getenv("TILAWAH_APP_BASE_URL", "http://localhost:5173")
+
+    # DEV ONLY. Logs the verification/reset LINK so both flows can be walked
+    # end to end with no provider at all. A link in a log file is an account
+    # takeover for anyone who can read logs; production refuses to boot with
+    # this set. See api/main.py.
+    email_echo_links: bool = os.getenv("TILAWAH_EMAIL_ECHO_LINKS", "0") == "1"
+
+    # 24 hours. Long enough to survive a mail queue and somebody reading their
+    # inbox tomorrow morning.
+    email_verify_ttl_seconds: int = int(
+        os.getenv("TILAWAH_EMAIL_VERIFY_TTL_SECONDS", 86400))
+    # 1 hour, deliberately much shorter. This one is a complete account
+    # takeover in a URL; verification only confirms an address.
+    password_reset_ttl_seconds: int = int(
+        os.getenv("TILAWAH_PASSWORD_RESET_TTL_SECONDS", 3600))
+
+    # ── brute-force throttling ────────────────────────────────────────────
+    #
+    # Per IP and per account, both - see tilawah/ratelimit.py for why neither
+    # alone is enough. Only FAILED attempts count.
+    #
+    # PER ACCOUNT. Five failures a minute is far below what a person mistyping
+    # their own password produces and far above nothing; the 15-minute block is
+    # what turns the sixth attempt into a real pause rather than a queue
+    # position.
+    login_max_failures: int = int(os.getenv("TILAWAH_LOGIN_MAX_FAILURES", 5))
+    login_window_seconds: int = int(os.getenv("TILAWAH_LOGIN_WINDOW_SECONDS", 60))
+    login_block_seconds: int = int(os.getenv("TILAWAH_LOGIN_BLOCK_SECONDS", 900))
+
+    # PER IP, AND DELIBERATELY MUCH LOOSER THAN PER ACCOUNT.
+    #
+    # AN IP IS NOT A PERSON. This app's audience is largely on mobile networks
+    # behind carrier-grade NAT, where thousands of people share one address -
+    # so a five-failure IP block would let any one of them lock out everybody
+    # else on their carrier, which is a denial of service the attacker gets for
+    # free. Household and university networks have the same shape, smaller.
+    #
+    # The per-ACCOUNT limit above is what actually stops password guessing.
+    # This one exists for the other shape - one machine spraying one password
+    # across many different addresses, which per-account counting never sees
+    # because no single account gets more than one guess. Twenty failures a
+    # minute from a single address is well past anything a shared connection
+    # produces honestly.
+    login_ip_max_failures: int = int(os.getenv("TILAWAH_LOGIN_IP_MAX_FAILURES", 20))
+
+    # Registration and forgot-password are throttled per IP on a much longer
+    # window. These are not guessing attacks - they are ways of using this
+    # server to send mail to strangers, so the shape to stop is volume over
+    # hours, not bursts over a minute.
+    signup_max_per_hour: int = int(os.getenv("TILAWAH_SIGNUP_MAX_PER_HOUR", 10))
+
     env: str = os.getenv("TILAWAH_ENV", "dev")           # dev | production
     # Shows the "not yet fully verified" banner. Also raised automatically while
     # any learner-facing correction is unreviewed, so it cannot be forgotten.
@@ -193,6 +282,16 @@ class Settings:
     @property
     def google_enabled(self) -> bool:
         return bool(self.google_audiences)
+
+    @property
+    def email_sending_enabled(self) -> bool:
+        """Whether a real provider could deliver a message right now.
+
+        Mirrors mailer.is_configured(), which is the function the sending path
+        actually calls; this property exists so the boot checks and the /meta
+        shape can ask without importing the mailer.
+        """
+        return bool(self.email_provider and self.email_api_key and self.email_from)
 
     @property
     def claim_deadline(self) -> "date | None":

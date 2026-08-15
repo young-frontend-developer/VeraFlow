@@ -26,6 +26,14 @@ import { ArchOrnament, KnotOrnament, StarOrnament } from "./Ornament";
  *
  * Each screen is an ornament, a line, and a sentence. Skippable throughout —
  * an introduction nobody can leave is an advertisement.
+ *
+ * ── IT IS A CARD, THE SAME CARD AS THE ACCOUNT SCREEN ──────────────────────
+ *
+ * The three screens sit in a centred 420px column with the content in a
+ * `.card`, because that is what the rest of the app does and this is the first
+ * screen a learner ever sees — the one that sets the expectation everything
+ * after it has to meet. Full-bleed it looked like a landing page at any width
+ * above a phone. See the onboarding block in index.css.
  */
 
 const SCREENS = [
@@ -48,37 +56,42 @@ export default function Welcome({
 
   return (
     <div className="onboard welcome">
-      <div className="onboard__step" key={i}>
-        <Mark className="onboard__ornament" size={48} />
-        <h2 className="onboard__display">
-          {withBrand(t(lang, screen.title))}
-        </h2>
-        <p className="onboard__lede">
-          {withBrand(t(lang, screen.body))}
-        </p>
+      <div className="onboard__inner">
+        <div className="card onboard__card">
+          <div className="onboard__step" key={i}>
+            <Mark className="onboard__ornament" size={44} />
+            <h2 className="onboard__display">
+              {withBrand(t(lang, screen.title))}
+            </h2>
+            <p className="onboard__lede">
+              {withBrand(t(lang, screen.body))}
+            </p>
 
-        <div className="onboard__foot">
-          <button
-            className="btn-primary"
-            onClick={() => (last ? onDone() : setI(i + 1))}
-          >
-            {t(lang, last ? "welcome_start" : "onboard_next")}
-          </button>
-          {!last && (
-            <button className="onboard__skip" onClick={onDone}>
-              {t(lang, "onboard_skip")}
-            </button>
-          )}
+            <div className="onboard__foot">
+              <button
+                className="btn-primary"
+                onClick={() => (last ? onDone() : setI(i + 1))}
+              >
+                {t(lang, last ? "welcome_start" : "onboard_next")}
+              </button>
+              {!last && (
+                <button className="onboard__skip" onClick={onDone}>
+                  {t(lang, "onboard_skip")}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div className="onboard__dots" aria-hidden="true">
-        {SCREENS.map((s, n) => (
-          <span
-            key={s.title}
-            className={n === i ? "onboard__dot onboard__dot--on" : "onboard__dot"}
-          />
-        ))}
+        {/* Under the card, not adrift below it. */}
+        <div className="onboard__dots" aria-hidden="true">
+          {SCREENS.map((s, n) => (
+            <span
+              key={s.title}
+              className={n === i ? "onboard__dot onboard__dot--on" : "onboard__dot"}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

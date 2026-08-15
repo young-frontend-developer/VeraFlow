@@ -89,12 +89,36 @@ class AuthIdentity(SQLModel, table=True):
     # subject) row pointing at a person who no longer exists - which would lock
     # that Google account out of ever signing up again.
     user_id: str = Field(index=True, foreign_key="user.id", ondelete="CASCADE")
-    provider: str                              # 'google' | 'apple'
+    provider: str                              # 'google' | 'apple' | 'email'
     # The provider's stable subject claim. NOT the email - Google's `sub` and
     # Apple's `sub` are permanent, addresses are not.
+    #
+    # FOR provider='email' THE SUBJECT *IS* THE NORMALISED ADDRESS, and that is
+    # not a contradiction of the paragraph above. There, the address is one of
+    # several things Google says about a person and the `sub` is the stable
+    # one. Here there is no external authority at all: the address is the
+    # account name, chosen by the learner, and the thing being proven is
+    # possession of a password matched to it. It is normalised through
+    # passwords.normalise_email() before it is ever written or looked up, so
+    # UNIQUE(provider, subject) is what enforces one account per address -
+    # including against a full-width or differently-cased spelling of one that
+    # already exists.
     subject: str
     email: str | None = Field(default=None)    # informational; may be a relay address
     email_verified: bool = Field(default=False)
+    # Argon2id, encoded with its own parameters and salt. NULL for every
+    # provider except 'email', where it is the whole credential.
+    #
+    # NULLABLE AND NOT A SEPARATE TABLE because an identity row is exactly the
+    # right grain: it is one way of proving you are a user, and for this
+    # provider the proof is a password. A `password` table would need its own
+    # answer to "what happens on delete" and would be one more thing that can
+    # disagree with auth_identity about who the account belongs to.
+    #
+    # NEVER selected into a response model. See api/schemas.py - no wire type
+    # carries this field, which is a stronger guarantee than remembering to
+    # strip it.
+    password_hash: str | None = Field(default=None)
     created_at: datetime = Field(default_factory=_now)
     last_login_at: datetime | None = Field(default=None)
 
@@ -138,6 +162,47 @@ class OAuthNonce(SQLModel, table=True):
 
     id: int | None = Field(default=None, primary_key=True)
     nonce_hash: str = Field(index=True, unique=True)
+    created_at: datetime = Field(default_factory=_now)
+    expires_at: datetime
+    consumed_at: datetime | None = Field(default=None)
+
+
+class EmailToken(SQLModel, table=True):
+    """A one-shot secret mailed to an address, for verifying it or for a reset.
+
+    ONE TABLE FOR BOTH PURPOSES, separated by `purpose`, because they have
+    identical mechanics - issue, mail, expire, consume once - and two tables
+    would be two places to get "consumed" wrong. The purpose is checked on
+    redemption, so a verification token cannot be spent as a password reset.
+    That check is not optional: without it, the weaker of the two flows
+    (verification, which may be issued on nothing more than a signup) would
+    mint credentials for the stronger one (reset, which changes a password).
+
+    ONLY THE HASH IS STORED, for the same reason as auth_session and
+    oauth_nonce: a leaked table must not hand anyone a working credential, and
+    a reset token IS a working credential - it is the entire proof required to
+    take over an account.
+
+    CONSUMED, NOT DELETED, matching OAuthNonce: a replay then finds the row
+    already spent rather than racing a delete, and the evidence of an attempted
+    replay survives.
+    """
+    __tablename__ = "email_token"
+
+    id: int | None = Field(default=None, primary_key=True)
+    token_hash: str = Field(index=True, unique=True)
+    # CASCADE for the same reason every other auth row has it: this app
+    # promises that deleting an account really deletes it, and a live reset
+    # token pointing at a deleted user would be a credential outliving the
+    # thing it authenticates.
+    user_id: str = Field(index=True, foreign_key="user.id", ondelete="CASCADE")
+    purpose: str = Field(index=True)           # 'verify' | 'reset'
+    # The address it was SENT TO, normalised - which is not necessarily the
+    # address on the identity row today. Verification must confirm the address
+    # that was actually mailed, so that changing the address on the account
+    # invalidates a verification already in flight rather than confirming the
+    # new one on the strength of mail sent to the old one.
+    email: str
     created_at: datetime = Field(default_factory=_now)
     expires_at: datetime
     consumed_at: datetime | None = Field(default=None)

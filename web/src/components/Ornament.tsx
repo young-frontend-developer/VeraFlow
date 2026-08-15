@@ -740,3 +740,140 @@ export function AppleMark({ size = 17 }: { size?: number }) {
     </svg>
   );
 }
+
+/* ── SETTINGS ROW GLYPHS ────────────────────────────────────────────────────
+ *
+ * One leading mark per settings row, drawn to the same specification as every
+ * other icon in this file: 20×20, 1.3 stroke, round caps, no fill. Line marks
+ * rather than filled or duotone ones, because a settings list is scanned down
+ * the left edge and a column of shapes with different visual weights reads as
+ * a column of different importances.
+ *
+ * NOT EMOJI, and not for style reasons. Emoji render as someone else's artwork
+ * at someone else's colour on every platform, which is the one thing a design
+ * system cannot absorb.
+ */
+
+export function Globe({ size = 20 }: { size?: number }) {
+  return (
+    <svg
+      width={size} height={size} viewBox="0 0 20 20" fill="none"
+      stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"
+      strokeLinejoin="round" aria-hidden="true"
+    >
+      <circle cx="10" cy="10" r="7.2" />
+      <path d="M2.9 10h14.2" />
+      <path d="M10 2.8c1.9 2 2.9 4.5 2.9 7.2s-1 5.2-2.9 7.2c-1.9-2-2.9-4.5-2.9-7.2s1-5.2 2.9-7.2z" />
+    </svg>
+  );
+}
+
+/** Appearance. A disc half in light and half in shade — one mark for a setting
+ *  whose two positions are both designed, rather than a sun that means "on". */
+export function Contrast({ size = 20 }: { size?: number }) {
+  return (
+    <svg
+      width={size} height={size} viewBox="0 0 20 20" fill="none"
+      stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"
+      strokeLinejoin="round" aria-hidden="true"
+    >
+      <circle cx="10" cy="10" r="7.2" />
+      <path d="M10 2.8a7.2 7.2 0 0 1 0 14.4z" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+/** The reciter. A voice leaving a source, not a loudspeaker. */
+export function Voice({ size = 20 }: { size?: number }) {
+  return (
+    <svg
+      width={size} height={size} viewBox="0 0 20 20" fill="none"
+      stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"
+      strokeLinejoin="round" aria-hidden="true"
+    >
+      <path d="M4 8v4" />
+      <path d="M7 5.6v8.8" />
+      <path d="M10 7.2v5.6" />
+      <path d="M13.2 6.4a5.2 5.2 0 0 1 0 7.2" />
+      <path d="M15.8 4.4a8.4 8.4 0 0 1 0 11.2" />
+    </svg>
+  );
+}
+
+/** The script the text is set in. A page with lines of writing on it. */
+export function Script({ size = 20 }: { size?: number }) {
+  return (
+    <svg
+      width={size} height={size} viewBox="0 0 20 20" fill="none"
+      stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"
+      strokeLinejoin="round" aria-hidden="true"
+    >
+      <path d="M4.4 3.2h11.2v13.6H4.4z" />
+      <path d="M7 7h6" />
+      <path d="M7 10h6" />
+      <path d="M7 13h3.6" />
+    </svg>
+  );
+}
+
+/** Privacy. A shield, which is the one shape nobody has to be taught. */
+export function Shield({ size = 20 }: { size?: number }) {
+  return (
+    <svg
+      width={size} height={size} viewBox="0 0 20 20" fill="none"
+      stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"
+      strokeLinejoin="round" aria-hidden="true"
+    >
+      <path d="M10 2.6l5.6 2.2v4.6c0 3.4-2.2 6.4-5.6 7.9-3.4-1.5-5.6-4.5-5.6-7.9V4.8z" />
+    </svg>
+  );
+}
+
+/** Delete everything. An open bin, drawn plainly — this row is dangerous and
+ *  the icon should not be cute about it. */
+export function Bin({ size = 20 }: { size?: number }) {
+  return (
+    <svg
+      width={size} height={size} viewBox="0 0 20 20" fill="none"
+      stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"
+      strokeLinejoin="round" aria-hidden="true"
+    >
+      <path d="M3.6 5.6h12.8" />
+      <path d="M8 5.6V4a.9.9 0 0 1 .9-.9h2.2a.9.9 0 0 1 .9.9v1.6" />
+      <path d="M5.4 5.6l.8 10a1 1 0 0 0 1 .9h5.6a1 1 0 0 0 1-.9l.8-10" />
+      <path d="M8.6 8.6v5" />
+      <path d="M11.4 8.6v5" />
+    </svg>
+  );
+}
+
+/** About. */
+export function Info({ size = 20 }: { size?: number }) {
+  return (
+    <svg
+      width={size} height={size} viewBox="0 0 20 20" fill="none"
+      stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"
+      strokeLinejoin="round" aria-hidden="true"
+    >
+      <circle cx="10" cy="10" r="7.2" />
+      <path d="M10 9.2v4.2" />
+      <path d="M10 6.5v.1" />
+    </svg>
+  );
+}
+
+/** The practice log. */
+export function Log({ size = 20 }: { size?: number }) {
+  return (
+    <svg
+      width={size} height={size} viewBox="0 0 20 20" fill="none"
+      stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"
+      strokeLinejoin="round" aria-hidden="true"
+    >
+      <path d="M4.2 4.4a1.6 1.6 0 0 1 1.6-1.6h9.2a.8.8 0 0 1 .8.8v11.6H5.8a1.6 1.6 0 0 0-1.6 1.6z" />
+      <path d="M4.2 4.4v12.4a1.6 1.6 0 0 0 1.6 1.6h10" />
+      <path d="M8 7h5" />
+      <path d="M8 10h5" />
+    </svg>
+  );
+}

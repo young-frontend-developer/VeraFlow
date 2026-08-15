@@ -40,7 +40,7 @@ from datetime import datetime, timedelta, timezone
 from sqlmodel import Session, select
 
 from .config import settings
-from .db.models import AuthSession, OAuthNonce, User
+from .db.models import AuthSession, EmailToken, OAuthNonce, User
 
 log = logging.getLogger(__name__)
 
@@ -246,6 +246,88 @@ def purge_expired_nonces(db: Session, *, before: datetime | None = None) -> int:
     cutoff = before or now()
     gone = 0
     for row in db.exec(select(OAuthNonce)).all():
+        expires = _utc(row.expires_at)
+        if expires is not None and expires <= cutoff:
+            db.delete(row)
+            gone += 1
+    if gone:
+        db.commit()
+    return gone
+
+
+# ── email tokens: verification and password reset ─────────────────────────
+#
+# SAME THREE RULES AS A SESSION TOKEN, and for a sharper reason. A reset token
+# is not a convenience - it is the complete proof required to take an account
+# over. It is minted from the same CSPRNG, only its hash is stored, and it is
+# never logged.
+
+def issue_email_token(db: Session, user_id: str, *, purpose: str, email: str,
+                      ttl_seconds: int) -> str:
+    """Mint a one-shot token for `purpose`. Returns the raw value ONCE.
+
+    ANY UNSPENT TOKEN OF THE SAME PURPOSE IS KILLED FIRST. Without that, every
+    "resend" leaves its predecessor live, and a year of forgotten resets is a
+    pile of working credentials for one account, each one only as safe as the
+    inbox it landed in. The newest link is the only one that works, which is
+    also what a learner expects when they click "send it again".
+    """
+    for row in db.exec(
+        select(EmailToken).where(EmailToken.user_id == user_id,
+                                 EmailToken.purpose == purpose,
+                                 EmailToken.consumed_at.is_(None))  # type: ignore[union-attr]
+    ).all():
+        row.consumed_at = now()
+        db.add(row)
+
+    raw = new_token()
+    db.add(EmailToken(token_hash=hash_token(raw), user_id=user_id,
+                      purpose=purpose, email=email,
+                      expires_at=now() + timedelta(seconds=ttl_seconds)))
+    db.commit()
+    log.info("email token issued user=%s purpose=%s", user_id, purpose)
+    return raw
+
+
+def consume_email_token(db: Session, raw: str | None, *,
+                        purpose: str) -> EmailToken | None:
+    """Spend a token. Returns the row, or None for every kind of no.
+
+    THE PURPOSE IS PART OF THE LOOKUP, not a check made afterwards on a row
+    already marked spent. A verification token presented to the reset endpoint
+    must not be consumed by it: consuming first and validating second would
+    burn the learner's real token on an attacker's probe.
+
+    None covers unknown, already spent, expired, wrong purpose, and pointing at
+    a user who no longer exists - and the caller turns all of them into one
+    identical refusal, exactly as resolve() does.
+    """
+    if not raw:
+        return None
+    row = db.exec(
+        select(EmailToken).where(EmailToken.token_hash == hash_token(raw))
+    ).first()
+    if row is None or row.purpose != purpose or row.consumed_at is not None:
+        return None
+    expires = _utc(row.expires_at)
+    if expires is None or expires <= now():
+        return None
+    if db.get(User, row.user_id) is None:
+        log.warning("email token %s references missing user %s",
+                    _tag(row.token_hash), row.user_id)
+        return None
+
+    row.consumed_at = now()
+    db.add(row)
+    db.commit()
+    return row
+
+
+def purge_expired_email_tokens(db: Session, *, before: datetime | None = None) -> int:
+    """Housekeeping. A spent or expired token authorises nothing either way."""
+    cutoff = before or now()
+    gone = 0
+    for row in db.exec(select(EmailToken)).all():
         expires = _utc(row.expires_at)
         if expires is not None and expires <= cutoff:
             db.delete(row)

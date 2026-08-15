@@ -35,6 +35,14 @@ import { Tick } from "./Ornament";
  *
  * SELECTION IS NEVER COLOUR ALONE: an emerald border, a background shift AND a
  * check mark, all three, plus aria-pressed for anyone not looking at any of it.
+ *
+ * ── ONE QUESTION, ONE CARD ─────────────────────────────────────────────────
+ *
+ * Each question renders inside the same centred 420px card the account screen
+ * uses, with the progress dots beneath it. It was previously a full-bleed
+ * column, which meant six option plates stretched to whatever width the
+ * viewport happened to be and a continue button as wide as a desktop monitor.
+ * See the onboarding block in index.css.
  */
 
 type Q = {
@@ -123,61 +131,75 @@ export default function Personalize({
 
   return (
     <div className="onboard">
-      <div className="onboard__step" key={q.key}>
-        <p className="onboard__count">
-          {i + 1} / {QUESTIONS.length}
-        </p>
-        <h2 className="onboard__display">{withBrand(t(lang, q.title))}</h2>
+      <div className="onboard__inner">
+        <div className="card onboard__card">
+          <div className="onboard__step" key={q.key}>
+            <p className="onboard__count">
+              {i + 1} / {QUESTIONS.length}
+            </p>
+            <h2 className="onboard__display">{withBrand(t(lang, q.title))}</h2>
 
-        <div className="choice">
-          {q.options.map((opt) => {
-            const on = answers[q.key] === opt.value;
-            return (
+            {/* Compact option plates bounded by the card, not text rows
+                stretched across the viewport. `choice--tight` because six goal
+                options at full plate height would push the primary action off
+                a short phone screen. */}
+            <div className="choice choice--tight">
+              {q.options.map((opt) => {
+                const on = answers[q.key] === opt.value;
+                return (
+                  <button
+                    key={String(opt.value)}
+                    className={on ? "choice__item is-on" : "choice__item"}
+                    aria-pressed={on}
+                    onClick={() =>
+                      setAnswers((a) => ({
+                        ...a,
+                        [q.key]: on ? null : opt.value,
+                      }))
+                    }
+                  >
+                    <span>
+                      <span className="choice__name">{t(lang, opt.label)}</span>
+                    </span>
+                    <span className="choice__tick">
+                      <Tick />
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="onboard__foot">
               <button
-                key={String(opt.value)}
-                className={on ? "choice__item is-on" : "choice__item"}
-                aria-pressed={on}
-                onClick={() =>
-                  setAnswers((a) => ({ ...a, [q.key]: on ? null : opt.value }))
-                }
+                className="btn-primary"
+                onClick={() => (last ? finish() : setI(i + 1))}
               >
-                <span>
-                  <span className="choice__name">{t(lang, opt.label)}</span>
-                </span>
-                <span className="choice__tick">
-                  <Tick />
-                </span>
+                {t(lang, last ? "personalize_done" : "onboard_next")}
               </button>
-            );
-          })}
+              {/* Skippable, and the skip is visible rather than hidden behind a
+                  gesture. An unanswered question is simply omitted from the
+                  journey card later. */}
+              <button
+                className="onboard__skip"
+                onClick={() => (last ? finish() : setI(i + 1))}
+              >
+                {t(lang, "onboard_choose_later")}
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div className="onboard__foot">
-          <button
-            className="btn-primary"
-            onClick={() => (last ? finish() : setI(i + 1))}
-          >
-            {t(lang, last ? "personalize_done" : "onboard_next")}
-          </button>
-          {/* Skippable, and the skip is visible rather than hidden behind a
-              gesture. An unanswered question is simply omitted from the
-              journey card later. */}
-          <button
-            className="onboard__skip"
-            onClick={() => (last ? finish() : setI(i + 1))}
-          >
-            {t(lang, "onboard_choose_later")}
-          </button>
+        {/* Five questions, five dots, immediately under the card they describe.
+            The counter above the question says the same thing in words for
+            anyone who cannot see the dots. */}
+        <div className="onboard__dots" aria-hidden="true">
+          {QUESTIONS.map((x, n) => (
+            <span
+              key={x.key}
+              className={n === i ? "onboard__dot onboard__dot--on" : "onboard__dot"}
+            />
+          ))}
         </div>
-      </div>
-
-      <div className="onboard__dots" aria-hidden="true">
-        {QUESTIONS.map((x, n) => (
-          <span
-            key={x.key}
-            className={n === i ? "onboard__dot onboard__dot--on" : "onboard__dot"}
-          />
-        ))}
       </div>
     </div>
   );

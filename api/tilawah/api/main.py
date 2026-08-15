@@ -16,6 +16,7 @@ from ..config import settings
 from ..content import coaching
 from ..db import init_db
 from .auth_routes import router as auth_router
+from .email_routes import router as email_auth_router
 from .routes import router
 
 logging.basicConfig(level=logging.INFO)
@@ -141,6 +142,50 @@ async def lifespan(_: FastAPI):
             "cross-site requests, so CSRF protection must come from somewhere "
             "else before any state-changing route moves behind the session.")
 
+    # ── email / password sign-in ──────────────────────────────────────────
+    #
+    # There is no provider wired yet (tilawah/mailer.py), so verification and
+    # password reset generate real tokens that nobody receives. These checks
+    # exist so that state is impossible to ship by accident, and so the one
+    # combination that locks every learner out cannot boot at all.
+    if settings.require_email_verification and not settings.email_sending_enabled:
+        raise RuntimeError(
+            "TILAWAH_REQUIRE_EMAIL_VERIFICATION=1 with no email provider "
+            "configured. Every registration would be told to check an inbox "
+            "nothing was ever sent to, and NOBODY WOULD EVER BE ABLE TO SIGN "
+            "IN.\n"
+            "Either wire a provider - set TILAWAH_EMAIL_PROVIDER, "
+            "TILAWAH_EMAIL_API_KEY and TILAWAH_EMAIL_FROM, and implement "
+            "mailer._deliver() - or set "
+            "TILAWAH_REQUIRE_EMAIL_VERIFICATION=0 for now.")
+
+    if settings.email_echo_links:
+        if settings.is_production:
+            raise RuntimeError(
+                "TILAWAH_EMAIL_ECHO_LINKS=1 in production. It writes "
+                "verification and password-reset LINKS into the application "
+                "log, and a reset link is a complete account takeover for "
+                "anyone who can read logs. It is a laptop-only affordance for "
+                "walking the flow with no mail provider.")
+        logging.warning("=" * 68)
+        logging.warning("EMAIL LINK ECHO ON - verification and reset links are")
+        logging.warning("written to this log. Development only.")
+        logging.warning("=" * 68)
+
+    if settings.is_production and not settings.require_email_verification:
+        bar = "!" * 68
+        logging.warning(bar)
+        logging.warning("EMAIL VERIFICATION IS OFF IN PRODUCTION")
+        logging.warning("Anyone can register any address they do not own, and")
+        logging.warning("password reset cannot be trusted to reach its owner.")
+        logging.warning("Wire a mail provider and set")
+        logging.warning("TILAWAH_REQUIRE_EMAIL_VERIFICATION=1.")
+        logging.warning(bar)
+    elif not settings.email_sending_enabled:
+        logging.info(
+            "email sending is not configured; verification and reset tokens "
+            "are minted but nothing is delivered. See tilawah/mailer.py.")
+
     if settings.show_unreviewed:
         bar = "=" * 68
         logging.warning(bar)
@@ -171,6 +216,9 @@ app.include_router(router)
 # Sessions. Additive in this phase: nothing in `router` requires one yet, and
 # the device_id endpoints are untouched. See api/auth_routes.py.
 app.include_router(auth_router)
+# Email/password, on the same /api/auth prefix and the same session system.
+# A separate module for readers, not for the client - see api/email_routes.py.
+app.include_router(email_auth_router)
 
 # The isolated letter recordings a coaching card's practice section plays.
 # Mounted unconditionally: the directory is checked in (with a README) so the

@@ -79,7 +79,14 @@ await page.route("**/api/**", async (route) => {
   if (url.includes("/api/meta")) {
     return j({ pilot: false, show_unreviewed: true, collect_audio_offered: false,
                max_audio_seconds: 120,
-               error_fields: ["makhraj", "tier", "reveal_order"] });
+               // THE WHOLE CONTRACT, not a sample. The client refuses to draw
+               // any card when /api/meta advertises fewer fields than
+               // REQUIRED_ERROR_FIELDS - it shows "server out of date" instead.
+               // This list was three names long and the guard has grown since,
+               // so the stub was being turned away at the door and every drive
+               // through this file stopped at that screen.
+               error_fields: ["kind", "letter", "count", "words", "occurrences",
+                              "content", "makhraj", "tier", "reveal_order"] });
   }
   if (url.includes("/api/suras/112/ayat")) {
     return j({ sura: 112, name_ar: "الإخلاص", translit: "Al-Ikhlas", n_ayat: 4,
@@ -88,8 +95,11 @@ await page.route("**/api/**", async (route) => {
         n_words: 2, n_segments: 2, seconds: 4, translation: "" })) });
   }
   if (url.includes("/api/suras")) {
+    // `place` is part of the payload contract too - missingPayloadFields()
+    // reports its absence as server skew and replaces the app with a notice.
     return j([{ number: 112, name_ar: "الإخلاص", translit: "Al-Ikhlas",
-                uz: "Ixlos", n_ayat: 4, search: "112 ixlos" }]);
+                uz: "Ixlos", n_ayat: 4, place: "makkah",
+                search: "112 ixlos" }]);
   }
   if (url.includes("/api/segments")) {
     const whole = { index: 0, start_word: 0, num_words: 2, n_phonemes: 10,
@@ -131,10 +141,18 @@ console.log("1. BASMALA   :", await text(".opening__basmala"));
 console.log("   brand mark:", await text(".opening__brand"));
 await page.waitForTimeout(2600);
 
-console.log("2. WELCOME   :", await text(".onboard__display"));
+// LANGUAGE IS THE FIRST QUESTION, straight after the Basmala. Every screen
+// below it is prose, so it is asked before any of them - see LanguagePick.tsx.
+// It has no skip, which is why this is a plain click through rather than an
+// option-then-continue like the personalization steps.
+console.log("2. LANGUAGE  :", await text(".onboard__display"));
+await page.click(".btn-primary");
+await page.waitForTimeout(320);
+
+console.log("3. WELCOME   :", await text(".onboard__display"));
 for (let i = 0; i < 3; i++) { await page.click(".btn-primary"); await page.waitForTimeout(320); }
 
-console.log("3. PERSONALIZE:", await text(".onboard__display"), "|", await text(".onboard__count"));
+console.log("4. PERSONALIZE:", await text(".onboard__display"), "|", await text(".onboard__count"));
 for (let i = 0; i < 5; i++) {
   const opts = await page.$$(".choice__item");
   if (opts.length) await opts[0].click();
@@ -143,7 +161,7 @@ for (let i = 0; i < 5; i++) {
   await page.waitForTimeout(320);
 }
 
-console.log("4. CREATE    :", await text(".onboard__display"));
+console.log("5. CREATE    :", await text(".onboard__display"));
 const rows = await page.$$eval(".journey__row", (rs) =>
   rs.map((r) => r.querySelector(".journey__key").textContent.trim() + ": " +
                 r.querySelector(".journey__val").textContent.trim()));
@@ -151,7 +169,7 @@ console.log("   MY JOURNEY:", rows.join(" | "));
 await page.click(".btn-primary");
 await page.waitForTimeout(400);
 
-console.log("5. READY     :", await text(".onboard__display"));
+console.log("6. READY     :", await text(".onboard__display"));
 const steps = await page.$$eval(".ready__step", (ss) =>
   ss.map((x) => x.textContent.trim().replace(/\s+/g, " ")));
 console.log("   TODAY     :", steps.join(" | "));
@@ -159,18 +177,69 @@ console.log("   PATH      :", await text(".ready__path"));
 await page.click(".btn-primary");
 await page.waitForTimeout(400);
 
-console.log("6. ACCOUNT   :", await text(".auth__wordmark"), "|", await text(".auth__pending"));
+console.log("7. ACCOUNT   :", await text(".auth__wordmark"), "| tabs:",
+  (await page.$$eval(".emailauth__tab", (e) => e.map((x) => x.textContent.trim()))).join(" / "));
 await page.click(".auth__skip");
 await page.waitForTimeout(500);
 
-console.log("7. CONSENT   :", (await page.$$(".gate__quiet")).length ? "shown" : "MISSING");
+console.log("8. CONSENT   :", (await page.$$(".gate__quiet")).length ? "shown" : "MISSING");
 const gate = await page.$(".gate__quiet");
 if (gate) await gate.click();
 await page.waitForTimeout(1100);
 
-console.log("8. HOME      : nav =", (await page.$$eval(".tabbar .tab", (e) => e.map((x) => x.textContent.trim()))).join(" | "));
+console.log("9. HOME      : nav =", (await page.$$eval(".tabbar .tab", (e) => e.map((x) => x.textContent.trim()))).join(" | "));
 console.log("   home CTA  :", await text(".btn-primary"));
 console.log("   journey stored:", await page.evaluate(() => localStorage.getItem("veyraflow_journey")));
+
+/* ── 10. THE PROGRESSIVE REVEAL ─────────────────────────────────────────────
+ *
+ * WHY THIS BLOCK EXISTS AGAIN. The header of this file has always said it is
+ * the in-browser proof of the one-at-a-time reveal, and the API stub above
+ * still returns exactly the case that deadlocked: three cards A/B/C, and a
+ * re-read that clears only A while the whole-ayah score stays below the pass
+ * mark. But the WALK had been rewritten into an entry-flow tour that stops at
+ * Home, so the stub was being built and never reached. The reveal kept passing
+ * its server-side tests and had no browser coverage at all.
+ *
+ * WHAT IS ASSERTED: three mistakes found, exactly ONE correction card on
+ * screen, and the waiting line naming the other two. That is the whole rule.
+ *
+ * The drive below is the sequence e2e-screens.mjs already uses, rather than a
+ * fresh guess at selectors - it is the one path through the picker and the
+ * reader that is known to reach the recorder.
+ */
+try {
+  // Straight in via the home CTA. `tilawah_place` is seeded to 112:2 by the
+  // init script above, which is exactly what that button resolves - no picker
+  // to walk, and one fewer screen whose markup this file has to know about.
+  await page.locator(".btn-primary").first().click();
+  // The CTA lands in the reader. Switch to the verse view and take its
+  // record button, which is the path e2e-screens.mjs walks.
+  await page.getByRole("tab", { name: /Oyatma-oyat/ }).click();
+  await page.locator(".verse").first().waitFor({ timeout: 15000 });
+  // The verse card renders <Recorder>, whose control is `.mic`. Pressing it
+  // arms the microphone HERE and hands the live recording to the practice
+  // screen, which is where the second press stops it - see claimShared().
+  await page.locator(".mic").first().click();
+  await page.waitForTimeout(2500);
+  await page.locator(".mic").first().click();
+
+  // Wait for the verdict block, which only renders once a result is in hand.
+  await page.locator(".verdict").waitFor({ timeout: 20000 });
+
+  const shown = await page.$$eval(".card--draft, .card--lit", (e) => e.length);
+  const more = await text(".ladder-more");
+  const bar = (await page.$$(".donebar")).length;
+  console.log("10. REVEAL   : correction cards on screen =", shown, "(expected 1)");
+  console.log("    waiting  :", more || "(none)");
+  console.log("    donebar  :", bar ? "present (should be absent - work open)" : "absent - correct");
+  console.log("    VERDICT  :",
+    shown === 1 && /2/.test(more) && !bar
+      ? "ONE AT A TIME - intact"
+      : "REGRESSED");
+} catch (e) {
+  console.log("10. REVEAL   : NOT REACHED -", String(e.message).slice(0, 90));
+}
 
 console.log("PAGE ERRORS:", errs.slice(0, 3));
 await browser.close();

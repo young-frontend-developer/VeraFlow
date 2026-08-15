@@ -60,9 +60,13 @@ export function CreateJourney({
     t(lang, "sessions_n").replace("{n}", String(journey.weekly)),
   ]);
 
+  // Same centred 420px column as every other step. These two screens already
+  // carry their own card — the summary IS the card — so they take the column
+  // without a second one wrapped around it, the way the account screen sets its
+  // heading above its card rather than inside it.
   return (
     <div className="onboard">
-      <div className="onboard__step">
+      <div className="onboard__inner onboard__step">
         <h2 className="onboard__display">{t(lang, "journey_build_title")}</h2>
         <p className="onboard__lede">{t(lang, "journey_build_body")}</p>
 
@@ -108,8 +112,8 @@ export function JourneyReady({
 
   return (
     <div className="onboard">
-      <div className="onboard__step">
-        <StarOrnament className="onboard__ornament ready__mark" size={46} />
+      <div className="onboard__inner onboard__step">
+        <StarOrnament className="onboard__ornament ready__mark" size={44} />
         <h2 className="onboard__display">{t(lang, "journey_ready_title")}</h2>
 
         <article className="card">
