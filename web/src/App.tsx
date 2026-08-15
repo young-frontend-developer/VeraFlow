@@ -15,7 +15,7 @@ import Profile from "./components/Profile";
 import { ReadMode } from "./components/Reader";
 import Recite from "./components/Recite";
 import Review from "./components/Review";
-import { Learn } from "./components/Soon";
+import { Academy } from "./components/Academy";
 import Progress from "./components/Progress";
 import { Flame, Gear } from "./components/Ornament";
 import GoalScreen, { GoalCard, goalSentence } from "./components/Goal";
@@ -730,7 +730,7 @@ function LearnerApp() {
             />
           )
         ) : tab === "learn" ? (
-          <Learn lang={lang} />
+          <Academy lang={lang} />
         ) : tab === "progress" ? (
           <Progress
             lang={lang}

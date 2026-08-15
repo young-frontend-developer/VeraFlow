@@ -1187,3 +1187,89 @@ export const hadithById = (id: string, lang: string) =>
   fetch(`${BASE}/api/hadith/${encodeURIComponent(id)}?lang=${lang}`).then(
     json<Hadith | null>,
   );
+
+
+// ── academy ─────────────────────────────────────────────────────────────
+
+export type LessonSummary = {
+  id: number;
+  order: number;
+  slug: string;
+  difficulty: string;
+  title_uz: string;
+  title_ru: string;
+  practice_sura: number;
+  practice_aya: number;
+  video_url: string | null;
+  rule_codes: string[];
+  status: "locked" | "available" | "completed";
+  quiz_score: number | null;
+  practice_done: boolean;
+};
+
+export type QuizQuestion = {
+  id: number;
+  order: number;
+  question_uz: string;
+  question_ru: string;
+  options_uz: string[];
+  options_ru: string[];
+};
+
+export type LessonDetail = {
+  id: number;
+  order: number;
+  slug: string;
+  difficulty: string;
+  title_uz: string;
+  title_ru: string;
+  body_uz: string;
+  body_ru: string;
+  practice_sura: number;
+  practice_aya: number;
+  video_url: string | null;
+  rule_codes: string[];
+  pass_score: number;
+  quiz: QuizQuestion[];
+  status: "locked" | "available" | "completed";
+  quiz_score: number | null;
+  practice_done: boolean;
+};
+
+export type QuizResult = {
+  score: number;
+  passed: boolean;
+  total: number;
+  correct_count: number;
+  results: {
+    question_id: number;
+    given: number;
+    correct: number;
+    is_correct: boolean;
+    explanation_uz: string | null;
+    explanation_ru: string | null;
+  }[];
+};
+
+export const listLessons = () =>
+  authedFetch("/api/lessons").then(json<LessonSummary[]>);
+
+export const getLesson = (id: number) =>
+  authedFetch(`/api/lessons/${id}`).then(json<LessonDetail>);
+
+export async function submitQuiz(
+  lessonId: number,
+  answers: number[],
+): Promise<QuizResult> {
+  return authedFetch(`/api/lessons/${lessonId}/quiz`, () => ({
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ answers }),
+  })).then(json<QuizResult>);
+}
+
+export async function markPractice(lessonId: number): Promise<void> {
+  await authedFetch(`/api/lessons/${lessonId}/practice`, () => ({
+    method: "POST",
+  }));
+}
