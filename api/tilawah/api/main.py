@@ -17,6 +17,7 @@ from ..content import coaching
 from ..db import init_db
 from .auth_routes import router as auth_router
 from .email_routes import router as email_auth_router
+from .lesson_routes import router as lesson_router
 from .routes import router
 
 logging.basicConfig(level=logging.INFO)
@@ -219,7 +220,7 @@ app.include_router(auth_router)
 # Email/password, on the same /api/auth prefix and the same session system.
 # A separate module for readers, not for the client - see api/email_routes.py.
 app.include_router(email_auth_router)
-
+app.include_router(lesson_router)
 # The isolated letter recordings a coaching card's practice section plays.
 # Mounted unconditionally: the directory is checked in (with a README) so the
 # mount cannot fail, and coaching.audio_url() gates each individual button on

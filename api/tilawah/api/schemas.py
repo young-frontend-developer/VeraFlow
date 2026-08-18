@@ -324,6 +324,66 @@ class MetaOut(BaseModel):
     version: str = "0.1.0"
 
 
+# ── academy ──────────────────────────────────────────────────────────────
+
+class LessonSummaryOut(BaseModel):
+    id: int
+    order: int
+    slug: str
+    difficulty: str
+    title_uz: str
+    title_ru: str
+    practice_sura: int
+    practice_aya: int
+    video_url: str | None = None
+    rule_codes: list[str] = []
+    # per-user progress, filled at query time
+    status: str = "locked"                  # locked | available | completed
+    quiz_score: int | None = None
+    practice_done: bool = False
+
+
+class QuizQuestionOut(BaseModel):
+    id: int
+    order: int
+    question_uz: str
+    question_ru: str
+    options_uz: list[str]
+    options_ru: list[str]
+
+
+class LessonDetailOut(BaseModel):
+    id: int
+    order: int
+    slug: str
+    difficulty: str
+    title_uz: str
+    title_ru: str
+    body_uz: str
+    body_ru: str
+    practice_sura: int
+    practice_aya: int
+    video_url: str | None = None
+    rule_codes: list[str] = []
+    pass_score: int = 70
+    quiz: list[QuizQuestionOut] = []
+    status: str = "locked"
+    quiz_score: int | None = None
+    practice_done: bool = False
+
+
+class QuizAnswerIn(BaseModel):
+    answers: list[int]
+
+
+class QuizResultOut(BaseModel):
+    score: int
+    passed: bool
+    total: int
+    correct_count: int
+    results: list[dict]
+
+
 # ── sessions ──────────────────────────────────────────────────────────────
 
 class AnonymousSessionIn(BaseModel):

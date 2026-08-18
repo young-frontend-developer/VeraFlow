@@ -3225,6 +3225,325 @@ ol {
   margin: 0 auto;
 }
 
+/* ══ academy ══════════════════════════════════════════════════════════════ */
+
+.academy { padding: 16px var(--pad) 32px; }
+
+.academy__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 20px;
+}
+
+.academy__title {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 400;
+}
+
+.academy__count {
+  font-size: 14px;
+  color: var(--ink-3);
+}
+
+.academy__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.academy__card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 18px 20px;
+  background: var(--card);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border: 1px solid var(--border);
+  border-radius: var(--r-soft);
+  box-shadow: var(--lift);
+  text-align: left;
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease);
+}
+
+.academy__card:hover:not(:disabled) { border-color: var(--gold); }
+.academy__card:disabled { opacity: 0.45; cursor: default; }
+
+.academy__order {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.academy__item--completed .academy__order {
+  background: var(--accent-fill-soft);
+  color: var(--on-gold);
+}
+.academy__item--available .academy__order {
+  background: var(--sage-soft);
+  color: var(--jade);
+}
+.academy__item--locked .academy__order {
+  background: var(--well);
+  color: var(--ink-3);
+}
+
+.academy__info { flex: 1; min-width: 0; }
+
+.academy__name {
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.academy__meta {
+  display: block;
+  font-size: 13px;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+
+.academy__status {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--ink-3);
+}
+
+.academy__item--completed .academy__status { color: var(--jade); }
+
+.academy__loading {
+  height: 200px;
+  display: grid;
+  place-items: center;
+}
+
+/* ── lesson view ─────────────────────────────────────────────────────── */
+
+.lesson { padding: 16px var(--pad) 40px; }
+
+.lesson__back {
+  display: inline-block;
+  margin-bottom: 20px;
+  background: none;
+  border: none;
+  color: var(--gold);
+  font-size: 15px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.lesson__title {
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1.3;
+  margin-bottom: 20px;
+}
+
+.lesson__body {
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--ink-2);
+  margin-bottom: 24px;
+}
+
+.lesson__body h3 {
+  font-family: var(--serif);
+  font-size: 20px;
+  color: var(--ink);
+  margin: 20px 0 8px;
+}
+
+.lesson__body ol {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.lesson__body li {
+  margin-bottom: 4px;
+}
+
+.lesson__video {
+  display: inline-block;
+  padding: 10px 20px;
+  background: var(--sage-soft);
+  color: var(--jade);
+  border-radius: var(--r-chip);
+  font-size: 14px;
+  text-decoration: none;
+  margin-bottom: 20px;
+}
+
+.lesson__actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+
+.lesson__btn--primary {
+  flex: 1;
+  min-width: 140px;
+  padding: 14px 24px;
+  background: var(--accent-fill);
+  color: var(--on-gold);
+  border: none;
+  border-radius: var(--r-chip);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.lesson__btn--primary:disabled { opacity: 0.5; cursor: default; }
+
+.lesson__btn--secondary {
+  flex: 1;
+  min-width: 140px;
+  padding: 14px 24px;
+  background: var(--ivory-lift);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: var(--r-chip);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.lesson__practice-check {
+  font-size: 14px;
+  color: var(--jade);
+  align-self: center;
+}
+
+/* ── quiz ────────────────────────────────────────────────────────────── */
+
+.lesson__quiz-title {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 400;
+  margin-bottom: 8px;
+}
+
+.lesson__quiz-note {
+  font-size: 14px;
+  color: var(--ink-3);
+  margin-bottom: 24px;
+}
+
+.quiz__question { margin-bottom: 24px; }
+
+.quiz__text {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.quiz__options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quiz__option {
+  padding: 12px 16px;
+  background: var(--ivory-lift);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-soft);
+  color: var(--ink);
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.quiz__option:hover { border-color: var(--gold); }
+
+.quiz__option--selected {
+  border-color: var(--gold);
+  background: var(--green-soft);
+}
+
+/* ── result ──────────────────────────────────────────────────────────── */
+
+.lesson__result { text-align: center; }
+
+.result__badge {
+  display: inline-block;
+  padding: 14px 32px;
+  border-radius: var(--r-chip);
+  font-size: 22px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.result__badge--pass {
+  background: var(--sage-soft);
+  color: var(--jade);
+}
+
+.result__badge--fail {
+  background: rgba(220, 80, 60, 0.15);
+  color: #e06050;
+}
+
+.result__message {
+  font-size: 16px;
+  color: var(--ink-2);
+  margin-bottom: 28px;
+}
+
+.result__details {
+  text-align: left;
+  margin-bottom: 28px;
+}
+
+.result__item {
+  padding: 14px 16px;
+  border-radius: var(--r-soft);
+  margin-bottom: 8px;
+}
+
+.result__item--correct { background: rgba(63, 162, 135, 0.08); }
+.result__item--wrong { background: rgba(220, 80, 60, 0.08); }
+
+.result__q {
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.result__given {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.result__answer {
+  font-size: 14px;
+  color: var(--jade);
+  margin-top: 2px;
+}
+
+.result__explanation {
+  font-size: 13px;
+  color: var(--ink-3);
+  margin-top: 4px;
+  font-style: italic;
+}
+
 /* ══ pilot banner ═════════════════════════════════════════════════════════ */
 
 /* Transparency, in the system's own voice. Beige rather than a warning colour:

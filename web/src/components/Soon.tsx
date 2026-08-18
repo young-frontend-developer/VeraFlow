@@ -23,9 +23,8 @@ export function Learn({ lang }: { lang: Lang }) {
   return (
     <section className="soon">
       <BookOrnament className="soon__ornament" size={54} />
-      <h2 className="soon__title">{t(lang, "learn_title")}</h2>
-      <p className="soon__body">{t(lang, "learn_body")}</p>
-      <p className="soon__note">{t(lang, "learn_note")}</p>
+      <h2 className="soon__title">{t(lang, "learn_empty")}</h2>
+      <p className="soon__body">{t(lang, "learn_empty_body")}</p>
     </section>
   );
 }

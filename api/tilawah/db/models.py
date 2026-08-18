@@ -265,3 +265,63 @@ class Attempt(SQLModel, table=True):
     audio_url: str | None = None                # only when consented + store_audio
     wrong_flag: bool = Field(default=False)     # "this feedback was wrong"
     wrong_note: str | None = None
+
+
+# ── academy ──────────────────────────────────────────────────────────────
+
+class Lesson(SQLModel, table=True):
+    """One tajweed topic in the learning curriculum.
+
+    Ordered sequentially: lesson N is available when lesson N-1 is completed.
+    Content is bilingual (uz/ru) and ingested from partner-authored JSON via
+    tools/ingest_lessons.py.
+    """
+    __tablename__ = "lesson"
+
+    id: int | None = Field(default=None, primary_key=True)
+    order: int = Field(index=True, unique=True)
+    slug: str = Field(index=True, unique=True)
+    difficulty: str = Field(default="beginner")   # beginner | intermediate | advanced
+    title_uz: str = ""
+    title_ru: str = ""
+    body_uz: str = ""
+    body_ru: str = ""
+    rule_codes: list = Field(default=[], sa_column=Column(JSON))
+    practice_sura: int = 0
+    practice_aya: int = 0
+    video_url: str | None = None
+    pass_score: int = Field(default=70)
+    published: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=_now)
+
+
+class QuizQuestion(SQLModel, table=True):
+    """Multiple-choice question belonging to a lesson. 3-5 per lesson."""
+    __tablename__ = "quiz_question"
+
+    id: int | None = Field(default=None, primary_key=True)
+    lesson_id: int = Field(index=True, foreign_key="lesson.id", ondelete="CASCADE")
+    order: int = Field(default=0)
+    question_uz: str = ""
+    question_ru: str = ""
+    options_uz: list = Field(default=[], sa_column=Column("options_uz", JSON))
+    options_ru: list = Field(default=[], sa_column=Column("options_ru", JSON))
+    correct: int = Field(default=0)
+    explanation_uz: str | None = None
+    explanation_ru: str | None = None
+
+
+class LessonProgress(SQLModel, table=True):
+    """Per-user completion state for a lesson."""
+    __tablename__ = "lesson_progress"
+    __table_args__ = (
+        UniqueConstraint("user_id", "lesson_id", name="uq_progress_user_lesson"),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: str = Field(index=True, foreign_key="user.id", ondelete="CASCADE")
+    lesson_id: int = Field(index=True, foreign_key="lesson.id", ondelete="CASCADE")
+    quiz_score: int | None = None
+    practice_done: bool = Field(default=False)
+    completed_at: datetime | None = None
+    attempts: int = Field(default=0)
