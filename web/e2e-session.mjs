@@ -80,8 +80,7 @@ await page.addInitScript((dev) => {
   localStorage.setItem("tilawah_consent", "1");
   localStorage.setItem("tilawah_consent_seen", "1");
   localStorage.setItem("tilawah_auth_seen", "1");
-  // `veyraflow_entry_done`, not `tilawah_*` - App.tsx kept the pre-rename key.
-  localStorage.setItem("veyraflow_entry_done", "1");
+  localStorage.setItem("tilawah_entry_done", "1");
 }, DEVICE);
 
 console.log(`\napi=${API}  client=http://127.0.0.1:${PORT}  device=${DEVICE}\n`);

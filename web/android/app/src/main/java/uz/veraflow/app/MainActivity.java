@@ -1,4 +1,4 @@
-package uz.veyraflow.app;
+package uz.veraflow.app;
 
 import com.getcapacitor.BridgeActivity;
 

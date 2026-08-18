@@ -54,7 +54,7 @@ export type Journey = {
   created: string;
 };
 
-export const JOURNEY_KEY = "veyraflow_journey";
+export const JOURNEY_KEY = "tilawah_journey";
 
 export const DEFAULT_JOURNEY: Journey = {
   goal: null, stage: null, focus: null, minutes: null, when: null,

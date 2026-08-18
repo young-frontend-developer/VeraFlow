@@ -117,7 +117,7 @@ const EARNED: Record<AchievementId, (s: Signals) => boolean> = {
   journey_completed: () => false,
 };
 
-export const REFLECTIONS_KEY = "veyraflow_reflections";
+export const REFLECTIONS_KEY = "tilawah_reflections";
 
 /** Reflections opened, counted locally. Private: never sent anywhere. */
 export function countReflection(): number {

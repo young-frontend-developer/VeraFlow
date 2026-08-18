@@ -59,7 +59,7 @@ const seed = async (extra = {}) => {
     localStorage.clear();
     for (const [k, val] of Object.entries(v)) localStorage.setItem(k, val);
   }, {
-    veyraflow_entry_done: "1",
+    tilawah_entry_done: "1",
     tilawah_auth_seen: "1",
     tilawah_consent_seen: "1",
     tilawah_consent: "1",

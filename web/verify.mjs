@@ -189,7 +189,7 @@ await page.waitForTimeout(1100);
 
 console.log("9. HOME      : nav =", (await page.$$eval(".tabbar .tab", (e) => e.map((x) => x.textContent.trim()))).join(" | "));
 console.log("   home CTA  :", await text(".btn-primary"));
-console.log("   journey stored:", await page.evaluate(() => localStorage.getItem("veyraflow_journey")));
+console.log("   journey stored:", await page.evaluate(() => localStorage.getItem("tilawah_journey")));
 
 /* ── 10. THE PROGRESSIVE REVEAL ─────────────────────────────────────────────
  *

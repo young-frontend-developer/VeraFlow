@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'uz.veyraflow.app',
-  appName: 'VeyraFlow',
+  appId: 'uz.veraflow.app',
+  appName: 'VeraFlow',
   webDir: 'dist'
 };
 

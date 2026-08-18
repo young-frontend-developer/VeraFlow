@@ -139,8 +139,8 @@ def send_verification_email(to: str, token: str, *, lang: str = "uz") -> bool:
     module docstring - and must not tell the client either way, because "that
     address got no mail" is "that address is not registered" said slowly.
     """
-    subject = ("Tilawah: emailingizni tasdiqlang" if lang == "uz"
-               else "Tilawah: подтвердите ваш email")
+    subject = ("VeraFlow: emailingizni tasdiqlang" if lang == "uz"
+               else "VeraFlow: подтвердите ваш email")
     link = _link("/verify-email", token)
     body = (
         f"{'Tasdiqlash uchun havolani oching' if lang == 'uz' else 'Откройте ссылку для подтверждения'}:\n\n"
@@ -156,8 +156,8 @@ def send_password_reset_email(to: str, token: str, *, lang: str = "uz") -> bool:
     Same contract as above, and the same reason for it: whether an address
     received a reset mail must not be observable from the response.
     """
-    subject = ("Tilawah: parolni tiklash" if lang == "uz"
-               else "Tilawah: сброс пароля")
+    subject = ("VeraFlow: parolni tiklash" if lang == "uz"
+               else "VeraFlow: сброс пароля")
     link = _link("/reset-password", token)
     body = (
         f"{'Yangi parol oʻrnatish uchun havolani oching' if lang == 'uz' else 'Откройте ссылку, чтобы задать новый пароль'}:\n\n"

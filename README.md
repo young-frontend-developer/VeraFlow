@@ -1,6 +1,6 @@
-# VeyraFlow
+# VeraFlow
 
-VeyraFlow helps people learn to recite the Qur'an correctly. It listens to a
+VeraFlow helps people learn to recite the Qur'an correctly. It listens to a
 recitation, detects pronunciation and Tajweed errors, highlights the mistake in
 the text, and explains the correction — in Uzbek or Russian.
 
@@ -58,4 +58,3 @@ Lessons, exercises, Hifz scheduling, LLM phrasing, other riwayat, whole-Quran
 coverage, real accounts, payments.
 
 The typed error profile is the spine; all of those derive from it. Ship the loop,
-get real attempts, then build the rest on evidence.

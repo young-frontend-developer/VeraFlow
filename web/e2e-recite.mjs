@@ -101,7 +101,7 @@ await ctx.addInitScript(
     // account — runs once on a fresh device and is six screens of clicking
     // before the app proper. It is not what this script is testing, and
     // stepping through it was six more selectors to break. Marked done.
-    localStorage.setItem("veyraflow_entry_done", "1");
+    localStorage.setItem("tilawah_entry_done", "1");
     localStorage.setItem("tilawah_auth_seen", "1");
   },
   [SURA, AYA],

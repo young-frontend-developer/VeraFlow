@@ -35,7 +35,7 @@
 
 export type Theme = "dark" | "light";
 
-const KEY = "veyraflow_theme";
+const KEY = "tilawah_theme";
 
 /**
  * What was chosen last, or dark.

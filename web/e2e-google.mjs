@@ -72,11 +72,11 @@ page.on("response", (r) => {
 //     if (!authSeen)   -> this screen
 // so the entry flow must be marked done and the auth screen must not be.
 //
-// The key really is `veyraflow_entry_done`, from before the rename; the others
-// are `tilawah_*`. Guessing it cost a run of five false failures.
+// Every key here is `tilawah_*` — including `tilawah_entry_done`, which used to
+// carry the old product name and was moved onto this prefix with the rest.
 await page.addInitScript(() => {
   localStorage.setItem("tilawah_device_id", "e2e-google-device");
-  localStorage.setItem("veyraflow_entry_done", "1");
+  localStorage.setItem("tilawah_entry_done", "1");
   localStorage.setItem("tilawah_consent_seen", "1");
   localStorage.setItem("tilawah_consent", "1");
   localStorage.removeItem("tilawah_auth_seen");

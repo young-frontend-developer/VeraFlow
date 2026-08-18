@@ -75,7 +75,7 @@ const AUTH_SEEN_KEY = "tilawah_auth_seen";
  * left, and a learner who backgrounds the app mid-flow comes back to a
  * fragment. This records only WHETHER the entry experience has been completed.
  */
-const ENTRY_KEY = "veyraflow_entry_done";
+const ENTRY_KEY = "tilawah_entry_done";
 /**
  * How much Qur'an reading the learner said they had done, at onboarding.
  *

@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "uz.veyraflow.app"
+    namespace = "uz.veraflow.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "uz.veyraflow.app"
+        applicationId "uz.veraflow.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

@@ -89,7 +89,7 @@ try {
   await page.evaluate(() => {
     localStorage.clear();
     const s = {
-      veyraflow_entry_done: "1", tilawah_auth_seen: "1",
+      tilawah_entry_done: "1", tilawah_auth_seen: "1",
       tilawah_consent_seen: "1", tilawah_consent: "1", tilawah_lang: "uz",
       tilawah_device_id: "verify-results", tilawah_place: "103:1",
     };

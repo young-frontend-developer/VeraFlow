@@ -1,10 +1,11 @@
 {
-  "name": "tilawah-web",
+  "name": "veraflow-web",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "lint:brand": "node lint-brand.mjs",
+    "build": "npm run lint:brand && tsc -b && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
