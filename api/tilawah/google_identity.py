@@ -63,6 +63,7 @@ class GoogleClaims:
     email: str | None            # informational only; never a lookup key
     email_verified: bool
     name: str | None
+    picture: str | None
     nonce: str | None
     audience: str
 
@@ -160,6 +161,7 @@ def verify(raw_token: str, *, audiences: list[str],
         email=email if isinstance(email, str) and email else None,
         email_verified=bool(payload.get("email_verified", False)),
         name=payload.get("name") if isinstance(payload.get("name"), str) else None,
+        picture=payload.get("picture") if isinstance(payload.get("picture"), str) else None,
         nonce=nonce if isinstance(nonce, str) else None,
         audience=audience,
     )
