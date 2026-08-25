@@ -289,6 +289,7 @@ def google_sign_in(body: GoogleSignInIn, request: Request, response: Response,
         # is found by `subject` and only ever by `subject`.
         existing.email = claims.email
         existing.email_verified = claims.email_verified
+        existing.picture = claims.picture
         db.add(existing)
     else:
         # CASE A (session in hand) or CASE C (no session at all).
@@ -328,6 +329,7 @@ def google_sign_in(body: GoogleSignInIn, request: Request, response: Response,
         db.add(AuthIdentity(user_id=user.id, provider="google",
                             subject=claims.subject, email=claims.email,
                             email_verified=claims.email_verified,
+                            picture=claims.picture,
                             last_login_at=auth.now()))
         linked_now = True
 
@@ -370,10 +372,11 @@ def me(resolved: tuple[AuthSession, User] = Depends(current_auth),
     a learner's attempts are being kept.
     """
     row, user = resolved
-    providers = [
-        r.provider for r in
-        db.exec(select(AuthIdentity).where(AuthIdentity.user_id == user.id)).all()
-    ]
+    identities = db.exec(select(AuthIdentity).where(AuthIdentity.user_id == user.id)).all()
+    providers = [r.provider for r in identities]
+    # Use the picture from the Google identity if one exists, otherwise None.
+    # If Apple identity provides pictures later, we can pick the best one.
+    picture = next((i.picture for i in identities if i.picture), None)
     return MeOut(
         user_id=user.id, lang=user.lang,
         consented=user.consented, audio_consented=user.audio_consented,
@@ -381,7 +384,7 @@ def me(resolved: tuple[AuthSession, User] = Depends(current_auth),
         # Derived, never stored - a cached flag would drift the first time an
         # identity was linked or unlinked in a path that forgot to update it.
         is_anonymous=not providers,
-        email=user.email, display_name=user.display_name,
+        email=user.email, display_name=user.display_name, picture=picture,
         providers=sorted(providers),
         session_expires_at=row.expires_at,
     )

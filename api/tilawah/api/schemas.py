@@ -435,6 +435,7 @@ class MeOut(BaseModel):
     is_anonymous: bool
     email: str | None = None
     display_name: str | None = None
+    picture: str | None = None
     providers: list[str] = []
     session_expires_at: datetime
 

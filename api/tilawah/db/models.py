@@ -106,6 +106,7 @@ class AuthIdentity(SQLModel, table=True):
     subject: str
     email: str | None = Field(default=None)    # informational; may be a relay address
     email_verified: bool = Field(default=False)
+    picture: str | None = Field(default=None)
     # Argon2id, encoded with its own parameters and salt. NULL for every
     # provider except 'email', where it is the whole credential.
     #

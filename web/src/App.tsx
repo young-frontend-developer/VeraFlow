@@ -36,6 +36,7 @@ import { Failure, Loading } from "./components/States";
 import {
   Attempt,
   Ayah,
+  Me,
   Meta,
   Reciter,
   Sura,
@@ -44,6 +45,8 @@ import {
   listAyat,
   listReciters,
   listSuras,
+  logout,
+  me,
   meta,
   missingPayloadFields,
   setConsent,
@@ -238,6 +241,15 @@ function LearnerApp() {
    * not a failure.
    */
   const [rows, setRows] = useState<Attempt[] | null>(null);
+  /**
+   * The current user's identity, fetched once on mount and refreshed after
+   * sign-in or logout. Drives the auth status block in Profile.
+   *
+   * Null while loading; on error we keep null and the profile still renders —
+   * the auth block falls back to showing the sign-in button, which is the
+   * correct behaviour when identity cannot be determined.
+   */
+  const [meData, setMeData] = useState<Me | null>(null);
 
   /**
    * The goal, and the notification list.
@@ -297,6 +309,10 @@ function LearnerApp() {
           version: "?",
         }),
       );
+    // Fetch the current user's identity for the Profile auth status block.
+    // A failure here degrades gracefully — meData stays null and Profile shows
+    // the sign-in button, which is the safe fallback.
+    me().then(setMeData).catch(() => {});
   }, []);
 
   /**
@@ -469,6 +485,7 @@ function LearnerApp() {
             localStorage.setItem(AUTH_SEEN_KEY, "1");
             setAuthSeen(true);
             setEntry("consent");
+            me().then(setMeData).catch(() => {});
           }}
         />
       );
@@ -511,6 +528,7 @@ function LearnerApp() {
         onContinue={() => {
           setAuthSeen(true);
           localStorage.setItem(AUTH_SEEN_KEY, "1");
+          me().then(setMeData).catch(() => {});
         }}
       />
     );
@@ -639,6 +657,27 @@ function LearnerApp() {
             rows={notifications}
             onOpen={() => setBellOpen(true)}
           />
+          {meData && !meData.is_anonymous && meData.picture && (
+            <img 
+              src={meData.picture} 
+              alt={meData.display_name || meData.email || ""} 
+              className="app__avatar" 
+              onClick={() => {
+                // If they click the avatar, take them to the Profile tab.
+                setTab("profile");
+                setGoalOpen(false);
+              }}
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: "50%",
+                cursor: "pointer",
+                objectFit: "cover",
+                marginLeft: 12, // Space between bell and avatar
+              }}
+              title={t(lang, "nav_profile")}
+            />
+          )}
         </div>
       </header>
 
@@ -859,6 +898,22 @@ function LearnerApp() {
             }}
             theme={theme}
             onTheme={setTheme}
+            meData={meData}
+            onLogout={async () => {
+              await logout();
+              setMeData(null);
+              // Show the auth screen again so the user can sign into a different
+              // account or continue anonymously. Reset the seen flag too.
+              localStorage.removeItem("tilawah_auth_seen");
+              setAuthSeen(false);
+            }}
+            onSignIn={() => {
+              // Navigate to the auth screen without resetting the entry flow.
+              // AUTH_SEEN_KEY staying false means the auth gate re-appears on
+              // the next render cycle, exactly as it does on first launch.
+              localStorage.removeItem("tilawah_auth_seen");
+              setAuthSeen(false);
+            }}
           />
         )}
       </main>

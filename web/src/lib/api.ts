@@ -807,6 +807,7 @@ export type Me = {
   is_anonymous: boolean;
   email: string | null;
   display_name: string | null;
+  picture?: string;
   providers: string[];
   session_expires_at: string;
 };
