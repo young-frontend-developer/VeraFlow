@@ -185,7 +185,11 @@ export default function Profile({
           </span>
         )}
         <div>
-          <p className="profile__name">{t(lang, "profile_name")}</p>
+          <p className="profile__name">
+            {meData && !meData.is_anonymous && meData.display_name
+              ? meData.display_name
+              : t(lang, "profile_name")}
+          </p>
           <p className="profile__sub">
             {meData && !meData.is_anonymous
               ? meData.email ?? (meData.providers.includes("google")

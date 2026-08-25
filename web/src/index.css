@@ -1118,10 +1118,17 @@ ol {
 /* ── consent, inside onboarding and in settings ───────────────────────── */
 
 .gate {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px var(--pad);
   animation: fade var(--t) var(--ease) both;
 }
 
 .gate__panel {
+  width: 100%;
+  max-width: 420px;
   padding: 0;
 }
 
