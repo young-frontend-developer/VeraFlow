@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useMemo, useState } from "react";
-import { Attempt, Reciter, Sura, history, setConsent } from "../lib/api";
+import { Attempt, Me, Reciter, Sura, history, setConsent } from "../lib/api";
 import { Key, Lang, t } from "../lib/i18n";
 import { LEVEL_LABEL, Level, storeLevel, storedLevel } from "../lib/level";
 import { Theme } from "../lib/theme";
@@ -127,6 +127,9 @@ export default function Profile({
   onLang,
   theme,
   onTheme,
+  meData,
+  onLogout,
+  onSignIn,
 }: {
   lang: Lang;
   suras: Sura[];
@@ -140,11 +143,18 @@ export default function Profile({
   onLang: (l: Lang) => void;
   theme: Theme;
   onTheme: (t: Theme) => void;
+  /** Current user identity from /api/auth/me. Null while loading or on error. */
+  meData: Me | null;
+  /** Revoke the current session and return to the auth screen. */
+  onLogout: () => Promise<void>;
+  /** Navigate to the auth screen to sign in or register. */
+  onSignIn: () => void;
 }) {
   const [rows, setRows] = useState<Attempt[] | null>(null);
   const [level, setLevel] = useState<Level | null>(() => storedLevel());
   const [filter, setFilter] = useState<number | "all">("all");
   const [deleted, setDeleted] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     if (!consented) return setRows([]);
@@ -166,13 +176,23 @@ export default function Profile({
   return (
     <>
       <div className="profile__head">
-        {/* No image. Initials, or the app's own mark when there is no name. */}
-        <span className="avatar" aria-hidden="true">
-          {t(lang, "profile_initials")}
-        </span>
+        {/* If the user has a profile picture from Google, show it. Otherwise fallback to the initials mark. */}
+        {meData && !meData.is_anonymous && meData.picture ? (
+          <img src={meData.picture} alt="" className="avatar" style={{ objectFit: "cover" }} />
+        ) : (
+          <span className="avatar" aria-hidden="true">
+            {t(lang, "profile_initials")}
+          </span>
+        )}
         <div>
           <p className="profile__name">{t(lang, "profile_name")}</p>
-          <p className="profile__sub">{t(lang, "profile_sub")}</p>
+          <p className="profile__sub">
+            {meData && !meData.is_anonymous
+              ? meData.email ?? (meData.providers.includes("google")
+                ? t(lang, "profile_provider_google")
+                : t(lang, "profile_provider_email"))
+              : t(lang, "profile_sub")}
+          </p>
         </div>
       </div>
 
@@ -203,6 +223,70 @@ export default function Profile({
              A learner told daily that they are a "beginner" is being handed an
              identity by software that has heard them recite once. */}
       <Group lang={lang} title="profile_group_account">
+        {/* ── AUTH STATUS. Shows who is signed in, or a prompt to sign in. ─
+               This is the primary purpose of the Account group now that real
+               auth exists. The level setting follows it as a secondary item. */}
+        {meData && !meData.is_anonymous ? (
+          <>
+            {/* Signed-in state: show email/provider + logout button */}
+            <Row
+              mark={<Shield size={18} />}
+              label={t(lang, "profile_signed_in_as")}
+              help={
+                meData.email ??
+                (meData.providers.includes("google")
+                  ? t(lang, "profile_provider_google")
+                  : meData.providers.includes("email")
+                    ? t(lang, "profile_provider_email")
+                    : meData.providers[0] ?? "")
+              }
+            />
+            <button
+              className="setting"
+              disabled={loggingOut}
+              onClick={async () => {
+                setLoggingOut(true);
+                try {
+                  await onLogout();
+                } finally {
+                  setLoggingOut(false);
+                }
+              }}
+            >
+              <span className="setting__mark setting__mark--danger">
+                <Shield size={18} />
+              </span>
+              <span className="setting__body">
+                <span className="setting__label setting__danger">
+                  {loggingOut ? t(lang, "auth_working") : t(lang, "profile_logout")}
+                </span>
+                <span className="setting__help">{t(lang, "profile_logout_help")}</span>
+              </span>
+            </button>
+          </>
+        ) : (
+          /* Anonymous or not yet loaded — show sign-in button */
+          <>
+            <Row
+              mark={<Shield size={18} />}
+              label={t(lang, "profile_anon_label")}
+              help={t(lang, "profile_anon_help")}
+            />
+            <button
+              className="setting"
+              style={{ borderBottom: "none" }}
+              onClick={onSignIn}
+            >
+              <span className="setting__mark">
+                <Shield size={18} />
+              </span>
+              <span className="setting__body">
+                <span className="setting__label">{t(lang, "profile_sign_in")}</span>
+                <span className="setting__help">{t(lang, "profile_sign_in_help")}</span>
+              </span>
+            </button>
+          </>
+        )}
         <Row
           mark={<Target size={18} />}
           label={t(lang, "level_setting")}
