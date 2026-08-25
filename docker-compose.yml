@@ -1,4 +1,16 @@
 services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: veraflow
+      POSTGRES_USER: veraflow
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env or shell}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+
   api:
     build: ./api
     ports:
@@ -7,10 +19,12 @@ services:
       - ./api/.env
     volumes:
       - hf-cache:/cache/huggingface
+      - /srv/veraflow-data:/data
     restart: unless-stopped
-    # The model needs ~1.5 GB resident in bfloat16. On a 4 GB box, cap it so an
-    # OOM kills the container cleanly instead of the whole host.
     mem_limit: 3g
+    depends_on:
+      - db
 
 volumes:
   hf-cache:
+  pgdata:
