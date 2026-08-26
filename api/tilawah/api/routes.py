@@ -168,6 +168,9 @@ async def create_attempt(
     user: User = Depends(current_user),
     session: Session = Depends(get_session),
 ) -> AttemptOut:
+    ct = (audio.content_type or "").split(";")[0].strip().lower()
+    if ct and not ct.startswith(("audio/", "video/")):
+        raise HTTPException(415, "expected audio file")
     data = await audio.read()
     if len(data) > settings.max_upload_bytes:
         raise HTTPException(413, "recording too large")
@@ -573,7 +576,7 @@ def hadith_by_id(hadith_id: str, lang: str = "uz") -> HadithOut | None:
 
 
 @router.get("/attempts", response_model=list[AttemptOut])
-def history(limit: int = 20, device_id: str | None = None,
+def history(limit: int = 20, device_id: str | None = None,  # noqa: ARG001
             user: User = Depends(current_user),
             session: Session = Depends(get_session)) -> list[AttemptOut]:
     """This learner's recent attempts. Always theirs, whatever the query says.
@@ -591,6 +594,7 @@ def history(limit: int = 20, device_id: str | None = None,
     unchanged.
     """
     require_own_device(session, user, device_id)
+    limit = max(1, min(limit, 200))
     rows = session.exec(
         select(Attempt).where(Attempt.user_id == user.id)
         .order_by(Attempt.created_at.desc()).limit(limit)

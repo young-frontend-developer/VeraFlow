@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useMemo, useState } from "react";
-import { Attempt, Me, Reciter, Sura, history, setConsent } from "../lib/api";
+import { Attempt, Me, Reciter, Sura, history } from "../lib/api";
 import { Key, Lang, t } from "../lib/i18n";
 import { LEVEL_LABEL, Level, storeLevel, storedLevel } from "../lib/level";
 import { Theme } from "../lib/theme";
@@ -398,10 +398,7 @@ export default function Profile({
             checked={consented}
             onChange={(e) => {
               const next = e.target.checked;
-              // Revoking attempt consent revokes audio with it: there is no
-              // coherent state where we keep the voice but not the record.
               const nextAudio = next && audioConsented;
-              setConsent(next, nextAudio).catch(() => {});
               onConsent(next, nextAudio);
               if (!next) {
                 setRows([]);
@@ -426,7 +423,6 @@ export default function Profile({
               checked={audioConsented}
               disabled={!consented}
               onChange={(e) => {
-                setConsent(consented, e.target.checked).catch(() => {});
                 onConsent(consented, e.target.checked);
               }}
             />
@@ -441,7 +437,7 @@ export default function Profile({
           className="setting"
           style={{ borderBottom: "none" }}
           onClick={() => {
-            setConsent(false, false).catch(() => {});
+            if (!confirm(t(lang, "profile_delete_confirm" as Key) || "Delete all practice data? This cannot be undone.")) return;
             onConsent(false, false);
             setRows([]);
             setDeleted(true);

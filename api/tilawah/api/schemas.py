@@ -3,7 +3,7 @@
 promotion evidence, not learner-facing."""
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class SegmentOut(BaseModel):
@@ -205,8 +205,8 @@ class ReviewQueueOut(BaseModel):
 
 class ReviewDecisionIn(BaseModel):
     action: str                       # approve | reject | edit | reset
-    reviewed_by: str = ""
-    note: str = ""
+    reviewed_by: str = Field(default="", max_length=200)
+    note: str = Field(default="", max_length=2000)
     uz: dict = {}
 
 
@@ -279,7 +279,7 @@ class HadithOut(BaseModel):
 
 
 class WrongFlagIn(BaseModel):
-    note: str | None = None
+    note: str | None = Field(default=None, max_length=2000)
 
 
 class MetaOut(BaseModel):

@@ -50,7 +50,7 @@ export default class ErrorBoundary extends Component<Props, State> {
     // Loud on purpose. Swallowing this is how a rendering bug survives a
     // release: the page would look merely incomplete rather than broken.
     console.error(
-      `[Tilawah] render failed${this.props.label ? ` in ${this.props.label}` : ""}:`,
+      `[VeraFlow] render failed${this.props.label ? ` in ${this.props.label}` : ""}:`,
       error,
       info.componentStack,
     );

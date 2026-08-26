@@ -180,17 +180,17 @@ def revoke_all_for_user(db: Session, user_id: str) -> int:
     Wanted whenever the account's security state changes - a future unlink, a
     password-equivalent event, or an explicit 'sign out everywhere'.
     """
-    rows = db.exec(select(AuthSession).where(AuthSession.user_id == user_id)).all()
-    killed = 0
+    rows = db.exec(
+        select(AuthSession)
+        .where(AuthSession.user_id == user_id, AuthSession.revoked_at.is_(None))  # type: ignore[union-attr]
+    ).all()
     for row in rows:
-        if row.revoked_at is None:
-            row.revoked_at = now()
-            db.add(row)
-            killed += 1
-    if killed:
+        row.revoked_at = now()
+        db.add(row)
+    if rows:
         db.commit()
-        log.info("revoked %d session(s) for user %s", killed, user_id)
-    return killed
+        log.info("revoked %d session(s) for user %s", len(rows), user_id)
+    return len(rows)
 
 
 def rotate(db: Session, row: AuthSession, *, user_agent: str = "") -> tuple[str, AuthSession]:
@@ -244,15 +244,14 @@ def consume_nonce(db: Session, raw: str | None) -> bool:
 def purge_expired_nonces(db: Session, *, before: datetime | None = None) -> int:
     """Housekeeping. A spent or expired nonce authorises nothing either way."""
     cutoff = before or now()
-    gone = 0
-    for row in db.exec(select(OAuthNonce)).all():
-        expires = _utc(row.expires_at)
-        if expires is not None and expires <= cutoff:
-            db.delete(row)
-            gone += 1
-    if gone:
+    rows = db.exec(
+        select(OAuthNonce).where(OAuthNonce.expires_at <= cutoff)
+    ).all()
+    for row in rows:
+        db.delete(row)
+    if rows:
         db.commit()
-    return gone
+    return len(rows)
 
 
 # ── email tokens: verification and password reset ─────────────────────────
@@ -326,15 +325,14 @@ def consume_email_token(db: Session, raw: str | None, *,
 def purge_expired_email_tokens(db: Session, *, before: datetime | None = None) -> int:
     """Housekeeping. A spent or expired token authorises nothing either way."""
     cutoff = before or now()
-    gone = 0
-    for row in db.exec(select(EmailToken)).all():
-        expires = _utc(row.expires_at)
-        if expires is not None and expires <= cutoff:
-            db.delete(row)
-            gone += 1
-    if gone:
+    rows = db.exec(
+        select(EmailToken).where(EmailToken.expires_at <= cutoff)
+    ).all()
+    for row in rows:
+        db.delete(row)
+    if rows:
         db.commit()
-    return gone
+    return len(rows)
 
 
 def purge_expired(db: Session, *, before: datetime | None = None) -> int:
@@ -345,13 +343,11 @@ def purge_expired(db: Session, *, before: datetime | None = None) -> int:
     the table has a defined way not to grow forever.
     """
     cutoff = before or now()
-    rows = db.exec(select(AuthSession)).all()
-    gone = 0
+    rows = db.exec(
+        select(AuthSession).where(AuthSession.expires_at <= cutoff)
+    ).all()
     for row in rows:
-        expires = _utc(row.expires_at)
-        if expires is not None and expires <= cutoff:
-            db.delete(row)
-            gone += 1
-    if gone:
+        db.delete(row)
+    if rows:
         db.commit()
-    return gone
+    return len(rows)

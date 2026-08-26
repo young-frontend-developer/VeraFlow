@@ -71,19 +71,24 @@ def get_model():
     return _model
 
 
+_INFER_TIMEOUT = 120
+
 def transcribe(wave: np.ndarray, phonetized) -> Prediction:
     """One recitation -> predicted phonemes + sifat."""
     model = get_model()
-    with _infer:
+    if not _infer.acquire(timeout=_INFER_TIMEOUT):
+        raise RuntimeError("inference queue full")
+    try:
         out = model([wave], [phonetized], sampling_rate=16000)[0]
-
-    probs = getattr(out.phonemes, "probs", None)
-    if isinstance(probs, torch.Tensor):
-        vals = probs.detach().cpu().float().reshape(-1).tolist()
-    else:
-        vals = list(probs or [])
-    return Prediction(
-        phonemes=_label(out.phonemes),
-        sifat=[_sifa_to_dict(s) for s in (getattr(out, "sifat", None) or [])],
-        mean_prob=float(sum(vals) / len(vals)) if vals else 0.0,
-    )
+        probs = getattr(out.phonemes, "probs", None)
+        if isinstance(probs, torch.Tensor):
+            vals = probs.detach().cpu().float().reshape(-1).tolist()
+        else:
+            vals = list(probs or [])
+        return Prediction(
+            phonemes=_label(out.phonemes),
+            sifat=[_sifa_to_dict(s) for s in (getattr(out, "sifat", None) or [])],
+            mean_prob=float(sum(vals) / len(vals)) if vals else 0.0,
+        )
+    finally:
+        _infer.release()

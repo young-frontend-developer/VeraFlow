@@ -1038,7 +1038,7 @@ export type AyahSegments = {
 };
 
 export const ayahSegments = (sura: number, aya: number) =>
-  fetch(`${BASE}/api/segments/${sura}/${aya}`).then(json<AyahSegments>);
+  authedFetch(`/api/segments/${sura}/${aya}`).then(json<AyahSegments>);
 
 export async function submitAttempt(
   audio: Blob,

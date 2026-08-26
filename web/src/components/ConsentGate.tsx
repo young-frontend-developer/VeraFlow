@@ -78,10 +78,10 @@ export default function ConsentGate({
 
         <div className="gate__actions">
           <button
-            className="gate__primary"
+            className={attempts ? "gate__primary" : "gate__primary gate__primary--muted"}
             onClick={() => onDecide(attempts, audio)}
           >
-            {t(lang, "consent_gate_accept")}
+            {t(lang, attempts ? "consent_gate_accept" : "consent_gate_skip")}
           </button>
           <button className="gate__quiet" onClick={() => onDecide(false, false)}>
             {t(lang, "consent_gate_skip")}

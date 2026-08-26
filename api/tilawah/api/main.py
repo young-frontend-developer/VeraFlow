@@ -187,6 +187,11 @@ async def lifespan(_: FastAPI):
             "email sending is not configured; verification and reset tokens "
             "are minted but nothing is delivered. See tilawah/mailer.py.")
 
+    if settings.is_production and any("localhost" in o for o in settings.origins):
+        raise RuntimeError(
+            "TILAWAH_CORS_ORIGINS contains localhost in production. "
+            "Set it to the real origin (e.g. https://veraflow.uz).")
+
     if settings.show_unreviewed:
         bar = "=" * 68
         logging.warning(bar)
@@ -210,8 +215,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 app.include_router(router)
 # Sessions. Additive in this phase: nothing in `router` requires one yet, and

@@ -381,7 +381,7 @@ export default function Recite({
       setRetry((r) => ({ ...r, cardId: cardId(e), level: rung.level,
                          phase: "recording", stillWrong: null }));
     } catch {
-      setFailure("network");
+      setFailure("mic");
     }
   }
 
