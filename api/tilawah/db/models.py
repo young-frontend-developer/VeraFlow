@@ -14,7 +14,7 @@ failure you do not recover from.
 """
 from datetime import datetime, timezone
 
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlmodel import JSON, Column, Field, SQLModel
 
 
@@ -236,7 +236,7 @@ class AuthSession(SQLModel, table=True):
 
 class Attempt(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: str = Field(index=True, foreign_key="user.id", sa_column_kwargs={"ondelete": "CASCADE"})
+    user_id: str = Field(sa_column=Column(ForeignKey("user.id", ondelete="CASCADE"), index=True))
     sura: int
     aya: int
     # The practice range, indexed RELATIVE TO THE AYAH. Never store encoded
