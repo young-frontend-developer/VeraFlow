@@ -12,6 +12,8 @@ RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/wh
       -r requirements.txt
 
 COPY tilawah ./tilawah
+COPY migrations ./migrations
+COPY alembic.ini .
 
 RUN adduser --disabled-password --no-create-home app
 
